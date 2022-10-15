@@ -1,0 +1,20 @@
+{
+  "name": "canvas-drawing-engine",
+  "version": "1.0.0",
+  "description": "CDE is a custom drawing library for js using the canvas",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Canvas",
+    "JS",
+    "HTML",
+    "Web",
+    "Browser",
+    "Rendering",
+    "Drawing"
+  ],
+  "author": "Kelvin Wijkniet",
+  "license": "ISC"
+}

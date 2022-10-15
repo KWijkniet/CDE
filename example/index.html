@@ -1,0 +1,74 @@
+<html>
+<head>
+    <meta name="robots" content="noindex">
+    
+    <script src="https://kit.fontawesome.com/f9577681d3.js" crossorigin="anonymous"></script>
+    <script src="./p5.min.js"></script>
+    <script src="../build/main.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <link href="./assets/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <ul class="nav flex-column">
+        <!-- Display FPS -->
+        <li class="nav-item">
+            <span id="fps" style="font-size: 0.9rem;">0</span>
+        </li>
+        <!-- Create shape -->
+        <li class="nav-item pointer">
+            <div class="dropdown">
+                <button class="btn btn-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="drawingTool">
+                    <i class="fa-solid fa-plus"></i>
+                    <i class="fa-solid fa-caret-down dropdown-icon"></i>
+                </button>
+
+                <ul class="dropdown-menu" id="drawingTool-dropdown">
+                    <li id="drawingToolAllowed">
+                        <i class="fas fa-plus" style="color:var(--gray)"></i>
+                    </li>
+                    <li id="drawingToolForbidden">
+                        <i class="fas fa-plus" style="color:var(--red)"></i>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <!-- Edit shape -->
+        <li class="nav-item pointer">
+            <div class="dropdown">
+                <button class="btn btn-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="editingTool">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                        <i class="fa-solid fa-caret-down dropdown-icon"></i>
+                </button>
+
+                <ul class="dropdown-menu" id="editingTool-dropdown">
+                    <li id="editingToolEdit">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </li>
+                    <li id="editingToolAdd">
+                        <i class="fas fa-plus"></i>
+                    </li>
+                    <li id="editingToolRemove">
+                        <i class="fas fa-min"></i>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <!-- Delete shape -->
+        <li class="nav-item pointer">
+            <i class="fa-solid fa-trash"></i>
+        </li>
+        <!-- Recenter camera -->
+        <li class="nav-item pointer" onclick="recenter()">
+            <i class="fas fa-crosshairs"></i>
+        </li>
+    </ul>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+    <!-- Custom script to detect collisions -->
+    <script src="./collision.js"></script>
+    <script src="./sketch.js"></script>
+</body>
+</html>

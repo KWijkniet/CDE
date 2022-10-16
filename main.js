@@ -1,3 +1,4 @@
+import Settings from './classes/Settings.js';
 import Vector2 from "./Classes/Vector2.js";
 import Color from "./Classes/Color.js";
 import Ruler from"./Classes/Ruler.js";
@@ -9,7 +10,7 @@ import EditingTool from "./Classes/EditingTool.js";
 import Shape from "./Classes/Shape.js";
 import Renderer from "./Classes/Renderer.js";
 
-export { Vector2, Color, Ruler, Grid, Cursor, Input, DrawingTool, EditingTool, Shape, Renderer }
+export { Settings, Vector2, Color, Ruler, Grid, Cursor, Input, DrawingTool, EditingTool, Shape, Renderer }
 
 window.onload = () => {
     if(typeof createCanvas !== 'function'){

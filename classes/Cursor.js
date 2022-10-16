@@ -1,14 +1,13 @@
 export default class Cursor {
+    static instance = null;
+
     //public
-    grid = null;
-    visualize = false;
-    track = false;
     position = null;
-    canvas = null;
     onClick = null;
     onDragStart = null;
     onDragUpdate = null;
     onDragEnd = null;
+    onScroll = null;
     diff = null;
 
     //private
@@ -16,13 +15,9 @@ export default class Cursor {
     #mousemoved = false;
     #lastPos = null;
     #offset = null;
-    #bonusSize = 0;
+    #zoom = 1;
 
-    constructor(grid, canvas, track = true, margin = 0, bonusSize = 0){
-        this.track = track;
-        this.grid = grid;
-        this.canvas = canvas;
-        this.#bonusSize = bonusSize;
+    constructor(){
         this.position = new Vector2(0, 0);
 
         this.onClick = document.createEvent("Event");
@@ -36,60 +31,49 @@ export default class Cursor {
         
         this.onDragEnd = document.createEvent("Event");
         this.onDragEnd.initEvent("cDragEnd", true, true);
+        
+        this.onScroll = document.createEvent("Event");
+        this.onScroll.initEvent("cOnScroll", true, true);
 
         this.#offset = new Vector2(0,0);
         this.#lastPos = new Vector2(0, 0);
 
-        document.addEventListener('mousemove', (event) => { this.event(event, 'mousemove'); });
-        document.addEventListener('mousedown', (event) => { this.event(event, 'mousedown'); });
-        document.addEventListener('mouseup', (event) => { this.event(event, 'mouseup'); });
+        document.addEventListener('mousemove', (event) => { this.#event(event, 'mousemove'); });
+        document.addEventListener('mousedown', (event) => { this.#event(event, 'mousedown'); });
+        document.addEventListener('mouseup', (event) => { this.#event(event, 'mouseup'); });
 
-        document.addEventListener('touchmove', (event) => { this.event(event, 'mousemove') });
-        document.addEventListener('touchstart', (event) => { this.event(event, 'mousedown') });
-        document.addEventListener('touchend', (event) => { this.event(event, 'mouseup') });
+        document.addEventListener('touchmove', (event) => { this.#event(event, 'mousemove') });
+        document.addEventListener('touchstart', (event) => { this.#event(event, 'mousedown') });
+        document.addEventListener('touchend', (event) => { this.#event(event, 'mouseup') });
+
+        document.addEventListener('mousewheel', (event) => { this.#scrollEvent(event); });
+
+        Cursor.instance = this;
     }
 
-    draw(){
-    }
-
-    fromGrid(){
-        var x = Math.round(this.position.x / this.grid.size) * this.grid.size;
-        var y = Math.round(this.position.y / this.grid.size) * this.grid.size;
-
-        return new Vector2(x, y);
-    }
-
-    getOffset(){
-        return this.#offset;
-    }
-
-    resetOffset(){
-        this.#offset = Vector2.zero();
-    }
+    // Private Methods
 
     // Based on received events determine if it was a drag or click
-    event(e, type){
+    #event(e, type){
         if(type == 'mousemove'){
-            if(this.track){
-                this.position.x = e.clientX;
-                this.position.y = e.clientY;
-            }
+            this.position.x = e.clientX;
+            this.position.y = e.clientY;
 
             if(this.#mousedown){
                 this.diff = null;
                 if(!this.#mousemoved){
                     //start of drag
-                    this.drag(e, "start");
+                    this.#drag(e, "start");
                 }
                 else{
-                    this.drag(e, "update");
+                    this.#drag(e, "update");
                 }
                 this.#mousemoved = true;
             }
             else{
                 if(this.#mousemoved){
                     //end of drag
-                    this.drag(e, "end");
+                    this.#drag(e, "end");
                 }
                 this.#mousemoved = false;
             }
@@ -101,22 +85,20 @@ export default class Cursor {
             this.#mousedown = false;
 
             if(!this.#mousemoved){
-                this.click(e);
+                this.#click(e);
             }else if(this.diff == null && window.activeTool != null && window.activeTool.constructor.name == "DrawingTool"){
-                this.click(e);
+                this.#click(e);
             }
         }
     }
 
-    click(e){
-        // console.log("click", e);
-
+    #click(e){
         if(e.target.tagName == "CANVAS"){
             document.dispatchEvent(this.onClick);
         }
     }
 
-    drag(e, type){
+    #drag(e, type){
         var newPos = null;
         if(type == "start"){
             newPos = this.fromGrid();
@@ -134,13 +116,40 @@ export default class Cursor {
 
         if(e.target.tagName == "CANVAS"){
             if(e.shiftKey && this.diff != null && newPos != null){
-                this.#offset.add(this.diff).minMax(new Vector2(-this.#bonusSize, -this.#bonusSize), new Vector2(this.#bonusSize, this.#bonusSize));
+                this.#offset.add(this.diff).minMax(new Vector2(-Settings.bonusSize, -Settings.bonusSize), new Vector2(Settings.bonusSize, Settings.bonusSize));
                 this.#lastPos = new Vector2(newPos.x, newPos.y);
             }
             else{
                 this.diff = null;
             }
         }
+    }
+
+    #scrollEvent(e){
+        this.#zoom -= e.deltaY / 1000;
+        if(this.#zoom < 0.5){ this.#zoom = 0.5; }
+        else if(this.#zoom > 5){ this.#zoom = 5; }
+    }
+
+    // Public Methods
+
+    fromGrid(){
+        var x = Math.round(this.position.x / Settings.gridSize) * Settings.gridSize;
+        var y = Math.round(this.position.y / Settings.gridSize) * Settings.gridSize;
+
+        return new Vector2(x, y);
+    }
+
+    getOffset(){
+        return this.#offset;
+    }
+
+    getZoom(){
+        return this.#zoom;
+    }
+
+    resetOffset(){
+        this.#offset = Vector2.zero();
     }
 
     addOnClick(func){
@@ -158,5 +167,8 @@ export default class Cursor {
     addOnDragEnd(func) {
         document.addEventListener("cDragEnd", func, false);
     }
+
+    addOnScroll(func) {
+        document.addEventListener("cOnScroll", func, false);
+    }
 }
-  

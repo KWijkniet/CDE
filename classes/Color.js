@@ -1,51 +1,19 @@
-export default class Color {
-    r = 255;
-    g = 255;
-    b = 255;
+export default class Color{
+    string = "";
     
-    constructor(r,g,b){
-        this.r = r;
-        this.g = g;
-        this.b = b;
+    constructor(string){
+        this.string = string;
     }
 
-    fromString(name){
-        name = name.toLowerCase();
-        if(name == "white"){
-            this.r = 255;
-            this.g = 255;
-            this.b = 255;
-        }
-        else if(name == "black"){
-            this.r = 0;
-            this.g = 0;
-            this.b = 0;
-        }
-        else if(name == "red"){
-            this.r = 255;
-            this.g = 0;
-            this.b = 0;
-        }
-        else if(name == "green"){
-            this.r = 0;
-            this.g = 255;
-            this.b = 0;
-        }
-        else if(name == "blue"){
-            this.r = 0;
-            this.g = 0;
-            this.b = 255;
-        }
+    rgba(){
+        var value = getComputedStyle(document.body).getPropertyValue(this.string);
+        value = value.replace("rgba(", "").replace("rgb(", "").replace(")", "").split(',');
+        return {r: parseFloat(value[0]), g: parseFloat(value[1]), b: parseFloat(value[2]), a: parseFloat(value[3])};
     }
-
-    fromRGB(_r, _g, _b){
-        this.r = _r;
-        this.g = _g;
-        this.b = _b;
-    }
-
-    toString(){
-        return this.r + ", " + this.g + ", " + this.b;
+    
+    rgb(){
+        var rgba = this.rgba();
+        delete rgba['a'];
+        return rgba;
     }
 }
-  

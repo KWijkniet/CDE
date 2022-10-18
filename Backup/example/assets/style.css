@@ -1,0 +1,118 @@
+:root{
+    --red: #b30000;
+    --white: #E1E1E1;
+    --gray: #3f3f3f;
+}
+
+* {
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+}
+
+body{
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+.pointer{
+    cursor: pointer;
+}
+
+.input-hidden{
+    background: none;
+    border: none;
+}
+
+.nav{
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    background-color: var(--white);
+    color: var(--gray);
+    border-radius: 5px;
+    width: 62px;
+}
+
+.nav-item{
+    width: 62px;
+    height: 62px;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+}
+.nav-item > i, .nav-item .btn > i{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.nav-item:not(:last-child){
+    border-bottom: 1px solid var(--red);
+}
+
+#fps{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.dropdown{
+    width: 100%;
+    height: 100%;
+}
+.dropdown .btn{
+    background: none;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+    color: var(--gray);
+    width: 100%;
+    height: 100%;
+}
+.btn.show {
+    color: var(--gray);
+}
+
+.dropdown-icon{
+    top: 45px !important;
+    left: 40px !important;
+    font-size: 0.5rem;
+}
+
+.dropdown-menu{
+    background-color: var(--white);
+    left: calc(62px + 5px) !important;
+    top: -48px !important;
+    max-width: 75px !important;
+    min-width: 75px !important;
+    height: 32px;
+    margin: 0px;
+    padding: 0px;
+    padding-top: 4px;
+}
+
+.dropdown-menu li{
+    display: inline;
+    width: 32px;
+    height: 32px;
+    margin: 0px;
+    padding: 5px 9px;
+}
+
+.dropdown-menu li:not(:last-child){
+    border-right: 1px solid var(--red);
+}
+
+.active{
+    color: skyblue !important;
+}
+
+.btn:disabled, .active, .btn.show, .btn:active, .btn:hover{
+    background-color: transparent !important;
+    /* border: none !important; */
+    opacity: 1 !important;
+}

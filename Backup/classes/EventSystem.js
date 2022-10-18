@@ -5,15 +5,15 @@ export default class EventSystem {
         for (let i = 0; i < events.length; i++) {
             const event = events[i];
             this.#events[event] = document.createEvent("Event");
-            this.#events[event].initEvent("c_" + event, true, true);
+            this.#events[event].initEvent(event, true, true);
         }
     }
 
     subscribe(event, func){
-        document.addEventListener("c_" + event, func, false);
+        document.addEventListener(event, func, false);
     }
     
     unsubscribe(event, func){
-        document.removeEventListener("c_" + event, func);
+        document.removeEventListener(event, func);
     }
 }

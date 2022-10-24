@@ -22,10 +22,14 @@ var __privateSet = (obj, member, value, setter) => {
   setter ? setter.call(obj, value) : member.set(obj, value);
   return value;
 };
+var __privateMethod = (obj, member, method) => {
+  __accessCheck(obj, member, "access private method");
+  return method;
+};
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _events, _buffer, _backgroundColor, _linesColor;
+  var _canvas, _events, _mousedown, _mousemoved, _buffer, _backgroundColor, _linesColor, _cachedZoom, _generate, generate_fn;
   "use strict";
   class Collision {
     pointPoint(x1, y1, x2, y2) {
@@ -268,6 +272,17 @@ var __privateSet = (obj, member, value, setter) => {
     unsubscribe(event, func) {
       document.removeEventListener("c_" + event, func);
     }
+    invoke(event, e) {
+      var keys = Object.keys(__privateGet(this, _events));
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (key == event) {
+          var ce = new CustomEvent("c_" + key, { "detail": e });
+          document.dispatchEvent(ce);
+          return;
+        }
+      }
+    }
   }
   _events = new WeakMap();
   const _Vector2 = class {
@@ -322,12 +337,14 @@ var __privateSet = (obj, member, value, setter) => {
   __publicField(Vector2, "max", (v1, v2) => {
     return v1.magnitude() > v2.magnitude() ? _Vector2.from(v1) : _Vector2.from(v2);
   });
-  class Cursor {
+  const _Cursor$1 = class {
     constructor() {
       __publicField(this, "events", null);
       __publicField(this, "position", null);
       __publicField(this, "zoom", 1);
       __publicField(this, "offset", null);
+      __privateAdd(this, _mousedown, false);
+      __privateAdd(this, _mousemoved, false);
       __publicField(this, "local", () => {
         var rect = Settings.getCanvas().elt.getBoundingClientRect();
         return new Vector2(this.position.x - rect.left, this.position.y - rect.top);
@@ -338,18 +355,62 @@ var __privateSet = (obj, member, value, setter) => {
         var pos = this.local();
         return new Vector2(x + pos.x, y + pos.y);
       });
+      _Cursor$1.get = () => {
+        return this;
+      };
       this.events = new EventSystem(["click", "dragStart", "dragMove", "dragEnd", "scroll"]);
       this.position = new Vector2(0, 0);
       document.addEventListener("mousemove", (e) => {
         this.position = new Vector2(e.clientX, e.clientY);
       });
+      document.addEventListener("mousemove", (event) => {
+        this.event(event, "mousemove");
+      });
+      document.addEventListener("mousedown", (event) => {
+        this.event(event, "mousedown");
+      });
+      document.addEventListener("mouseup", (event) => {
+        this.event(event, "mouseup");
+      });
+      document.addEventListener("touchmove", (event) => {
+        this.event(event, "mousemove");
+      });
+      document.addEventListener("touchstart", (event) => {
+        this.event(event, "mousedown");
+      });
+      document.addEventListener("touchend", (event) => {
+        this.event(event, "mouseup");
+      });
+      document.addEventListener("wheel", (event) => {
+        this.events.invoke("scroll", event);
+      });
+      this.events.subscribe("scroll", (e) => {
+        this.zoom += e.detail.deltaY / 5e3;
+        this.zoom = Math.round(this.zoom * 100) / 100;
+        if (this.zoom < 0.5) {
+          this.zoom = 0.5;
+        }
+        if (this.zoom > 1.5) {
+          this.zoom = 1.5;
+        }
+        console.log("Zoom: ", this.zoom);
+      });
     }
     update() {
       var pos = this.local();
-      circle(pos.x, pos.y, 10);
+      scale(this.zoom);
+      circle(pos.x / this.zoom, pos.y / this.zoom, 10);
     }
-  }
-  __publicField(Cursor, "toGrid", (pos) => {
+    event(e, type) {
+    }
+  };
+  let Cursor$1 = _Cursor$1;
+  _mousedown = new WeakMap();
+  _mousemoved = new WeakMap();
+  __publicField(Cursor$1, "get", () => {
+    return null;
+  });
+  __publicField(Cursor$1, "toGrid", (pos) => {
     return new Vector2(Math.round(pos.x / Settings.gridSize) * Settings.gridSize, Math.round(pos.y / Settings.gridSize) * Settings.gridSize);
   });
   class Color {
@@ -370,45 +431,51 @@ var __privateSet = (obj, member, value, setter) => {
   }
   class Grid {
     constructor(backgroundColorString, linesColorString) {
+      __privateAdd(this, _generate);
       __privateAdd(this, _buffer, null);
       __privateAdd(this, _backgroundColor, null);
       __privateAdd(this, _linesColor, null);
+      __privateAdd(this, _cachedZoom, 1);
       __privateSet(this, _linesColor, new Color(linesColorString));
       __privateSet(this, _backgroundColor, new Color(backgroundColorString));
       __privateSet(this, _buffer, createGraphics(Settings.mapSize, Settings.mapSize));
       __privateGet(this, _buffer).canvas.id = "grid-buffer";
-      var rgb = __privateGet(this, _backgroundColor).rgb();
-      __privateGet(this, _buffer).background(rgb.r, rgb.g, rgb.b);
-      var rgba = __privateGet(this, _linesColor).rgba();
-      __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
-      var amountL = Math.ceil(Settings.mapSize / Settings.gridSizeL);
-      for (let ly = 0; ly < amountL; ly++) {
-        for (let lx = 0; lx < amountL; lx++) {
-          var posL = new Vector2(lx * Settings.gridSizeL, ly * Settings.gridSizeL);
-          __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
-          __privateGet(this, _buffer).strokeWeight(1);
-          __privateGet(this, _buffer).line(posL.x, posL.y, posL.x + Settings.gridSizeL, posL.y, 5);
-          __privateGet(this, _buffer).line(posL.x, posL.y, posL.x, posL.y + Settings.gridSizeL, 5);
-          var amountS = Math.ceil(Settings.gridSizeL / Settings.gridSizeS);
-          for (let sy = 0; sy < amountS; sy++) {
-            for (let sx = 0; sx < amountS; sx++) {
-              var posS = new Vector2(posL.x + sx * Settings.gridSizeS, posL.y + sy * Settings.gridSizeS);
-              __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
-              __privateGet(this, _buffer).strokeWeight(0.25);
-              __privateGet(this, _buffer).line(posS.x, posS.y, posS.x + Settings.gridSizeS, posS.y, 5);
-              __privateGet(this, _buffer).line(posS.x, posS.y, posS.x, posS.y + Settings.gridSizeS, 5);
-            }
-          }
-        }
-      }
+      __privateMethod(this, _generate, generate_fn).call(this);
     }
     update() {
+      var zoom = Cursor.get().zoom;
+      if (__privateGet(this, _cachedZoom) != zoom) {
+        __privateSet(this, _cachedZoom, zoom);
+        __privateMethod(this, _generate, generate_fn).call(this);
+      }
       image(__privateGet(this, _buffer), 0, 0);
     }
   }
   _buffer = new WeakMap();
   _backgroundColor = new WeakMap();
   _linesColor = new WeakMap();
+  _cachedZoom = new WeakMap();
+  _generate = new WeakSet();
+  generate_fn = function() {
+    Cursor.get();
+    __privateGet(this, _buffer).clear();
+    var rgb = __privateGet(this, _backgroundColor).rgb();
+    __privateGet(this, _buffer).background(rgb.r, rgb.g, rgb.b);
+    var rgba = __privateGet(this, _linesColor).rgba();
+    __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
+    for (let y = 0; y < Settings.mapSize; y += Settings.gridSizeS) {
+      for (let x = 0; x < Settings.mapSize; x += Settings.gridSizeS) {
+        __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
+        if (x % Settings.gridSizeL == 0 && y % Settings.gridSizeL == 0) {
+          __privateGet(this, _buffer).strokeWeight(1);
+        } else {
+          __privateGet(this, _buffer).strokeWeight(0.25);
+        }
+        __privateGet(this, _buffer).line(x, y, x + Settings.gridSizeS, y, 5);
+        __privateGet(this, _buffer).line(x, y, x, y + Settings.gridSizeS, 5);
+      }
+    }
+  };
   window.onload = () => {
     if (typeof createCanvas !== "function") {
       alert("Please install p5js! (https://p5js.org)");
@@ -421,7 +488,7 @@ var __privateSet = (obj, member, value, setter) => {
   };
   exports2.Collision = Collision;
   exports2.Color = Color;
-  exports2.Cursor = Cursor;
+  exports2.Cursor = Cursor$1;
   exports2.EventSystem = EventSystem;
   exports2.Grid = Grid;
   exports2.Settings = Settings$1;

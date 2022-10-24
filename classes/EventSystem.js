@@ -16,4 +16,17 @@ export default class EventSystem {
     unsubscribe(event, func){
         document.removeEventListener("c_" + event, func);
     }
+
+    invoke(event, e) {
+        var keys = Object.keys(this.#events);
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            if(key == event){
+                var ce = new CustomEvent("c_" + key, {'detail': e});
+                // this.#events[key].detail = e;
+                document.dispatchEvent(ce);
+                return;
+            }
+        }
+    }
 }

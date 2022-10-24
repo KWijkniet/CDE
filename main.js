@@ -5,8 +5,6 @@ import Cursor from './classes/Cursor';
 import Color from './classes/Color';
 import Grid from './classes/Grid';
 
-export { Settings, Collision, EventSystem, Cursor, Color, Grid }
-
 window.onload = () => {
     if(typeof createCanvas !== 'function'){
         alert("Please install p5js! (https://p5js.org)");
@@ -17,3 +15,5 @@ window.onload = () => {
         }
     }
 };
+
+export { Settings, Collision, EventSystem, Cursor, Color, Grid }

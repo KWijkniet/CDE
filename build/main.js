@@ -29,7 +29,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _events, _mousedown, _mousemoved, _buffer, _backgroundColor, _linesColor, _cachedZoom, _generate, generate_fn;
+  var _canvas, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _backgroundColor, _linesColor, _cachedZoom, _generate, generate_fn;
   "use strict";
   class Collision {
     pointPoint(x1, y1, x2, y2) {
@@ -246,7 +246,8 @@ var __privateMethod = (obj, member, method) => {
   };
   let Settings$1 = _Settings$1;
   _canvas = new WeakMap();
-  __publicField(Settings$1, "mapSize", 2e3);
+  __publicField(Settings$1, "mapSizeX", 1879);
+  __publicField(Settings$1, "mapSizeY", 939);
   __publicField(Settings$1, "bufferMargin", 50);
   __publicField(Settings$1, "gridSizeS", 10);
   __publicField(Settings$1, "gridSizeL", 100);
@@ -299,17 +300,32 @@ var __privateMethod = (obj, member, method) => {
       __publicField(this, "getCopy", () => {
         return new _Vector2(this.x, this.y);
       });
+      __publicField(this, "minMax", (v1, v2) => {
+        this.x = this.x < v1.x ? v1.x : this.x;
+        this.y = this.y < v1.y ? v1.y : this.y;
+        this.x = this.x > v2.x ? v2.x : this.x;
+        this.y = this.y > v2.y ? v2.y : this.y;
+        return this;
+      });
       __publicField(this, "add", (v) => {
-        new _Vector2(this.x + v.x, this.y + v.y);
+        this.x += v.x;
+        this.y += v.y;
+        return this;
       });
       __publicField(this, "remove", (v) => {
-        new _Vector2(this.x - v.x, this.y - v.y);
+        this.x -= v.x;
+        this.y -= v.y;
+        return this;
       });
       __publicField(this, "multiply", (v) => {
-        new _Vector2(this.x * v.x, this.y * v.y);
+        this.x *= v.x;
+        this.y *= v.y;
+        return this;
       });
       __publicField(this, "devide", (v) => {
-        new _Vector2(this.x / v.x, this.y / v.y);
+        this.x /= v.x;
+        this.y /= v.y;
+        return this;
       });
       this.x = x;
       this.y = y;
@@ -317,13 +333,13 @@ var __privateMethod = (obj, member, method) => {
   };
   let Vector2 = _Vector2;
   __publicField(Vector2, "zero", () => {
-    new _Vector2(0, 0);
+    return new _Vector2(0, 0);
   });
   __publicField(Vector2, "one", () => {
-    new _Vector2(1, 1);
+    return new _Vector2(1, 1);
   });
-  __publicField(Vector2, "from", (v) => {
-    new _Vector2(v.x, v.y);
+  __publicField(Vector2, "copy", (v) => {
+    return new _Vector2(v.x, v.y);
   });
   __publicField(Vector2, "angle", (v1, v2) => {
     return Math.atan((v1.x - v2.x) / (v1.y - v2.y));
@@ -332,19 +348,35 @@ var __privateMethod = (obj, member, method) => {
     return new _Vector2(v1.x - v2.x, v1.y - v2.y).magnitude();
   });
   __publicField(Vector2, "min", (v1, v2) => {
-    return v1.magnitude() < v2.magnitude() ? _Vector2.from(v1) : _Vector2.from(v2);
+    return v1.magnitude() < v2.magnitude() ? _Vector2.copy(v1) : _Vector2.copy(v2);
   });
   __publicField(Vector2, "max", (v1, v2) => {
-    return v1.magnitude() > v2.magnitude() ? _Vector2.from(v1) : _Vector2.from(v2);
+    return v1.magnitude() > v2.magnitude() ? _Vector2.copy(v1) : _Vector2.copy(v2);
+  });
+  __publicField(Vector2, "add", (v1, v2) => {
+    return new _Vector2(v1.x + v2.x, v1.y + v2.y);
+  });
+  __publicField(Vector2, "remove", (v1, v2) => {
+    return new _Vector2(v1.x - v2.x, v1.y - v2.y);
+  });
+  __publicField(Vector2, "multiply", (v1, v2) => {
+    return new _Vector2(v1.x * v2.x, v1.y * v2.y);
+  });
+  __publicField(Vector2, "devide", (v1, v2) => {
+    return new _Vector2(v1.x / v2.x, v1.y / v2.y);
   });
   const _Cursor$1 = class {
     constructor() {
+      __privateAdd(this, _event);
+      __privateAdd(this, _checkBounds);
       __publicField(this, "events", null);
       __publicField(this, "position", null);
       __publicField(this, "zoom", 1);
       __publicField(this, "offset", null);
       __privateAdd(this, _mousedown, false);
       __privateAdd(this, _mousemoved, false);
+      __privateAdd(this, _lastPos, null);
+      __privateAdd(this, _diff, null);
       __publicField(this, "local", () => {
         var rect = Settings.getCanvas().elt.getBoundingClientRect();
         return new Vector2(this.position.x - rect.left, this.position.y - rect.top);
@@ -359,54 +391,93 @@ var __privateMethod = (obj, member, method) => {
         return this;
       };
       this.events = new EventSystem(["click", "dragStart", "dragMove", "dragEnd", "scroll"]);
-      this.position = new Vector2(0, 0);
+      this.position = Vector2.zero();
+      this.offset = Vector2.zero();
+      __privateSet(this, _lastPos, Vector2.zero());
+      __privateSet(this, _diff, Vector2.zero());
       document.addEventListener("mousemove", (e) => {
         this.position = new Vector2(e.clientX, e.clientY);
       });
       document.addEventListener("mousemove", (event) => {
-        this.event(event, "mousemove");
+        __privateMethod(this, _event, event_fn).call(this, event, "mousemove");
       });
       document.addEventListener("mousedown", (event) => {
-        this.event(event, "mousedown");
+        __privateMethod(this, _event, event_fn).call(this, event, "mousedown");
       });
       document.addEventListener("mouseup", (event) => {
-        this.event(event, "mouseup");
+        __privateMethod(this, _event, event_fn).call(this, event, "mouseup");
       });
       document.addEventListener("touchmove", (event) => {
-        this.event(event, "mousemove");
+        __privateMethod(this, _event, event_fn).call(this, event, "mousemove");
       });
       document.addEventListener("touchstart", (event) => {
-        this.event(event, "mousedown");
+        __privateMethod(this, _event, event_fn).call(this, event, "mousedown");
       });
       document.addEventListener("touchend", (event) => {
-        this.event(event, "mouseup");
+        __privateMethod(this, _event, event_fn).call(this, event, "mouseup");
       });
       document.addEventListener("wheel", (event) => {
         this.events.invoke("scroll", event);
       });
       this.events.subscribe("scroll", (e) => {
-        this.zoom += e.detail.deltaY / 5e3;
-        this.zoom = Math.round(this.zoom * 100) / 100;
-        if (this.zoom < 0.5) {
-          this.zoom = 0.5;
+        const { x, y, deltaY } = e.detail;
+        const direction = deltaY > 0 ? -1 : 1;
+        const factor = 0.05;
+        const zoom = 1 * direction * factor;
+        if (this.zoom + zoom < 0.5) {
+          return;
         }
-        if (this.zoom > 1.5) {
-          this.zoom = 1.5;
+        if (this.zoom + zoom > 1.5) {
+          return;
         }
-        console.log("Zoom: ", this.zoom);
+        const wx = (x - this.offset.x) / (width * this.zoom);
+        const wy = (y - this.offset.y) / (height * this.zoom);
+        this.offset.x -= wx * width * zoom;
+        this.offset.y -= wy * height * zoom;
+        this.zoom += zoom;
+        __privateMethod(this, _checkBounds, checkBounds_fn).call(this);
       });
     }
     update() {
       var pos = this.local();
-      scale(this.zoom);
       circle(pos.x / this.zoom, pos.y / this.zoom, 10);
-    }
-    event(e, type) {
     }
   };
   let Cursor$1 = _Cursor$1;
   _mousedown = new WeakMap();
   _mousemoved = new WeakMap();
+  _lastPos = new WeakMap();
+  _diff = new WeakMap();
+  _event = new WeakSet();
+  event_fn = function(e, type) {
+    var newPos = this.local();
+    if (type == "mousemove") {
+      if (!__privateGet(this, _mousemoved)) {
+        __privateSet(this, _lastPos, Vector2.copy(newPos));
+        __privateSet(this, _mousemoved, true);
+      }
+      if (__privateGet(this, _mousedown) && __privateGet(this, _mousemoved)) {
+        __privateSet(this, _diff, Vector2.remove(newPos, __privateGet(this, _lastPos)));
+        this.offset.add(__privateGet(this, _diff));
+        __privateMethod(this, _checkBounds, checkBounds_fn).call(this);
+        __privateSet(this, _lastPos, Vector2.copy(newPos));
+      }
+    } else if (type == "mousedown") {
+      __privateSet(this, _mousemoved, false);
+      __privateSet(this, _mousedown, true);
+    } else if (type == "mouseup") {
+      __privateSet(this, _mousemoved, false);
+      __privateSet(this, _mousedown, false);
+    }
+  };
+  _checkBounds = new WeakSet();
+  checkBounds_fn = function() {
+    var x = visualViewport.width / this.zoom + this.offset.x;
+    console.log(x);
+    var width2 = visualViewport.width >= Settings.mapSizeX * this.zoom ? 0 : Settings.mapSizeX * this.zoom - visualViewport.width;
+    var height2 = visualViewport.height >= Settings.mapSizeY * this.zoom ? 0 : Settings.mapSizeY * this.zoom - visualViewport.height;
+    this.offset.minMax(new Vector2(-width2, -height2), new Vector2(width2, height2));
+  };
   __publicField(Cursor$1, "get", () => {
     return null;
   });
@@ -438,14 +509,14 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _cachedZoom, 1);
       __privateSet(this, _linesColor, new Color(linesColorString));
       __privateSet(this, _backgroundColor, new Color(backgroundColorString));
-      __privateSet(this, _buffer, createGraphics(Settings.mapSize, Settings.mapSize));
+      __privateSet(this, _buffer, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
       __privateGet(this, _buffer).canvas.id = "grid-buffer";
       __privateMethod(this, _generate, generate_fn).call(this);
     }
     update() {
-      var zoom = Cursor.get().zoom;
-      if (__privateGet(this, _cachedZoom) != zoom) {
-        __privateSet(this, _cachedZoom, zoom);
+      var cursor = Cursor.get();
+      if (__privateGet(this, _cachedZoom) != cursor.zoom) {
+        __privateSet(this, _cachedZoom, cursor.zoom);
         __privateMethod(this, _generate, generate_fn).call(this);
       }
       image(__privateGet(this, _buffer), 0, 0);
@@ -457,22 +528,20 @@ var __privateMethod = (obj, member, method) => {
   _cachedZoom = new WeakMap();
   _generate = new WeakSet();
   generate_fn = function() {
-    Cursor.get();
-    __privateGet(this, _buffer).clear();
+    var zoom = Cursor.get().zoom;
     var rgb = __privateGet(this, _backgroundColor).rgb();
     __privateGet(this, _buffer).background(rgb.r, rgb.g, rgb.b);
     var rgba = __privateGet(this, _linesColor).rgba();
     __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
-    for (let y = 0; y < Settings.mapSize; y += Settings.gridSizeS) {
-      for (let x = 0; x < Settings.mapSize; x += Settings.gridSizeS) {
-        __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
-        if (x % Settings.gridSizeL == 0 && y % Settings.gridSizeL == 0) {
-          __privateGet(this, _buffer).strokeWeight(1);
-        } else {
-          __privateGet(this, _buffer).strokeWeight(0.25);
-        }
-        __privateGet(this, _buffer).line(x, y, x + Settings.gridSizeS, y, 5);
-        __privateGet(this, _buffer).line(x, y, x, y + Settings.gridSizeS, 5);
+    for (let i = 0; i < Settings.mapSize; i++) {
+      if (i % Settings.gridSizeL == 0) {
+        __privateGet(this, _buffer).strokeWeight(1);
+        __privateGet(this, _buffer).line(i * zoom, 0, i * zoom, Settings.mapSize * zoom);
+        __privateGet(this, _buffer).line(0, i * zoom, Settings.mapSize * zoom, i * zoom);
+      } else if (i % Settings.gridSizeS == 0) {
+        __privateGet(this, _buffer).strokeWeight(0.25);
+        __privateGet(this, _buffer).line(i * zoom, 0, i * zoom, Settings.mapSize * zoom);
+        __privateGet(this, _buffer).line(0, i * zoom, Settings.mapSize * zoom, i * zoom);
       }
     }
   };

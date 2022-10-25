@@ -4,40 +4,38 @@ var EventSystem = window.CDE.EventSystem;
 var Cursor = window.CDE.Cursor;
 var Color = window.CDE.Color;
 var Grid = window.CDE.Grid;
+var Renderer = window.CDE.Renderer;
 
-var cursor, grid;
-var cam;
+var cursor, grid, renderer;
+
 function setup() {
-    var canvas = createCanvas(Settings.mapSizeX, Settings.mapSizeY);
+    var canvas = createCanvas(visualViewport.width, visualViewport.height);
 
     Settings.setCanvas(canvas);
 
+    renderer = new Renderer();
     cursor = new Cursor();
-    grid = new Grid("--grid-background", "--grid-lines");
+    grid = new Grid();
     frameRate(60);
 }
 
-let fr = 60;
 function draw() {
     background(225, 225, 225);
 
     push();
     translate(cursor.offset.x, cursor.offset.y);
     scale(cursor.zoom);
-
     grid.update();
-    cursor.update();
-
-    stroke(0);
-    strokeWeight(10);
-    line(0, 0, Settings.mapSizeX, 0);
-    line(Settings.mapSizeX, 0, Settings.mapSizeX, Settings.mapSizeY);
-    line(Settings.mapSizeX, Settings.mapSizeY, 0, Settings.mapSizeY);
-    line(0, Settings.mapSizeY, 0, 0);
-
-    circle(Settings.mapSizeX / 2, Settings.mapSizeY / 2, 50);
+    renderer.update();
     pop();
 
+    cursor.update();
+    showFPS();
+}
+
+let fr = 60;
+function showFPS() {
+    push();
     fr = 0.95 * fr + 0.05 * frameRate();
     fill(0);
     rect(0, 0, 40, 35);
@@ -45,4 +43,5 @@ function draw() {
     noStroke();
     text(str(floor(fr * 100) / 100), 5, 16);
     text(cursor.zoom.toFixed(2) + "%", 4, 30);
+    pop();
 }

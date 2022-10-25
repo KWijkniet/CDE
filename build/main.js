@@ -29,7 +29,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _backgroundColor, _linesColor, _cachedZoom, _generate, generate_fn;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _shapes;
   "use strict";
   class Collision {
     pointPoint(x1, y1, x2, y2) {
@@ -242,21 +242,49 @@ var __privateMethod = (obj, member, method) => {
       return false;
     }
   }
+  class Color {
+    constructor(string) {
+      __publicField(this, "string", "");
+      this.string = string;
+    }
+    rgba() {
+      var value = getComputedStyle(document.body).getPropertyValue(this.string);
+      value = value.replace("rgba(", "").replace("rgb(", "").replace(")", "").split(",");
+      return { r: parseFloat(value[0]), g: parseFloat(value[1]), b: parseFloat(value[2]), a: parseFloat(value[3]) };
+    }
+    rgb() {
+      var rgba = this.rgba();
+      delete rgba["a"];
+      return rgba;
+    }
+  }
   const _Settings$1 = class {
   };
   let Settings$1 = _Settings$1;
   _canvas = new WeakMap();
-  __publicField(Settings$1, "mapSizeX", 1879);
-  __publicField(Settings$1, "mapSizeY", 939);
+  _activeTool = new WeakMap();
+  __publicField(Settings$1, "mapSizeX", 2500);
+  __publicField(Settings$1, "mapSizeY", 2500 / 16 * 9);
   __publicField(Settings$1, "bufferMargin", 50);
   __publicField(Settings$1, "gridSizeS", 10);
   __publicField(Settings$1, "gridSizeL", 100);
+  __publicField(Settings$1, "gridBackground", new Color("--grid-background"));
+  __publicField(Settings$1, "gridLines", new Color("--grid-lines"));
+  __publicField(Settings$1, "shapeAllowed", new Color("--shape-allowed"));
+  __publicField(Settings$1, "shapeForbidden", new Color("--shape-forbidden"));
   __privateAdd(Settings$1, _canvas, null);
   __publicField(Settings$1, "setCanvas", (c) => {
     __privateSet(_Settings$1, _canvas, c);
   });
   __publicField(Settings$1, "getCanvas", () => {
     return __privateGet(_Settings$1, _canvas);
+  });
+  __privateAdd(Settings$1, _activeTool, null);
+  __publicField(Settings$1, "setActiveTool", (c) => {
+    __privateSet(_Settings$1, _activeTool, c);
+  });
+  __publicField(Settings$1, "getActiveTool", () => {
+    return __privateGet(_Settings$1, _activeTool);
   });
   class EventSystem {
     constructor(events) {
@@ -365,7 +393,7 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Vector2, "devide", (v1, v2) => {
     return new _Vector2(v1.x / v2.x, v1.y / v2.y);
   });
-  const _Cursor$1 = class {
+  const _Cursor = class {
     constructor() {
       __privateAdd(this, _event);
       __privateAdd(this, _checkBounds);
@@ -387,12 +415,12 @@ var __privateMethod = (obj, member, method) => {
         var pos = this.local();
         return new Vector2(x + pos.x, y + pos.y);
       });
-      _Cursor$1.get = () => {
+      _Cursor.get = () => {
         return this;
       };
       this.events = new EventSystem(["click", "dragStart", "dragMove", "dragEnd", "scroll"]);
       this.position = Vector2.zero();
-      this.offset = Vector2.zero();
+      this.offset = new Vector2(-Settings.mapSizeX / 8, -Settings.mapSizeY / 8);
       __privateSet(this, _lastPos, Vector2.zero());
       __privateSet(this, _diff, Vector2.zero());
       document.addEventListener("mousemove", (e) => {
@@ -424,10 +452,10 @@ var __privateMethod = (obj, member, method) => {
         const direction = deltaY > 0 ? -1 : 1;
         const factor = 0.05;
         const zoom = 1 * direction * factor;
-        if (this.zoom + zoom < 0.5) {
+        if (Math.round((this.zoom + zoom) * 100) / 100 < 0.5) {
           return;
         }
-        if (this.zoom + zoom > 1.5) {
+        if (Math.round((this.zoom + zoom) * 100) / 100 > 1.5) {
           return;
         }
         const wx = (x - this.offset.x) / (width * this.zoom);
@@ -440,10 +468,10 @@ var __privateMethod = (obj, member, method) => {
     }
     update() {
       var pos = this.local();
-      circle(pos.x / this.zoom, pos.y / this.zoom, 10);
+      circle(pos.x, pos.y, 10);
     }
   };
-  let Cursor$1 = _Cursor$1;
+  let Cursor = _Cursor;
   _mousedown = new WeakMap();
   _mousemoved = new WeakMap();
   _lastPos = new WeakMap();
@@ -472,79 +500,76 @@ var __privateMethod = (obj, member, method) => {
   };
   _checkBounds = new WeakSet();
   checkBounds_fn = function() {
-    var x = visualViewport.width / this.zoom + this.offset.x;
-    console.log(x);
-    var width2 = visualViewport.width >= Settings.mapSizeX * this.zoom ? 0 : Settings.mapSizeX * this.zoom - visualViewport.width;
-    var height2 = visualViewport.height >= Settings.mapSizeY * this.zoom ? 0 : Settings.mapSizeY * this.zoom - visualViewport.height;
-    this.offset.minMax(new Vector2(-width2, -height2), new Vector2(width2, height2));
+    this.offset.minMax(new Vector2(-Settings.mapSizeX, -Settings.mapSizeY), new Vector2(Settings.mapSizeX, Settings.mapSizeY));
   };
-  __publicField(Cursor$1, "get", () => {
+  __publicField(Cursor, "get", () => {
     return null;
   });
-  __publicField(Cursor$1, "toGrid", (pos) => {
+  __publicField(Cursor, "toGrid", (pos) => {
     return new Vector2(Math.round(pos.x / Settings.gridSize) * Settings.gridSize, Math.round(pos.y / Settings.gridSize) * Settings.gridSize);
   });
-  class Color {
-    constructor(string) {
-      __publicField(this, "string", "");
-      this.string = string;
-    }
-    rgba() {
-      var value = getComputedStyle(document.body).getPropertyValue(this.string);
-      value = value.replace("rgba(", "").replace("rgb(", "").replace(")", "").split(",");
-      return { r: parseFloat(value[0]), g: parseFloat(value[1]), b: parseFloat(value[2]), a: parseFloat(value[3]) };
-    }
-    rgb() {
-      var rgba = this.rgba();
-      delete rgba["a"];
-      return rgba;
-    }
-  }
   class Grid {
-    constructor(backgroundColorString, linesColorString) {
-      __privateAdd(this, _generate);
+    constructor() {
       __privateAdd(this, _buffer, null);
-      __privateAdd(this, _backgroundColor, null);
-      __privateAdd(this, _linesColor, null);
-      __privateAdd(this, _cachedZoom, 1);
-      __privateSet(this, _linesColor, new Color(linesColorString));
-      __privateSet(this, _backgroundColor, new Color(backgroundColorString));
       __privateSet(this, _buffer, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
       __privateGet(this, _buffer).canvas.id = "grid-buffer";
-      __privateMethod(this, _generate, generate_fn).call(this);
+      var rgb = Settings.gridBackground.rgb();
+      __privateGet(this, _buffer).background(rgb.r, rgb.g, rgb.b);
+      var rgba = Settings.gridLines.rgba();
+      __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
+      for (let i = 0; i < Settings.mapSizeX; i++) {
+        __privateGet(this, _buffer).strokeWeight(i % Settings.gridSizeL == 0 ? 1 : 0.25);
+        if (i % Settings.gridSizeS == 0 || i % Settings.gridSizeL == 0) {
+          __privateGet(this, _buffer).line(i, 0, i, Settings.mapSizeY);
+        }
+      }
+      for (let i = 0; i < Settings.mapSizeY; i++) {
+        __privateGet(this, _buffer).strokeWeight(i % Settings.gridSizeL == 0 ? 1 : 0.25);
+        if (i % Settings.gridSizeS == 0 || i % Settings.gridSizeL == 0) {
+          __privateGet(this, _buffer).line(0, i, Settings.mapSizeX, i);
+        }
+      }
     }
     update() {
-      var cursor = Cursor.get();
-      if (__privateGet(this, _cachedZoom) != cursor.zoom) {
-        __privateSet(this, _cachedZoom, cursor.zoom);
-        __privateMethod(this, _generate, generate_fn).call(this);
-      }
       image(__privateGet(this, _buffer), 0, 0);
     }
   }
   _buffer = new WeakMap();
-  _backgroundColor = new WeakMap();
-  _linesColor = new WeakMap();
-  _cachedZoom = new WeakMap();
-  _generate = new WeakSet();
-  generate_fn = function() {
-    var zoom = Cursor.get().zoom;
-    var rgb = __privateGet(this, _backgroundColor).rgb();
-    __privateGet(this, _buffer).background(rgb.r, rgb.g, rgb.b);
-    var rgba = __privateGet(this, _linesColor).rgba();
-    __privateGet(this, _buffer).stroke(rgba.r, rgba.g, rgba.b, rgba.a);
-    for (let i = 0; i < Settings.mapSize; i++) {
-      if (i % Settings.gridSizeL == 0) {
-        __privateGet(this, _buffer).strokeWeight(1);
-        __privateGet(this, _buffer).line(i * zoom, 0, i * zoom, Settings.mapSize * zoom);
-        __privateGet(this, _buffer).line(0, i * zoom, Settings.mapSize * zoom, i * zoom);
-      } else if (i % Settings.gridSizeS == 0) {
-        __privateGet(this, _buffer).strokeWeight(0.25);
-        __privateGet(this, _buffer).line(i * zoom, 0, i * zoom, Settings.mapSize * zoom);
-        __privateGet(this, _buffer).line(0, i * zoom, Settings.mapSize * zoom, i * zoom);
+  class Renderer {
+    constructor() {
+      __privateAdd(this, _shapes, null);
+      __privateSet(this, _shapes, []);
+    }
+    update() {
+      var keys = Object.keys(__privateGet(this, _shapes));
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        var shape = __privateGet(this, _shapes)[key];
+        shape.update();
+      }
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        var shape = __privateGet(this, _shapes)[key];
+        shape.updateText();
       }
     }
-  };
+    add(target) {
+      __privateGet(this, _shapes).push(target);
+    }
+    remove(target) {
+      for (let i = 0; i < __privateGet(this, _shapes).length; i++) {
+        const shape = __privateGet(this, _shapes)[i];
+        if (shape == target) {
+          __privateGet(this, _shapes).splice(i, 1);
+          return;
+        }
+      }
+    }
+    getAll() {
+      return __privateGet(this, _shapes);
+    }
+  }
+  _shapes = new WeakMap();
   window.onload = () => {
     if (typeof createCanvas !== "function") {
       alert("Please install p5js! (https://p5js.org)");
@@ -557,9 +582,10 @@ var __privateMethod = (obj, member, method) => {
   };
   exports2.Collision = Collision;
   exports2.Color = Color;
-  exports2.Cursor = Cursor$1;
+  exports2.Cursor = Cursor;
   exports2.EventSystem = EventSystem;
   exports2.Grid = Grid;
+  exports2.Renderer = Renderer;
   exports2.Settings = Settings$1;
   Object.defineProperties(exports2, { __esModule: { value: true }, [Symbol.toStringTag]: { value: "Module" } });
 });

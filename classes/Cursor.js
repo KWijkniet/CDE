@@ -7,7 +7,6 @@ export default class Cursor{
     
     events = null;
     position = null;
-    
     zoom = 1;
     offset = null;
 
@@ -18,7 +17,7 @@ export default class Cursor{
 
     local = () => {
         var rect = Settings.getCanvas().elt.getBoundingClientRect();
-        return new Vector2(this.position.x - rect.left, this.position.y - rect.top);
+        return new Vector2((this.position.x - rect.left), (this.position.y - rect.top));
     };
     global = () => {
         var x = window.pageXOffset + Settings.getCanvas().elt.getBoundingClientRect().left;
@@ -32,7 +31,7 @@ export default class Cursor{
         Cursor.get = () => { return this; };
         this.events = new EventSystem(['click', 'dragStart', 'dragMove', 'dragEnd', 'scroll']);
         this.position = Vector2.zero();
-        this.offset = Vector2.zero();
+        this.offset = new Vector2(-Settings.mapSizeX / 8, -Settings.mapSizeY / 8);
         this.#lastPos = Vector2.zero();
         this.#diff = Vector2.zero();
 
@@ -56,8 +55,8 @@ export default class Cursor{
             const factor = 0.05;
             const zoom = 1 * direction * factor;
             
-            if(this.zoom + zoom < 0.5) { return; }
-            if(this.zoom + zoom > 1.5) { return; }
+            if (Math.round((this.zoom + zoom) * 100) / 100 < 0.50) { return; }
+            if (Math.round((this.zoom + zoom) * 100) / 100 > 1.50) { return; }
 
             const wx = (x-this.offset.x)/(width*this.zoom);
             const wy = (y-this.offset.y)/(height*this.zoom);
@@ -72,10 +71,7 @@ export default class Cursor{
 
     update(){
         var pos = this.local();
-
-        // translate(visualViewport.width / 2 + this.local().x, visualViewport.height / 2 + this.local().y);
-        // scale(this.zoom);
-        circle(pos.x / this.zoom, pos.y / this.zoom, 10);
+        circle(pos.x, pos.y, 10);
     }
 
     #event(e, type) {
@@ -106,65 +102,6 @@ export default class Cursor{
     }
 
     #checkBounds(){
-
-        var x = visualViewport.width / this.zoom + this.offset.x;
-        console.log(x);
-
-        // if(visualViewport.width >= Settings.mapSizeX * this.zoom){
-        //     this.offset.x = 0;
-        //     // this.offset.x = Settings.mapSizeX * this.zoom;
-        // }
-        // if(visualViewport.height >= Settings.mapSizeY * this.zoom){
-        //     this.offset.y = 0;
-        //     // this.offset.y = Settings.mapSizeY * this.zoom;
-        // }
-
-        // var width = visualViewport.width >= (Settings.mapSizeX * this.zoom) ? (Settings.mapSizeX * this.zoom) / 2 : (Settings.mapSizeX * this.zoom) - (Settings.mapSizeX / 2);
-        // var height = visualViewport.height >= (Settings.mapSizeY * this.zoom) ? (Settings.mapSizeX * this.zoom) / 2 : (Settings.mapSizeY * this.zoom) - (Settings.mapSizeY / 2);
-
-        var width = visualViewport.width >= (Settings.mapSizeX * this.zoom) ? 0 : (Settings.mapSizeX * this.zoom) - visualViewport.width;
-        var height = visualViewport.height >= (Settings.mapSizeY * this.zoom) ? 0 : (Settings.mapSizeY * this.zoom) - visualViewport.height;
-        
-        // console.log(width, height);
-        this.offset.minMax(new Vector2(-width, -height), new Vector2(width, height));
-        // console.log(this.offset);
-
-        // var xs = visualViewport.pageLeft - this.offset.x / this.zoom;
-        // var xe = visualViewport.pageLeft + visualViewport.width - this.offset.x / this.zoom;
-
-        // var ys = visualViewport.pageTop - this.offset.y / this.zoom;
-        // var ye = visualViewport.pageTop + visualViewport.height - this.offset.y / this.zoom;
-        // console.log(xs, xe, ys, ye);
-
-        // // console.log(xs, this.offset.x);
-        // if(xs < 0 && this.offset.x > 0){
-        //     this.offset.x = 0;
-        //     console.log("Left bound reached");
-        // }
-        // else if(xe > Settings.mapSizeX && this.offset.x < 0){
-        //     this.offset.x = 0;
-        //     console.log("Right bound reached");
-        // }
-        // if(ys < 0 && this.offset.y > 0){
-        //     this.offset.y = 0;
-        //     console.log("Top bound reached");
-        // }
-        // else if(ye > Settings.mapSizeY && this.offset.y < 0){
-        //     this.offset.y = 0;
-        //     console.log("Bottom bound reached");
-        // }
-
-        // var width = (Settings.mapSizeX * this.zoom) - visualViewport.width;
-        // var height = (Settings.mapSizeY * this.zoom) - visualViewport.height;
-
-        // //console.log(-width, width, " <> ", -height, height);
-        // if(-width > width){ width = 0; }
-        // if(-height > height){ height = 0; }
-        // // var minWidth = (-Settings.mapSize + (visualViewport.width / 2)) * this.zoom;
-        // // var maxWidth = (Settings.mapSize - (visualViewport.width / 2)) * this.zoom;
-        // // var minHeight = (-Settings.mapSize + (visualViewport.height / 2)) * this.zoom;
-        // // var maxHeight = (Settings.mapSize - (visualViewport.height / 2)) * this.zoom;
-
-        // this.offset.minMax(new Vector2(-width, -height), new Vector2(width, height));
+        this.offset.minMax(new Vector2(-Settings.mapSizeX, -Settings.mapSizeY), new Vector2(Settings.mapSizeX, Settings.mapSizeY));
     }
 }

@@ -1,5 +1,6 @@
 export default class Settings {
-    static mapSize = 2000;
+    static mapSizeX = 1879;
+    static mapSizeY = 939;
     static bufferMargin = 50;
     static gridSizeS = 10;
     static gridSizeL = 100;

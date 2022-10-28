@@ -1,8 +1,19 @@
+import Shape from "./Shape";
+import Vector2 from "./Vector2";
+
 export default class Renderer {
+    static instance = null;
     #shapes = null;
     
     constructor() {
-        this.#shapes = [];
+        Renderer.instance = this;
+        this.#shapes = [
+            // new Shape([
+            //     Cursor.toGrid(new Vector2(10, 10)),
+            //     Cursor.toGrid(new Vector2(10, 50)),
+            //     Cursor.toGrid(new Vector2(0, 50)),
+            // ]),
+        ];
     }
 
     update(){

@@ -2,12 +2,12 @@ import Vector2 from "./Vector2";
 import EventSystem from "./EventSystem";
 
 export default class Cursor{
+    static disableOffset = false;
     static get = () => { return null; };
-    static toGrid = (pos) => { return new Vector2(Math.round(pos.x / Settings.gridSize) * Settings.gridSize, Math.round(pos.y / Settings.gridSize) * Settings.gridSize); };
+    static toGrid = (pos) => { var size = Settings.gridSizeS; return new Vector2(Math.round(pos.x / size) * size, Math.round(pos.y / size) * size); };
     
     events = null;
     position = null;
-    zoom = 1;
     offset = null;
 
     #mousedown = false;
@@ -54,41 +54,45 @@ export default class Cursor{
             const direction = deltaY > 0 ? -1 : 1;
             const factor = 0.05;
             const zoom = 1 * direction * factor;
-            
-            if (Math.round((this.zoom + zoom) * 100) / 100 < 0.50) { return; }
-            if (Math.round((this.zoom + zoom) * 100) / 100 > 1.50) { return; }
 
-            const wx = (x-this.offset.x)/(width*this.zoom);
-            const wy = (y-this.offset.y)/(height*this.zoom);
-            
-            this.offset.x -= wx*width*zoom;
-            this.offset.y -= wy*height*zoom;
-            this.zoom += zoom;
+            if (Math.round((Settings.zoom + zoom) * 100) / 100 < 0.50) { return; }
+            if (Math.round((Settings.zoom + zoom) * 100) / 100 > 1.50) { return; }
+
+            const wx = (x - this.offset.x) / (width * Settings.zoom);
+            const wy = (y - this.offset.y) / (height * Settings.zoom);
+
+            this.offset.x -= wx * width * zoom;
+            this.offset.y -= wy * height * zoom;
+            Settings.zoom += zoom;
 
             this.#checkBounds();
         });
     }
 
     update(){
-        var pos = this.local();
-        circle(pos.x, pos.y, 10);
+        // var pos = Cursor.toGrid(this.local());
+        // circle(pos.x, pos.y, 10);
     }
 
     #event(e, type) {
         var newPos = this.local();
         if(type == 'mousemove'){
-            if(!this.#mousemoved){
+            if (this.#mousedown && !this.#mousemoved){
                 this.#lastPos = Vector2.copy(newPos);
                 this.#mousemoved = true;
+                this.events.invoke('dragStart', e);
             }
 
             if(this.#mousedown && this.#mousemoved){
                 //drag
-                this.#diff = Vector2.remove(newPos, this.#lastPos);
-                this.offset.add(this.#diff);
+                if (!Cursor.disableOffset) {
+                    this.#diff = Vector2.remove(newPos, this.#lastPos);
+                    this.offset.add(this.#diff);
 
-                this.#checkBounds();
-                this.#lastPos = Vector2.copy(newPos);
+                    this.#checkBounds();
+                    this.#lastPos = Vector2.copy(newPos);
+                }
+                this.events.invoke('dragMove', e);
             }
         }
         else if(type == 'mousedown'){
@@ -96,6 +100,13 @@ export default class Cursor{
             this.#mousedown = true;
         }
         else if(type == 'mouseup'){
+            if(this.#mousemoved){
+                this.events.invoke('dragEnd', e);
+            }
+            else{
+                this.events.invoke('click', e);
+            }
+
             this.#mousemoved = false;
             this.#mousedown = false;
         }

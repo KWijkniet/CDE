@@ -13,6 +13,7 @@ export default class Vector2{
     static remove = (v1, v2) => { return new Vector2(v1.x - v2.x, v1.y - v2.y); };
     static multiply = (v1, v2) => { return new Vector2(v1.x * v2.x, v1.y * v2.y); };
     static devide = (v1, v2) => { return new Vector2(v1.x / v2.x, v1.y / v2.y); };
+    static equals = (v1, v2) => { return v1.x == v2.x && v1.y == v2.y; };
     
     magnitude = () => { return Math.sqrt(this.x * this.x + this.y * this.y); };
     normalized = () => { var mag = this.magnitude(); return new Vector2(this.x / mag, this.y / mag); };
@@ -29,6 +30,7 @@ export default class Vector2{
     remove = (v) => { this.x -= v.x; this.y -= v.y; return this; };
     multiply = (v) => { this.x *= v.x; this.y *= v.y; return this; };
     devide = (v) => { this.x /= v.x; this.y /= v.y; return this; };
+    equals = (v) => { return this.x == v.x && this.y == v.y; };
 
     constructor(x = 0, y = 0){
         this.x = x;

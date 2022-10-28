@@ -1,3 +1,5 @@
+import Vector2 from "./Vector2";
+
 export default class Grid{
     #buffer = null;
     
@@ -14,21 +16,26 @@ export default class Grid{
         //Grid
         for (let i = 0; i < Settings.mapSizeX; i++) {
             this.#buffer.strokeWeight(i % Settings.gridSizeL == 0 ? 1 : 0.25);
+
             if (i % Settings.gridSizeS == 0 || i % Settings.gridSizeL == 0){
-                this.#buffer.line(i, 0, i, Settings.mapSizeY);
+                var fromPos = Cursor.toGrid(new Vector2(i, 0));
+                var toPos = Cursor.toGrid(new Vector2(i, Settings.mapSizeY));
+                this.#buffer.line(fromPos.x, fromPos.y, toPos.x, toPos.y);
             }
         }
 
         for (let i = 0; i < Settings.mapSizeY; i++) {
             this.#buffer.strokeWeight(i % Settings.gridSizeL == 0 ? 1 : 0.25);
+
             if (i % Settings.gridSizeS == 0 || i % Settings.gridSizeL == 0) {
-                this.#buffer.line(0, i, Settings.mapSizeX, i);
+                var fromPos = Cursor.toGrid(new Vector2(0, i));
+                var toPos = Cursor.toGrid(new Vector2(Settings.mapSizeX, i));
+                this.#buffer.line(fromPos.x, fromPos.y, toPos.x, toPos.y);
             }
         }
     }
 
     update(){
-        //zoom determines offset
         image(this.#buffer, 0, 0);
     }
 }

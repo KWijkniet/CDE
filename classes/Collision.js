@@ -12,7 +12,7 @@ export default class Collision{
     // y1 = Y coordinates of point 1
     // x2 = X coordinates of point 2
     // y2 = Y coordinates of point 2
-    pointPoint(x1, y1, x2, y2){
+    static pointPoint(x1, y1, x2, y2){
         if(x1 == x2 && y1 == y2){
             return true;
         }
@@ -26,7 +26,7 @@ export default class Collision{
     // cx = circle X
     // cy = circle Y
     // cr = circle Radius
-    pointCircle(px, py, cx, cy, cr){
+    static pointCircle(px, py, cx, cy, cr){
         var distX = px - cx;
         var distY = py - cy;
         var dist = Math.sqrt((distX * distX) + (distY * distY));
@@ -46,7 +46,7 @@ export default class Collision{
     // c2x = circle X of circle 2
     // c2y = circle Y of circle 2
     // c2r = circle Radius of circle 2
-    circleCircle(c1x, c1y, c1r, c2x, c2y, c2r){
+    static circleCircle(c1x, c1y, c1r, c2x, c2y, c2r){
         var distX = c1x - c2x;
         var distY = c1y - c2y;
         var dist = Math.sqrt((distX * distX) + (distY * distY));
@@ -66,7 +66,7 @@ export default class Collision{
     // ry = rectangle Y
     // rw = rectangle Width
     // rh = rectangle Height
-    pointRectangle(px, py, rx, ry, rw, rh){
+    static pointRectangle(px, py, rx, ry, rw, rh){
         // px >= rx = right of the left edge AND
         // px <= rx + rw = left of the right edge AND
         // py >= ry = below the top AND
@@ -87,7 +87,7 @@ export default class Collision{
     // r2y = rectangle Y of rectangle 2
     // r2w = rectangle Width of rectangle 2
     // r2h = rectangle Height of rectangle 2
-    RectangleRectangle(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h){
+    static RectangleRectangle(r1x, r1y, r1w, r1h, r2x, r2y, r2w, r2h){
         // r1x + r1w >= r2x = r1 right edge past r2 left
         // r1x <= r2x + r2w = r1 left edge past r2 right
         // r1y + r1h >= r2y = r1 top edge past r2 bottom
@@ -107,7 +107,7 @@ export default class Collision{
     // ry = rectangle Y
     // rw = rectangle Width
     // rh = rectangle Height
-    circleRectangle(cx, cy, cr, rx, ry, rw, rh){
+    static circleRectangle(cx, cy, cr, rx, ry, rw, rh){
         var testX = cx;
         var testY = cy;
 
@@ -137,7 +137,7 @@ export default class Collision{
     // y2 = line Y of the ending point
     // px = point X
     // py = point Y
-    linePoint(x1, y1, x2, y2, px, py){
+    static linePoint(x1, y1, x2, y2, px, py){
         //get distance between point and line starting point
         var dist1 = Math.sqrt(Math.pow((px - x1), 2) + Math.pow((py - y1), 2));
         //get distance between point and line ending point
@@ -147,7 +147,7 @@ export default class Collision{
         var lineLength = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
 
         //since floats are so minutely accurate, add a little buffer zone that will give collision
-        var buffer = 0.1;    // higher # = less accurate
+        var buffer = 0.2;    // higher # = less accurate
 
         //if the two distances are equal to the line's length, the point is on the line!
         //note we use the buffer here to give a range
@@ -166,7 +166,7 @@ export default class Collision{
     // cx = circle X
     // cy = circle Y
     // cr = circle Radius
-    lineCircle(x1, y1, x2, y2, cx, cy, cr){
+    static lineCircle(x1, y1, x2, y2, cx, cy, cr){
         //if start or end point of the line is in the circle
         var isInsideP1 = pointCircle(x1, y1, cx, cy, cr);
         var isInsideP2 = pointCircle(x2, y2, cx, cy, cr);
@@ -213,7 +213,7 @@ export default class Collision{
     // y3 = line Y of the starting point of line 2
     // x4 = line X of the ending point of line 2
     // y4 = line Y of the ending point of line 2
-    lineLine(x1, y1, x2, y2, x3, y3, x4, y4){
+    static lineLine(x1, y1, x2, y2, x3, y3, x4, y4){
         //calculate the distance to intersection point
         var uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
         var uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
@@ -235,7 +235,7 @@ export default class Collision{
     // ry = rectangle Y
     // rw = rectangle Width
     // rh = rectangle Height
-    lineRectangle(x1, y1, x2, y2, rx, ry, rw, rh){
+    static lineRectangle(x1, y1, x2, y2, rx, ry, rw, rh){
         //check if the line has hit any of the rectangle's sides uses the Line/Line function
         var left =   lineLine(x1,y1,x2,y2, rx,ry,rx, ry+rh);
         var right =  lineLine(x1,y1,x2,y2, rx+rw,ry, rx+rw,ry+rh);
@@ -254,7 +254,7 @@ export default class Collision{
     // vertices = array of XY coordinates (example: vertices = [ {x:0, y:0}, {x:1, y:5} ]; )
     // px = point X
     // py = point Y
-    polygonPoint(vertices, px, py){
+    static polygonPoint(vertices, px, py){
         var collision = false;
         
         //loop over all vertices
@@ -286,7 +286,7 @@ export default class Collision{
     // cx = circle X
     // cy = circle Y
     // cr = circle Radius
-    polygonCircle(vertices, cx, cy, cr){
+    static polygonCircle(vertices, cx, cy, cr){
         //loop over all vertices
         var next = 0;
         for (let current = 0; current < vertices.length; current++) {
@@ -327,7 +327,7 @@ export default class Collision{
     // ry = rectangle Y
     // rw = rectangle Width
     // rh = rectangle Height
-    polygonRectangle(vertices, rx, ry, rw, rh){
+    static polygonRectangle(vertices, rx, ry, rw, rh){
         //loop over all vertices
         var next = 0;
         for (let current = 0; current < vertices.length; current++) {
@@ -359,7 +359,7 @@ export default class Collision{
     // y1 = line Y of the starting point
     // x2 = line X of the ending point
     // y2 = line Y of the ending point
-    polygonLine(vertices, x1, y1, x2, y2){
+    static polygonLine(vertices, x1, y1, x2, y2){
         //loop over all vertices
         var next = 0;
         for (let current = 0; current < vertices.length; current++) {
@@ -390,7 +390,7 @@ export default class Collision{
     // Detect if a polygon is colliding with a polygon
     // v1 = array of XY coordinates (example: vertices = [ {x:0, y:0}, {x:1, y:5} ]; )
     // v2 = array of XY coordinates (example: vertices = [ {x:0, y:0}, {x:1, y:5} ]; )
-    polygonPolygon(v1, v2){
+    static polygonPolygon(v1, v2){
         //loop over all vertices
         var next = 0;
         for (let current = 0; current < v1.length; current++) {
@@ -432,7 +432,7 @@ export default class Collision{
     // y3 = line Y of the ending point of the triangle
     // px = point X
     // py = point Y
-    trianglePoint(x1, y1, x2, y2, x3, y3, px, py){
+    static trianglePoint(x1, y1, x2, y2, x3, y3, px, py){
         //get the area of the triangle
         var areaOrig = Math.abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1));
 

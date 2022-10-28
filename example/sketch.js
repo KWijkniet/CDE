@@ -5,8 +5,9 @@ var Cursor = window.CDE.Cursor;
 var Color = window.CDE.Color;
 var Grid = window.CDE.Grid;
 var Renderer = window.CDE.Renderer;
+var DrawingTool = window.CDE.DrawingTool;
 
-var cursor, grid, renderer;
+var cursor, grid, renderer, drawingTool;
 
 function setup() {
     var canvas = createCanvas(visualViewport.width, visualViewport.height);
@@ -16,6 +17,7 @@ function setup() {
     renderer = new Renderer();
     cursor = new Cursor();
     grid = new Grid();
+    drawingTool = new DrawingTool();
     frameRate(60);
 }
 
@@ -24,9 +26,10 @@ function draw() {
 
     push();
     translate(cursor.offset.x, cursor.offset.y);
-    scale(cursor.zoom);
+    scale(Settings.zoom);
     grid.update();
     renderer.update();
+    drawingTool.update();
     pop();
 
     cursor.update();
@@ -38,10 +41,11 @@ function showFPS() {
     push();
     fr = 0.95 * fr + 0.05 * frameRate();
     fill(0);
-    rect(0, 0, 40, 35);
+    rect(0, 0, 40, 46);
     fill(255, 255, 255);
     noStroke();
     text(str(floor(fr * 100) / 100), 5, 16);
-    text(cursor.zoom.toFixed(2) + "%", 4, 30);
+    text(Settings.zoom.toFixed(2) + "%", 4, 30);
+    text(drawingTool.isEnabled, 4, 44);
     pop();
 }

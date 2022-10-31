@@ -4,6 +4,8 @@ import EventSystem from './classes/EventSystem';
 import Cursor from './classes/Cursor';
 import Color from './classes/Color';
 import Grid from './classes/Grid';
+import Renderer from './classes/Renderer';
+import DrawingTool from './classes/DrawingTool';
 
 window.onload = () => {
     if(typeof createCanvas !== 'function'){
@@ -16,4 +18,4 @@ window.onload = () => {
     }
 };
 
-export { Settings, Collision, EventSystem, Cursor, Color, Grid }
+export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool }

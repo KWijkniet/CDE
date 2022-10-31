@@ -1,6 +1,8 @@
 :root{
     --grid-background: rgb(255, 255, 255);
     --grid-lines: rgba(0, 0, 0, 100);
+    --shape-allowed: rgb(255, 255, 255);
+    --shape-forbidden: rgb(255, 0, 0);
 }
 
 * {

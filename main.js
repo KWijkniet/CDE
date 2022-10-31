@@ -6,6 +6,8 @@ import Color from './classes/Color';
 import Grid from './classes/Grid';
 import Renderer from './classes/Renderer';
 import DrawingTool from './classes/DrawingTool';
+import History from './classes/History';
+import Action from './classes/Action';
 
 window.onload = () => {
     if(typeof createCanvas !== 'function'){
@@ -18,4 +20,4 @@ window.onload = () => {
     }
 };
 
-export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool }
+export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, History, Action }

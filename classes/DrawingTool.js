@@ -2,6 +2,7 @@ import Vector2 from "./Vector2";
 import Collision from "./Collision";
 import Shape from "./Shape";
 import Color from "./Color";
+import Action from "./Action";
 
 export default class DrawingTool {
     isEnabled = false;
@@ -9,6 +10,9 @@ export default class DrawingTool {
     #buffer = null;
     #points = [];
     #selectedPointIndex = null;
+
+    #dragOldPos = null;
+    #originalShape = null;
 
     constructor() {
         this.#buffer = createGraphics(Settings.mapSizeX, Settings.mapSizeY);
@@ -18,6 +22,17 @@ export default class DrawingTool {
             if (e.detail.shiftKey) {
                 if (this.isEnabled) { this.disable(); }
                 else { this.enable(); }
+
+                return;
+            }
+            
+            if (e.detail.controlKey) {
+                if (this.isEnabled) { this.disable(); }
+                else {
+                    // this.enable();
+                    
+                    //find target, select target (copy the points), update shape (see #onPlace)
+                }
 
                 return;
             }
@@ -42,6 +57,7 @@ export default class DrawingTool {
 
                     if (dist <= Settings.cursorSize) {
                         this.#selectedPointIndex = i;
+                        this.#dragOldPos = this.#points[this.#selectedPointIndex].getCopy();
                         Cursor.disableOffset = true;
                         break;
                     }
@@ -57,6 +73,16 @@ export default class DrawingTool {
 
         cursor.events.subscribe('dragEnd', (e) => {
             if (this.isEnabled) {
+                if(this.#selectedPointIndex != null){
+                    var newPos = this.#points[this.#selectedPointIndex].getCopy();
+                    var index = this.#selectedPointIndex;
+                    var action = new Action(
+                        () => { this.#points[index] = this.#dragOldPos; this.#generate(); },
+                        () => { this.#points[index] = newPos; this.#generate(); }
+                    );
+                    History.add(action);
+                }
+
                 this.#selectedPointIndex = null;
                 Cursor.disableOffset = false;
             }
@@ -68,12 +94,20 @@ export default class DrawingTool {
     }
 
     enable(){
+        this.#originalShape = null;
         this.isEnabled = true;
         this.#points = [];
+        this.#dragOldPos = null;
     }
 
     disable(){
+        this.#originalShape = null;
         this.isEnabled = false;
+        this.#dragOldPos = null;
+    }
+
+    setData(points){
+        this.#points = points;
     }
 
     #onPlace(e){
@@ -91,18 +125,34 @@ export default class DrawingTool {
 
             if (dist <= Settings.cursorSize){
                 if(i != 0){
-                    //delete point
-                    this.#points.splice(i, 1);
                     hasFound = true;
-                    this.#generate();
+                    var p = this.#points[i];
+                    
+                    //create history entree
+                    var action = new Action(
+                        () => { this.#points.splice(i, 0, p); this.#generate(); },
+                        () => { this.#points.splice(i, 1); this.#generate(); }
+                    );
+                    History.add(action);
+
+                    //delete point
+                    action.redo();
                     break;
                 }
                 else{
-                    //complete shape
                     hasFound = true;
-                    Renderer.instance.add(new Shape(this.#points, new Color('--shape-allowed')));
-                    this.#points = [];
-                    this.#buffer.clear();
+                    var shape = new Shape(this.#points, new Color('--shape-allowed'));
+                    var points = this.#points;
+
+                    //create history entree
+                    var action = new Action(
+                        () => { Renderer.instance.remove(shape); this.#points = points; this.#generate(); },
+                        () => { Renderer.instance.add(shape); this.#points = []; this.#buffer.clear(); }
+                    );
+                    History.add(action);
+
+                    //complete shape
+                    action.redo();
                     return;
                 }
             }
@@ -118,17 +168,36 @@ export default class DrawingTool {
                 if (Collision.linePoint(next.x, next.y, prev.x, prev.y, realPos.x, realPos.y)) {
                     //Colliding with a line
                     hasFound = true;
+
+                    //create history entree
+                    var action = new Action(
+                        () => { this.#points.splice(i, 1); this.#generate(); },
+                        () => { this.#points.splice(i, 0, pos); this.#generate(); }
+                    );
+                    History.add(action);
+
                     //add point in between
-                    this.#points.splice(i, 0, pos);
+                    action.redo();
+
                     break;
                 }
             }
 
             if (!hasFound) {
-                //add
-                this.#points.push(pos);
+                if(this.#originalShape == null){
+                    var action = new Action(
+                        () => { this.#points.splice(this.#points.length - 1, 1); this.#generate(); },
+                        () => { this.#points.push(pos); this.#generate(); }
+                    );
+                    History.add(action);
+                    
+                    //add
+                    action.redo();
+                }
+                else{
+                    //update shape
+                }
             }
-            this.#generate();
         }
     }
 

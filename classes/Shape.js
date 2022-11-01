@@ -15,10 +15,14 @@ export default class Shape {
     }
 
     update() {
-        image(this.#shapebuffer, 0, 0);
+        image(this.#shapebuffer, this.#pos.x, this.#pos.y);
     }
     updateText() {
-        image(this.#textBuffer, 0, 0);
+        image(this.#textBuffer, this.#pos.x, this.#pos.y);
+    }
+
+    getId(){
+        return this.#shapebuffer.canvas.id.split("_")[1];
     }
 
     #generate = () => {

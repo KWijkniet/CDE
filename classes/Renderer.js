@@ -1,6 +1,3 @@
-import Shape from "./Shape";
-import Vector2 from "./Vector2";
-
 export default class Renderer {
     static instance = null;
     #shapes = null;

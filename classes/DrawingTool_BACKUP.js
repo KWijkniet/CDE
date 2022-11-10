@@ -75,10 +75,9 @@ export default class DrawingTool {
             if (this.isEnabled) {
                 if(this.#selectedPointIndex != null){
                     var newPos = this.#points[this.#selectedPointIndex].getCopy();
-                    var oldPos = this.#dragOldPos.getCopy();
                     var index = this.#selectedPointIndex;
-                    var action = new Action("Moved Coordinates",
-                        () => { this.#points[index] = oldPos; this.#generate(); },
+                    var action = new Action(
+                        () => { this.#points[index] = this.#dragOldPos; this.#generate(); },
                         () => { this.#points[index] = newPos; this.#generate(); }
                     );
                     History.add(action);
@@ -128,14 +127,10 @@ export default class DrawingTool {
                     hasFound = true;
                     var p = this.#points[i];
                     
-                    var original = JSON.parse(JSON.stringify(this.#points));
-                    var tmp = JSON.parse(JSON.stringify(this.#points));
-                    tmp.splice(i, 1);
-
                     //create history entree
-                    var action = new Action("Deleted Coordinates",
-                        () => { this.#points = original; this.#generate(); },
-                        () => { this.#points = tmp; this.#generate(); }
+                    var action = new Action(
+                        () => { this.#points.splice(i, 0, p); this.#generate(); },
+                        () => { this.#points.splice(i, 1); this.#generate(); }
                     );
                     History.add(action);
 
@@ -146,10 +141,10 @@ export default class DrawingTool {
                 else{
                     hasFound = true;
                     var shape = new Shape(this.#points, new Color('--shape-allowed'));
-                    var points = JSON.parse(JSON.stringify(this.#points));
+                    var points = this.#points;
 
                     //create history entree
-                    var action = new Action("Created Shape",
+                    var action = new Action(
                         () => { Renderer.instance.remove(shape); this.#points = points; this.#generate(); },
                         () => { Renderer.instance.add(shape); this.#points = []; this.#buffer.clear(); }
                     );
@@ -175,7 +170,7 @@ export default class DrawingTool {
                     hasFound = true;
 
                     //create history entree
-                    var action = new Action("Inserted Coordinates",
+                    var action = new Action(
                         () => { this.#points.splice(i, 1); this.#generate(); },
                         () => { this.#points.splice(i, 0, pos); this.#generate(); }
                     );
@@ -190,7 +185,7 @@ export default class DrawingTool {
 
             if (!hasFound) {
                 if(this.#originalShape == null){
-                    var action = new Action("Added Coordinates",
+                    var action = new Action(
                         () => { this.#points.splice(this.#points.length - 1, 1); this.#generate(); },
                         () => { this.#points.push(pos); this.#generate(); }
                     );

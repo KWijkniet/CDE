@@ -38,6 +38,7 @@ function draw() {
 
     cursor.update();
     showFPS();
+    showHistory();
 }
 
 function menu(){
@@ -62,5 +63,32 @@ function showFPS() {
     text(drawingTool.isEnabled, 4, 44);
     text("R:" + renderer.getAll().length, 4, 58);
     text("H:" + History.count(), 4, 72);
+    pop();
+}
+
+function showHistory() {
+    push();
+
+    fill(0);
+    rect(width - 250, 0, 250, 500);
+
+    var count = 0;
+    for (let i = History.count() - 1; i >= 0; i--) {
+        if(count >= 15){break;}
+        count++;
+        
+        var action = History.get(i);
+        var index = History.getIndex();
+        noStroke();
+        if (index == i) {
+            fill(0, 255, 0);
+        }
+        else{
+            fill(255, 255, 255);
+        }
+        text(count + ". " + action.name, width - 250, 25 + (16 * count));
+        stroke(255);
+        line(width - 250, 25 + (16 * count), width, 25 + (16 * count));
+    }
     pop();
 }

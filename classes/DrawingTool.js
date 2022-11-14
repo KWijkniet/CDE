@@ -19,20 +19,10 @@ export default class DrawingTool {
 
         var cursor = Cursor.get();
         cursor.events.subscribe('click', (e) => {
+            if (e.detail.target.nodeName != "CANVAS" || e.detail.which == 3){return;}
             if (e.detail.shiftKey) {
                 if (this.isEnabled) { this.disable(); }
                 else { this.enable(); }
-
-                return;
-            }
-            
-            if (e.detail.controlKey) {
-                if (this.isEnabled) { this.disable(); }
-                else {
-                    // this.enable();
-                    
-                    //find target, select target (copy the points), update shape (see #onPlace)
-                }
 
                 return;
             }
@@ -57,7 +47,7 @@ export default class DrawingTool {
 
                     if (dist <= Settings.cursorSize) {
                         this.#selectedPointIndex = i;
-                        this.#dragOldPos = this.#points[this.#selectedPointIndex].getCopy();
+                        this.#dragOldPos = point.getCopy();
                         Cursor.disableOffset = true;
                         break;
                     }
@@ -95,15 +85,21 @@ export default class DrawingTool {
     }
 
     enable() {
-        this.isEnabled = true;
-        this.#originalShape = null;
-        this.#dragOldPos = null;
+        var action = new Action("Enabled Drawing tool",
+            () => { this.isEnabled = false; this.#originalShape = null; this.#dragOldPos = null; }, //disable
+            () => { this.isEnabled = true; this.#originalShape = null; this.#dragOldPos = null;  }
+        );
+        History.add(action);
+        action.redo();
     }
 
-    disable(){
-        this.#originalShape = null;
-        this.isEnabled = false;
-        this.#dragOldPos = null;
+    disable() {
+        var action = new Action("Disable Drawing tool",
+            () => { this.isEnabled = true; this.#originalShape = null; this.#dragOldPos = null; }, //enable
+            () => { this.isEnabled = false; this.#originalShape = null; this.#dragOldPos = null; }
+        );
+        History.add(action);
+        action.redo();
     }
 
     setData(points){
@@ -157,7 +153,6 @@ export default class DrawingTool {
 
                     //complete shape
                     action.redo();
-                    this.disable();
                     return;
                 }
             }
@@ -167,17 +162,17 @@ export default class DrawingTool {
             var realPos = cursor.global().remove(cursor.offset);
             //check collision between points
             for (let i = 0; i < this.#points.length; i++) {
-                const next = this.#points[i];
-                const prev = this.#points[i - 1 >= 0 ? i - 1 : this.#points.length - 1];
+                const next = this.#points[i + 1 < this.#points.length - 1 ? i + 1 : 0];
+                const prev = this.#points[i];
 
+                //colliding with a line
                 if (Collision.linePoint(next.x, next.y, prev.x, prev.y, realPos.x, realPos.y)) {
-                    //Colliding with a line
                     hasFound = true;
 
                     //create history entree
                     var action = new Action("Inserted Coordinates",
-                        () => { this.#points.splice(i, 1); this.#generate(); },
-                        () => { this.#points.splice(i, 0, pos); this.#generate(); }
+                        () => { this.#points.splice(i + 1, 1); this.#generate(); },
+                        () => { this.#points.splice(i + 1, 0, pos); this.#generate(); }
                     );
                     History.add(action);
 
@@ -213,9 +208,10 @@ export default class DrawingTool {
         pos.y /= Settings.zoom;
         if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) { return; }
         var oldPos = this.#points[this.#selectedPointIndex];
-        
+        if (!oldPos || !point) { return; }
+
         this.#points[this.#selectedPointIndex] = Cursor.toGrid(pos);
-        if (!oldPos.equals(pos)){
+        if (!oldPos.equals(this.#points[this.#selectedPointIndex])){
             this.#generate();
         }
     }

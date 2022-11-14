@@ -45,9 +45,18 @@ function menu(){
     var undo = createButton("Undo");
     undo.position(50, 5);
     undo.mouseClicked(History.undo);
+
     var redo = createButton("Redo");
     redo.position(50, 40);
     redo.mouseClicked(History.redo);
+
+    var create = createButton("Create tool");
+    create.elt.id = "createButton";
+    create.position(50, 75);
+    create.mouseClicked(() => {
+        if (drawingTool.isEnabled) { drawingTool.disable(); }
+        else { drawingTool.enable(); }
+    });
 }
 
 let fr = 60;

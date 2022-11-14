@@ -692,17 +692,14 @@ var __privateMethod = (obj, member, method) => {
       __privateSet(this, _buffer2, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
       var cursor = Cursor.get();
       cursor.events.subscribe("click", (e) => {
+        if (e.detail.target.nodeName != "CANVAS" || e.detail.which == 3) {
+          return;
+        }
         if (e.detail.shiftKey) {
           if (this.isEnabled) {
             this.disable();
           } else {
             this.enable();
-          }
-          return;
-        }
-        if (e.detail.controlKey) {
-          if (this.isEnabled) {
-            this.disable();
           }
           return;
         }
@@ -721,11 +718,11 @@ var __privateMethod = (obj, member, method) => {
           }
           __privateSet(this, _selectedPointIndex, null);
           for (let i = 0; i < __privateGet(this, _points).length; i++) {
-            const point = __privateGet(this, _points)[i];
-            const dist = Vector2.distance(pos, point);
+            const point2 = __privateGet(this, _points)[i];
+            const dist = Vector2.distance(pos, point2);
             if (dist <= Settings.cursorSize) {
               __privateSet(this, _selectedPointIndex, i);
-              __privateSet(this, _dragOldPos, __privateGet(this, _points)[__privateGet(this, _selectedPointIndex)].getCopy());
+              __privateSet(this, _dragOldPos, point2.getCopy());
               Cursor.disableOffset = true;
               break;
             }
@@ -765,14 +762,38 @@ var __privateMethod = (obj, member, method) => {
       image(__privateGet(this, _buffer2), 0, 0);
     }
     enable() {
-      this.isEnabled = true;
-      __privateSet(this, _originalShape, null);
-      __privateSet(this, _dragOldPos, null);
+      var action = new Action(
+        "Enabled Drawing tool",
+        () => {
+          this.isEnabled = false;
+          __privateSet(this, _originalShape, null);
+          __privateSet(this, _dragOldPos, null);
+        },
+        () => {
+          this.isEnabled = true;
+          __privateSet(this, _originalShape, null);
+          __privateSet(this, _dragOldPos, null);
+        }
+      );
+      History.add(action);
+      action.redo();
     }
     disable() {
-      __privateSet(this, _originalShape, null);
-      this.isEnabled = false;
-      __privateSet(this, _dragOldPos, null);
+      var action = new Action(
+        "Disable Drawing tool",
+        () => {
+          this.isEnabled = true;
+          __privateSet(this, _originalShape, null);
+          __privateSet(this, _dragOldPos, null);
+        },
+        () => {
+          this.isEnabled = false;
+          __privateSet(this, _originalShape, null);
+          __privateSet(this, _dragOldPos, null);
+        }
+      );
+      History.add(action);
+      action.redo();
     }
     setData(points) {
       __privateSet(this, _points, points);
@@ -795,8 +816,8 @@ var __privateMethod = (obj, member, method) => {
     }
     var hasFound = false;
     for (let i = 0; i < __privateGet(this, _points).length; i++) {
-      const point = __privateGet(this, _points)[i];
-      const dist = Vector2.distance(pos, point);
+      const point2 = __privateGet(this, _points)[i];
+      const dist = Vector2.distance(pos, point2);
       if (dist <= Settings.cursorSize) {
         if (i != 0) {
           hasFound = true;
@@ -837,7 +858,6 @@ var __privateMethod = (obj, member, method) => {
           );
           History.add(action);
           action.redo();
-          this.disable();
           return;
         }
       }
@@ -845,18 +865,18 @@ var __privateMethod = (obj, member, method) => {
     if (!hasFound) {
       var realPos = cursor.global().remove(cursor.offset);
       for (let i = 0; i < __privateGet(this, _points).length; i++) {
-        const next = __privateGet(this, _points)[i];
-        const prev = __privateGet(this, _points)[i - 1 >= 0 ? i - 1 : __privateGet(this, _points).length - 1];
+        const next = __privateGet(this, _points)[i + 1 < __privateGet(this, _points).length - 1 ? i + 1 : 0];
+        const prev = __privateGet(this, _points)[i];
         if (Collision.linePoint(next.x, next.y, prev.x, prev.y, realPos.x, realPos.y)) {
           hasFound = true;
           var action = new Action(
             "Inserted Coordinates",
             () => {
-              __privateGet(this, _points).splice(i, 1);
+              __privateGet(this, _points).splice(i + 1, 1);
               __privateMethod(this, _generate2, generate_fn).call(this);
             },
             () => {
-              __privateGet(this, _points).splice(i, 0, pos);
+              __privateGet(this, _points).splice(i + 1, 0, pos);
               __privateMethod(this, _generate2, generate_fn).call(this);
             }
           );
@@ -894,8 +914,11 @@ var __privateMethod = (obj, member, method) => {
       return;
     }
     var oldPos = __privateGet(this, _points)[__privateGet(this, _selectedPointIndex)];
+    if (!oldPos || !point) {
+      return;
+    }
     __privateGet(this, _points)[__privateGet(this, _selectedPointIndex)] = Cursor.toGrid(pos);
-    if (!oldPos.equals(pos)) {
+    if (!oldPos.equals(__privateGet(this, _points)[__privateGet(this, _selectedPointIndex)])) {
       __privateMethod(this, _generate2, generate_fn).call(this);
     }
   };

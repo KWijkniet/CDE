@@ -25,3 +25,170 @@ body{
     top: 50px;
     transform: translate(-50%, -50%);
 }
+
+/* TEMP */
+main{
+    position: relative;
+}
+
+/* Style */
+:root{
+    --red: #b30000;
+    --white: #ffffff;
+    --gray: #e1e1e1;
+}
+
+.editor *, .editor {
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+}
+
+.editor{
+    width: 100%;
+    height: 90vh;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    top: 0px;
+    padding: 0px;
+    position: relative;
+}
+.editor canvas{
+    border-radius: 3px;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}
+.editor .pointer{
+    cursor: pointer;
+}
+
+.editor .input-hidden{
+    background: none;
+    border: none;
+}
+
+.editor .nav{
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translate(0px, -50%);
+    background-color: #fff;
+    color: #b30000;
+    border-radius: 5px;
+    width: 62px;
+    z-index: 2;
+}
+
+.editor .nav-item{
+    width: 62px;
+    height: 62px;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+}
+.editor .nav-item i{
+    color: #b30000;
+}
+.editor .btn-secondary{
+    text-align: center;
+}
+.editor .nav-item:not(:last-child){
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.editor #fps{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.editor .dropdown{
+    width: 100%;
+    height: 52px;
+}
+.editor .dropdown .btn{
+    background: none;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+    color: #b30000;
+    width: 100%;
+    height: 100%;
+}
+.editor .btn.show {
+    color: var(--gray);
+}
+
+.nav-title{
+    font-size: 7px;
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    left: 0px;
+    color: #b30000;
+}
+
+.editor .dropdown-icon{
+    position: absolute;
+    right: 10px !important;
+    font-size: 0.5rem;
+}
+
+.editor .dropdown-menu{
+    background-color: #fff;
+    left: calc(62px + 5px) !important;
+    top: -48px !important;
+    height: 62px;
+    margin: 0px;
+    padding: 0px;
+    margin-top: -7px!important;
+}
+
+.editor .dropdown-menu li{
+    display: inline-block;
+    width: 62px;
+    height: 60px;
+    margin: 0px;
+    padding: 0px;
+    float: left;
+    text-align: center;
+    position: relative;
+}
+.editor .dropdown-menu li i{
+    padding-top: 18px;
+}
+
+.editor .dropdown-menu li:not(:last-child){
+    border-right: 1px solid #e1e1e1;
+}
+
+.editor .active{
+    color: skyblue !important;
+}
+
+.editor .btn:disabled, .editor .active, .editor .btn.show, .editor .btn:active, .editor .btn:hover{
+    background-color: transparent !important;
+    /* border: none !important; */
+    opacity: 1 !important;
+}
+
+.editor input{
+    margin-top: 15px;
+    text-align: center;
+    height: 80%;
+    width: 80%;
+    border: 0px;
+    border-radius: 8px;
+    background-color: #efefef;
+}
+
+.editor .active{
+    background-color: #b30000 !important;
+}
+.editor .active i, .editor .active span{
+    color: white !important;
+}

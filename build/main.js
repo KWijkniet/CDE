@@ -37,7 +37,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _color, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _actions, _index;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _shapes, _vertices, _shapebuffer, _textBuffer, _pos, _color, _generate, _generateUniqSerial, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _actions, _index;
   "use strict";
   class Collision {
     static pointPoint(x1, y1, x2, y2) {
@@ -571,6 +571,44 @@ var __privateMethod = (obj, member, method) => {
     }
   }
   _buffer = new WeakMap();
+  const _Renderer$1 = class {
+    constructor() {
+      __privateAdd(this, _shapes, null);
+      _Renderer$1.instance = this;
+      __privateSet(this, _shapes, []);
+    }
+    update() {
+      var keys = Object.keys(__privateGet(this, _shapes));
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        var shape = __privateGet(this, _shapes)[key];
+        shape.update();
+      }
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        var shape = __privateGet(this, _shapes)[key];
+        shape.updateText();
+      }
+    }
+    add(target) {
+      __privateGet(this, _shapes).push(target);
+    }
+    remove(target) {
+      for (let i = 0; i < __privateGet(this, _shapes).length; i++) {
+        const shape = __privateGet(this, _shapes)[i];
+        if (shape.getId() == target.getId()) {
+          __privateGet(this, _shapes).splice(i, 1);
+          return;
+        }
+      }
+    }
+    getAll() {
+      return __privateGet(this, _shapes);
+    }
+  };
+  let Renderer$1 = _Renderer$1;
+  _shapes = new WeakMap();
+  __publicField(Renderer$1, "instance", null);
   class Shape {
     constructor(vertices = [], color = new Color(null, 255, 255, 255)) {
       __privateAdd(this, _vertices, null);
@@ -622,6 +660,9 @@ var __privateMethod = (obj, member, method) => {
     getId() {
       return __privateGet(this, _shapebuffer).canvas.id.split("_")[1];
     }
+    getVertices() {
+      return __privateGet(this, _vertices);
+    }
   }
   _vertices = new WeakMap();
   _shapebuffer = new WeakMap();
@@ -630,48 +671,12 @@ var __privateMethod = (obj, member, method) => {
   _color = new WeakMap();
   _generate = new WeakMap();
   _generateUniqSerial = new WeakMap();
-  const _Renderer$1 = class {
-    constructor() {
-      __privateAdd(this, _shapes, null);
-      _Renderer$1.instance = this;
-      __privateSet(this, _shapes, []);
-    }
-    update() {
-      var keys = Object.keys(__privateGet(this, _shapes));
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        var shape = __privateGet(this, _shapes)[key];
-        shape.update();
-      }
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        var shape = __privateGet(this, _shapes)[key];
-        shape.updateText();
-      }
-    }
-    add(target) {
-      __privateGet(this, _shapes).push(target);
-    }
-    remove(target) {
-      for (let i = 0; i < __privateGet(this, _shapes).length; i++) {
-        const shape = __privateGet(this, _shapes)[i];
-        if (shape.getId() == target.getId()) {
-          __privateGet(this, _shapes).splice(i, 1);
-          return;
-        }
-      }
-    }
-    getAll() {
-      return __privateGet(this, _shapes);
-    }
-  };
-  let Renderer$1 = _Renderer$1;
-  _shapes = new WeakMap();
-  __publicField(Renderer$1, "instance", null);
   class Action {
-    constructor(undo, redo) {
+    constructor(name, undo, redo) {
+      __publicField(this, "name", "");
       __publicField(this, "undo", null);
       __publicField(this, "redo", null);
+      this.name = name;
       this.undo = undo;
       this.redo = redo;
     }
@@ -690,17 +695,14 @@ var __privateMethod = (obj, member, method) => {
       __privateSet(this, _buffer2, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
       var cursor = Cursor.get();
       cursor.events.subscribe("click", (e) => {
+        if (e.detail.target.nodeName != "CANVAS" || e.detail.which == 3) {
+          return;
+        }
         if (e.detail.shiftKey) {
           if (this.isEnabled) {
             this.disable();
           } else {
             this.enable();
-          }
-          return;
-        }
-        if (e.detail.controlKey) {
-          if (this.isEnabled) {
-            this.disable();
           }
           return;
         }
@@ -719,11 +721,11 @@ var __privateMethod = (obj, member, method) => {
           }
           __privateSet(this, _selectedPointIndex, null);
           for (let i = 0; i < __privateGet(this, _points).length; i++) {
-            const point = __privateGet(this, _points)[i];
-            const dist = Vector2.distance(pos, point);
+            const point2 = __privateGet(this, _points)[i];
+            const dist = Vector2.distance(pos, point2);
             if (dist <= Settings.cursorSize) {
               __privateSet(this, _selectedPointIndex, i);
-              __privateSet(this, _dragOldPos, __privateGet(this, _points)[__privateGet(this, _selectedPointIndex)].getCopy());
+              __privateSet(this, _dragOldPos, point2.getCopy());
               Cursor.disableOffset = true;
               break;
             }
@@ -739,10 +741,12 @@ var __privateMethod = (obj, member, method) => {
         if (this.isEnabled) {
           if (__privateGet(this, _selectedPointIndex) != null) {
             var newPos = __privateGet(this, _points)[__privateGet(this, _selectedPointIndex)].getCopy();
+            var oldPos = __privateGet(this, _dragOldPos).getCopy();
             var index = __privateGet(this, _selectedPointIndex);
             var action = new Action(
+              "Moved Coordinates",
               () => {
-                __privateGet(this, _points)[index] = __privateGet(this, _dragOldPos);
+                __privateGet(this, _points)[index] = oldPos;
                 __privateMethod(this, _generate2, generate_fn).call(this);
               },
               () => {
@@ -761,15 +765,43 @@ var __privateMethod = (obj, member, method) => {
       image(__privateGet(this, _buffer2), 0, 0);
     }
     enable() {
-      __privateSet(this, _originalShape, null);
-      this.isEnabled = true;
-      __privateSet(this, _points, []);
-      __privateSet(this, _dragOldPos, null);
+      var action = new Action(
+        "Enabled Drawing tool",
+        () => {
+          this.isEnabled = false;
+          __privateSet(this, _originalShape, null);
+          __privateSet(this, _dragOldPos, null);
+        },
+        () => {
+          this.isEnabled = true;
+          __privateSet(this, _originalShape, null);
+          __privateSet(this, _dragOldPos, null);
+        }
+      );
+      History.add(action);
+      action.redo();
     }
     disable() {
-      __privateSet(this, _originalShape, null);
-      this.isEnabled = false;
-      __privateSet(this, _dragOldPos, null);
+      var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+      var action = new Action(
+        "Disable Drawing tool",
+        () => {
+          this.isEnabled = true;
+          __privateSet(this, _originalShape, null);
+          __privateSet(this, _dragOldPos, null);
+          __privateSet(this, _points, points);
+          __privateMethod(this, _generate2, generate_fn).call(this);
+        },
+        () => {
+          this.isEnabled = false;
+          __privateSet(this, _originalShape, null);
+          __privateSet(this, _dragOldPos, null);
+          __privateSet(this, _points, []);
+          __privateMethod(this, _generate2, generate_fn).call(this);
+        }
+      );
+      History.add(action);
+      action.redo();
     }
     setData(points) {
       __privateSet(this, _points, points);
@@ -792,30 +824,35 @@ var __privateMethod = (obj, member, method) => {
     }
     var hasFound = false;
     for (let i = 0; i < __privateGet(this, _points).length; i++) {
-      const point = __privateGet(this, _points)[i];
-      const dist = Vector2.distance(pos, point);
+      const point2 = __privateGet(this, _points)[i];
+      const dist = Vector2.distance(pos, point2);
       if (dist <= Settings.cursorSize) {
         if (i != 0) {
           hasFound = true;
-          var p = __privateGet(this, _points)[i];
+          __privateGet(this, _points)[i];
+          var original = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+          var tmp = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+          tmp.splice(i, 1);
           var action = new Action(
+            "Deleted Coordinates",
             () => {
-              __privateGet(this, _points).splice(i, 0, p);
+              __privateSet(this, _points, original);
               __privateMethod(this, _generate2, generate_fn).call(this);
             },
             () => {
-              __privateGet(this, _points).splice(i, 1);
+              __privateSet(this, _points, tmp);
               __privateMethod(this, _generate2, generate_fn).call(this);
             }
           );
           History.add(action);
           action.redo();
           break;
-        } else {
+        } else if (__privateGet(this, _points).length > 1) {
           hasFound = true;
           var shape = new Shape(__privateGet(this, _points), new Color("--shape-allowed"));
-          var points = __privateGet(this, _points);
+          var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
           var action = new Action(
+            "Created Shape",
             () => {
               Renderer.instance.remove(shape);
               __privateSet(this, _points, points);
@@ -830,23 +867,41 @@ var __privateMethod = (obj, member, method) => {
           History.add(action);
           action.redo();
           return;
+        } else {
+          var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+          var action = new Action(
+            "Deleted Shape",
+            () => {
+              __privateSet(this, _points, points);
+              __privateMethod(this, _generate2, generate_fn).call(this);
+            },
+            () => {
+              __privateSet(this, _points, []);
+              __privateGet(this, _buffer2).clear();
+              __privateMethod(this, _generate2, generate_fn).call(this);
+            }
+          );
+          History.add(action);
+          action.redo();
+          return;
         }
       }
     }
     if (!hasFound) {
       var realPos = cursor.global().remove(cursor.offset);
       for (let i = 0; i < __privateGet(this, _points).length; i++) {
-        const next = __privateGet(this, _points)[i];
-        const prev = __privateGet(this, _points)[i - 1 >= 0 ? i - 1 : __privateGet(this, _points).length - 1];
+        const next = __privateGet(this, _points)[i + 1 < __privateGet(this, _points).length - 1 ? i + 1 : 0];
+        const prev = __privateGet(this, _points)[i];
         if (Collision.linePoint(next.x, next.y, prev.x, prev.y, realPos.x, realPos.y)) {
           hasFound = true;
           var action = new Action(
+            "Inserted Coordinates",
             () => {
-              __privateGet(this, _points).splice(i, 1);
+              __privateGet(this, _points).splice(i + 1, 1);
               __privateMethod(this, _generate2, generate_fn).call(this);
             },
             () => {
-              __privateGet(this, _points).splice(i, 0, pos);
+              __privateGet(this, _points).splice(i + 1, 0, pos);
               __privateMethod(this, _generate2, generate_fn).call(this);
             }
           );
@@ -858,6 +913,7 @@ var __privateMethod = (obj, member, method) => {
       if (!hasFound) {
         if (__privateGet(this, _originalShape) == null) {
           var action = new Action(
+            "Added Coordinates",
             () => {
               __privateGet(this, _points).splice(__privateGet(this, _points).length - 1, 1);
               __privateMethod(this, _generate2, generate_fn).call(this);
@@ -883,8 +939,11 @@ var __privateMethod = (obj, member, method) => {
       return;
     }
     var oldPos = __privateGet(this, _points)[__privateGet(this, _selectedPointIndex)];
+    if (!oldPos || !point) {
+      return;
+    }
     __privateGet(this, _points)[__privateGet(this, _selectedPointIndex)] = Cursor.toGrid(pos);
-    if (!oldPos.equals(pos)) {
+    if (!oldPos.equals(__privateGet(this, _points)[__privateGet(this, _selectedPointIndex)])) {
       __privateMethod(this, _generate2, generate_fn).call(this);
     }
   };
@@ -914,9 +973,21 @@ var __privateMethod = (obj, member, method) => {
     static count() {
       return __privateGet(this, _actions).length;
     }
+    static get(index) {
+      if (index < 0 || index >= __privateGet(this, _actions).length) {
+        return null;
+      }
+      return __privateGet(this, _actions)[index];
+    }
+    static getIndex() {
+      return __privateGet(this, _index);
+    }
+    static getAll() {
+      return __privateGet(this, _actions);
+    }
     static add(action) {
       if (__privateGet(_History$1, _index) != __privateGet(_History$1, _actions).length - 1 && __privateGet(_History$1, _index) >= -1) {
-        __privateGet(_History$1, _actions).splice(__privateGet(_History$1, _index), __privateGet(_History$1, _actions).length - __privateGet(_History$1, _index));
+        __privateGet(_History$1, _actions).splice(__privateGet(_History$1, _index) + 1, __privateGet(_History$1, _actions).length - __privateGet(_History$1, _index));
       }
       __privateGet(_History$1, _actions).push(action);
       __privateSet(_History$1, _index, __privateGet(_History$1, _actions).length - 1);

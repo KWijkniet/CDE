@@ -6,15 +6,30 @@ export default class History {
         History.#actions = [];
         History.#index = -1;
     }
-    
-    static count(){
+
+    static count() {
         return this.#actions.length;
+    }
+
+    static get(index) {
+        if (index < 0 || index >= this.#actions.length) {
+            return null;
+        }
+        return this.#actions[index];
+    }
+
+    static getIndex() {
+        return this.#index;
+    }
+
+    static getAll() {
+        return this.#actions;
     }
 
     static add(action){
         if(History.#index != History.#actions.length - 1 && History.#index >= -1){
             //delete all actions after the index;
-            History.#actions.splice(History.#index, History.#actions.length - History.#index);
+            History.#actions.splice(History.#index + 1, History.#actions.length - History.#index);
             // History.#actions.splice(0, History.#index);
         }
 

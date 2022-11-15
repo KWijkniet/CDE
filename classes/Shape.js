@@ -25,6 +25,10 @@ export default class Shape {
         return this.#shapebuffer.canvas.id.split("_")[1];
     }
 
+    getVertices(){
+        return this.#vertices;
+    }
+
     #generate = () => {
         const xArr = this.#vertices.map(a => a.x);
         const yArr = this.#vertices.map(a => a.y);

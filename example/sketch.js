@@ -8,7 +8,10 @@ var Renderer = window.CDE.Renderer;
 var DrawingTool = window.CDE.DrawingTool;
 var History = window.CDE.History;
 
+//Core
 var cursor, grid, renderer, drawingTool;
+//Visuals
+var drawingToolElem;
 
 function setup() {
     var canvas = createCanvas(visualViewport.width, visualViewport.height);
@@ -22,7 +25,9 @@ function setup() {
     drawingTool = new DrawingTool();
 
     frameRate(60);
-    menu();
+
+    //Visuals
+    drawingToolElem = document.getElementById("drawingTool");
 }
 
 function draw() {
@@ -39,24 +44,7 @@ function draw() {
     cursor.update();
     showFPS();
     showHistory();
-}
-
-function menu(){
-    var undo = createButton("Undo");
-    undo.position(50, 5);
-    undo.mouseClicked(History.undo);
-
-    var redo = createButton("Redo");
-    redo.position(50, 40);
-    redo.mouseClicked(History.redo);
-
-    var create = createButton("Create tool");
-    create.elt.id = "createButton";
-    create.position(50, 75);
-    create.mouseClicked(() => {
-        if (drawingTool.isEnabled) { drawingTool.disable(); }
-        else { drawingTool.enable(); }
-    });
+    updateVisuals();
 }
 
 let fr = 60;
@@ -64,14 +52,11 @@ function showFPS() {
     push();
     fr = 0.95 * fr + 0.05 * frameRate();
     fill(0);
-    rect(0, 0, 40, 74);
+    rect(0, 0, 40, 35);
     fill(255, 255, 255);
     noStroke();
     text(str(floor(fr * 100) / 100), 5, 16);
     text(Settings.zoom.toFixed(2) + "%", 4, 30);
-    text(drawingTool.isEnabled, 4, 44);
-    text("R:" + renderer.getAll().length, 4, 58);
-    text("H:" + History.count(), 4, 72);
     pop();
 }
 
@@ -100,4 +85,23 @@ function showHistory() {
         line(width - 250, 25 + (16 * count), width, 25 + (16 * count));
     }
     pop();
+}
+
+function updateVisuals(){
+    //Drawing tool
+    if (drawingTool.isEnabled && !drawingToolElem.classList.contains("active")) {
+        drawingToolElem.classList.add("active");
+    }
+    else if (!drawingTool.isEnabled && drawingToolElem.classList.contains("active")) {
+        drawingToolElem.classList.remove("active");
+    }
+}
+
+function toggleDrawingTool() {
+    if (drawingTool.isEnabled) {
+        drawingTool.disable();
+    }
+    else {
+        drawingTool.enable();
+    }
 }

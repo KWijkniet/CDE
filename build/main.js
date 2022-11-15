@@ -660,6 +660,9 @@ var __privateMethod = (obj, member, method) => {
     getId() {
       return __privateGet(this, _shapebuffer).canvas.id.split("_")[1];
     }
+    getVertices() {
+      return __privateGet(this, _vertices);
+    }
   }
   _vertices = new WeakMap();
   _shapebuffer = new WeakMap();
@@ -779,17 +782,22 @@ var __privateMethod = (obj, member, method) => {
       action.redo();
     }
     disable() {
+      var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
       var action = new Action(
         "Disable Drawing tool",
         () => {
           this.isEnabled = true;
           __privateSet(this, _originalShape, null);
           __privateSet(this, _dragOldPos, null);
+          __privateSet(this, _points, points);
+          __privateMethod(this, _generate2, generate_fn).call(this);
         },
         () => {
           this.isEnabled = false;
           __privateSet(this, _originalShape, null);
           __privateSet(this, _dragOldPos, null);
+          __privateSet(this, _points, []);
+          __privateMethod(this, _generate2, generate_fn).call(this);
         }
       );
       History.add(action);
@@ -839,7 +847,7 @@ var __privateMethod = (obj, member, method) => {
           History.add(action);
           action.redo();
           break;
-        } else {
+        } else if (__privateGet(this, _points).length > 1) {
           hasFound = true;
           var shape = new Shape(__privateGet(this, _points), new Color("--shape-allowed"));
           var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
@@ -854,6 +862,23 @@ var __privateMethod = (obj, member, method) => {
               Renderer.instance.add(shape);
               __privateSet(this, _points, []);
               __privateGet(this, _buffer2).clear();
+            }
+          );
+          History.add(action);
+          action.redo();
+          return;
+        } else {
+          var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+          var action = new Action(
+            "Deleted Shape",
+            () => {
+              __privateSet(this, _points, points);
+              __privateMethod(this, _generate2, generate_fn).call(this);
+            },
+            () => {
+              __privateSet(this, _points, []);
+              __privateGet(this, _buffer2).clear();
+              __privateMethod(this, _generate2, generate_fn).call(this);
             }
           );
           History.add(action);

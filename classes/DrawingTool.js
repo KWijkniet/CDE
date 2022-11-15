@@ -94,9 +94,10 @@ export default class DrawingTool {
     }
 
     disable() {
+        var points = JSON.parse(JSON.stringify(this.#points));
         var action = new Action("Disable Drawing tool",
-            () => { this.isEnabled = true; this.#originalShape = null; this.#dragOldPos = null; }, //enable
-            () => { this.isEnabled = false; this.#originalShape = null; this.#dragOldPos = null; }
+            () => { this.isEnabled = true; this.#originalShape = null; this.#dragOldPos = null; this.#points = points; this.#generate(); }, //enable
+            () => { this.isEnabled = false; this.#originalShape = null; this.#dragOldPos = null; this.#points = []; this.#generate(); }
         );
         History.add(action);
         action.redo();
@@ -139,7 +140,7 @@ export default class DrawingTool {
                     action.redo();
                     break;
                 }
-                else{
+                else if(this.#points.length > 1){
                     hasFound = true;
                     var shape = new Shape(this.#points, new Color('--shape-allowed'));
                     var points = JSON.parse(JSON.stringify(this.#points));
@@ -152,6 +153,19 @@ export default class DrawingTool {
                     History.add(action);
 
                     //complete shape
+                    action.redo();
+                    return;
+                }
+                else {
+                    var points = JSON.parse(JSON.stringify(this.#points));
+                    //create history entree
+                    var action = new Action("Deleted Shape",
+                        () => { this.#points = points; this.#generate(); },
+                        () => { this.#points = []; this.#buffer.clear(); this.#generate(); }
+                    );
+                    History.add(action);
+
+                    //delete shape
                     action.redo();
                     return;
                 }

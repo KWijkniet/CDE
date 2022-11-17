@@ -6,12 +6,13 @@ var Color = window.CDE.Color;
 var Grid = window.CDE.Grid;
 var Renderer = window.CDE.Renderer;
 var DrawingTool = window.CDE.DrawingTool;
+var SelectorTool = window.CDE.SelectorTool;
 var History = window.CDE.History;
 
 //Core
-var cursor, grid, renderer, drawingTool;
+var cursor, grid, renderer, drawingTool, selectorTool;
 //Visuals
-var drawingToolElem;
+var drawingToolElem, selectorToolElem;
 
 function setup() {
     var canvas = createCanvas(visualViewport.width, visualViewport.height);
@@ -23,11 +24,13 @@ function setup() {
     cursor = new Cursor();
     grid = new Grid();
     drawingTool = new DrawingTool();
+    selectorTool = new SelectorTool();
 
     frameRate(60);
 
     //Visuals
     drawingToolElem = document.getElementById("drawingTool");
+    selectorToolElem = document.getElementById("selectorTool");
 }
 
 function draw() {
@@ -39,6 +42,7 @@ function draw() {
     grid.update();
     renderer.update();
     drawingTool.update();
+    selectorTool.update();
     pop();
 
     cursor.update();
@@ -95,13 +99,37 @@ function updateVisuals(){
     else if (!drawingTool.isEnabled && drawingToolElem.classList.contains("active")) {
         drawingToolElem.classList.remove("active");
     }
+    //Selector tool
+    if (selectorTool.isEnabled && !selectorToolElem.classList.contains("active")) {
+        selectorToolElem.classList.add("active");
+    }
+    else if (!selectorTool.isEnabled && selectorToolElem.classList.contains("active")) {
+        selectorToolElem.classList.remove("active");
+    }
 }
 
 function toggleDrawingTool() {
+    if(Window.currentTool != null && Window.currentTool != drawingTool){ Window.currentTool.disable(); }
+    Window.currentTool = drawingTool;
     if (drawingTool.isEnabled) {
         drawingTool.disable();
     }
     else {
         drawingTool.enable();
     }
+}
+
+function toggleSelectorTool() {
+    if(Window.currentTool != null && Window.currentTool != selectorTool){ Window.currentTool.disable(); }
+    Window.currentTool = selectorTool;
+    if (selectorTool.isEnabled) {
+        selectorTool.disable();
+    }
+    else {
+        selectorTool.enable();
+    }
+}
+
+function recenter(){
+    cursor.resetOffset();
 }

@@ -123,7 +123,6 @@ export default class DrawingTool {
             if (dist <= Settings.cursorSize){
                 if(i != 0){
                     hasFound = true;
-                    var p = this.#points[i];
                     
                     var original = JSON.parse(JSON.stringify(this.#points));
                     var tmp = JSON.parse(JSON.stringify(this.#points));
@@ -153,7 +152,7 @@ export default class DrawingTool {
                     History.add(action);
 
                     //complete shape
-                    action.redo();
+                    action.redo();[]
                     return;
                 }
                 else {
@@ -251,6 +250,12 @@ export default class DrawingTool {
 
             //draw point
             this.#buffer.circle(p1.x, p1.y, 10);
+            if(i == 0){
+                this.#buffer.push();
+                this.#buffer.fill(255, 0, 0);
+                this.#buffer.circle(p1.x, p1.y, 5);
+                this.#buffer.pop();
+            }
         }
     }
 }

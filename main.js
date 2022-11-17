@@ -6,6 +6,7 @@ import Color from './classes/Color';
 import Grid from './classes/Grid';
 import Renderer from './classes/Renderer';
 import DrawingTool from './classes/DrawingTool';
+import SelectorTool from './classes/SelectorTool';
 import History from './classes/History';
 import Action from './classes/Action';
 
@@ -20,4 +21,4 @@ window.onload = () => {
     }
 };
 
-export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, History, Action }
+export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, History, Action }

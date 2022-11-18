@@ -31,9 +31,9 @@ export default class Cursor{
         Cursor.get = () => { return this; };
         this.events = new EventSystem(['click', 'dragStart', 'dragMove', 'dragEnd', 'scroll']);
         this.position = Vector2.zero();
-        this.offset = new Vector2(-Settings.mapSizeX / 8, -Settings.mapSizeY / 8);
         this.#lastPos = Vector2.zero();
         this.#diff = Vector2.zero();
+        this.resetOffset();
 
         //Track mouse position
         document.addEventListener('mousemove', (e) => { this.position = new Vector2(e.clientX, e.clientY); });
@@ -72,6 +72,10 @@ export default class Cursor{
     update(){
         // var pos = Cursor.toGrid(this.local());
         // circle(pos.x, pos.y, 10);
+    }
+
+    resetOffset(){
+        this.offset = new Vector2(-Settings.mapSizeX / 8, -Settings.mapSizeY / 8);
     }
 
     #event(e, type) {

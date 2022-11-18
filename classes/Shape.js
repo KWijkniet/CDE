@@ -2,15 +2,22 @@ import Color from "./Color";
 import Vector2 from "./Vector2";
 
 export default class Shape {
+    id = null;
+    color = null;
+
     #vertices = null;
     #shapebuffer = null;
     #textBuffer = null;
     #pos = null;
-    #color = null
 
-    constructor(vertices = [], color = new Color(null, 255, 255, 255)) {
+    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null) {
+        this.id = id;
+        this.color = color;
+
+        if(this.id == null){
+            this.id = this.#generateUniqSerial();
+        }
         this.#vertices = vertices;
-        this.#color = color;
         this.#generate();
     }
 
@@ -29,6 +36,30 @@ export default class Shape {
         return this.#vertices;
     }
 
+    clone() {
+        var copy = [];
+        for (let i = 0; i < this.#vertices.length; i++) {
+            const vertice = this.#vertices[i];
+            copy.push(Vector2.copy(vertice));
+        }
+        return new Shape(copy, this.color, this.id);
+    }
+
+    redraw(vertices = [], color = new Color(null, 255, 255, 255)){
+        if(this.#shapebuffer != null){
+            this.#shapebuffer.clear();
+            this.#shapebuffer.elt.parentNode.removeChild(this.#shapebuffer.elt);
+            this.#shapebuffer = null;
+            this.#textBuffer.clear();
+            this.#textBuffer.elt.parentNode.removeChild(this.#textBuffer.elt);
+            this.#textBuffer = null;
+        }
+        
+        this.#vertices = vertices;
+        this.color = color;
+        this.#generate();
+    }
+
     #generate = () => {
         const xArr = this.#vertices.map(a => a.x);
         const yArr = this.#vertices.map(a => a.y);
@@ -39,7 +70,7 @@ export default class Shape {
 
         if(this.#shapebuffer == null || this.#textBuffer == null){
             this.#shapebuffer = createGraphics(width, height);
-            this.#shapebuffer.canvas.id = "ShapesBufferGraphics_" + this.#generateUniqSerial();
+            this.#shapebuffer.canvas.id = "ShapesBufferGraphics_" + this.id;
             this.#textBuffer = createGraphics(width, height);
             this.#textBuffer.canvas.id = "TEXT_" + this.#shapebuffer.canvas.id;
         }

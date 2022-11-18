@@ -38,6 +38,16 @@ export default class Renderer {
         }
     }
 
+    replace(target, value){
+        for (let i = 0; i < this.#shapes.length; i++) {
+            const shape = this.#shapes[i];
+            if (shape.getId() == target.getId()){
+                this.#shapes[i] = value;
+                return;
+            }
+        }
+    }
+
     getAll() {
         return this.#shapes;
     }

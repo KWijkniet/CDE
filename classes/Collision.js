@@ -147,7 +147,7 @@ export default class Collision{
         var lineLength = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
 
         //since floats are so minutely accurate, add a little buffer zone that will give collision
-        var buffer = 0.2;    // higher # = less accurate
+        var buffer = 1;    // higher # = less accurate
 
         //if the two distances are equal to the line's length, the point is on the line!
         //note we use the buffer here to give a range
@@ -168,8 +168,8 @@ export default class Collision{
     // cr = circle Radius
     static lineCircle(x1, y1, x2, y2, cx, cy, cr){
         //if start or end point of the line is in the circle
-        var isInsideP1 = pointCircle(x1, y1, cx, cy, cr);
-        var isInsideP2 = pointCircle(x2, y2, cx, cy, cr);
+        var isInsideP1 = this.pointCircle(x1, y1, cx, cy, cr);
+        var isInsideP2 = this.pointCircle(x2, y2, cx, cy, cr);
         if(isInsideP1 || isInsideP2){
             return true;
         }
@@ -187,7 +187,7 @@ export default class Collision{
         var closestY = y1 + (dot * (y2 - y1));
 
         //is it actually on the line segment?
-        var onSegment = linePoint(x1, y1, x2, y2, closestX, closestY);
+        var onSegment = this.linePoint(x1, y1, x2, y2, closestX, closestY);
         if(!onSegment){
             return false;
         }
@@ -197,7 +197,7 @@ export default class Collision{
         distY = closestY - cy;
         var dist = Math.sqrt((distX * distX) + (distY * distY));
 
-        if(dist <= r){
+        if(dist <= cr){
             return true;
         }
         return false;
@@ -237,10 +237,10 @@ export default class Collision{
     // rh = rectangle Height
     static lineRectangle(x1, y1, x2, y2, rx, ry, rw, rh){
         //check if the line has hit any of the rectangle's sides uses the Line/Line function
-        var left =   lineLine(x1,y1,x2,y2, rx,ry,rx, ry+rh);
-        var right =  lineLine(x1,y1,x2,y2, rx+rw,ry, rx+rw,ry+rh);
-        var top =    lineLine(x1,y1,x2,y2, rx,ry, rx+rw,ry);
-        var bottom = lineLine(x1,y1,x2,y2, rx,ry+rh, rx+rw,ry+rh);
+        var left =   this.lineLine(x1,y1,x2,y2, rx,ry,rx, ry+rh);
+        var right =  this.lineLine(x1,y1,x2,y2, rx+rw,ry, rx+rw,ry+rh);
+        var top =    this.lineLine(x1,y1,x2,y2, rx,ry, rx+rw,ry);
+        var bottom = this.lineLine(x1,y1,x2,y2, rx,ry+rh, rx+rw,ry+rh);
         
         //if ANY of the above are true, the line has hit the rectangle
         if (left || right || top || bottom) {
@@ -302,7 +302,7 @@ export default class Collision{
             const vn = vertices[next];
             
             //check for collision between the circle and a line formed between the two vertices
-            var collision = lineCircle(vc.x, vc.y, vn.x, vn.y, cx, cy, cr);
+            var collision = this.lineCircle(vc.x, vc.y, vn.x, vn.y, cx, cy, cr);
             if(collision){
                 return true;
             }
@@ -311,7 +311,7 @@ export default class Collision{
         //the above algorithm only checks if the circle is touching the edges of the polygon
         //in most cases this is enough
         //the following code tests if the center of the circle is inside the polygon
-        var centerInside = polygonPoint(vertices, cx,cy);
+        var centerInside = this.polygonPoint(vertices, cx,cy);
         if (centerInside) {
             return true;
         }
@@ -343,7 +343,7 @@ export default class Collision{
             const vn = vertices[next];
             
             //check for collision between the circle and a line formed between the two vertices
-            var collision = lineRectangle(vc.x, vc.y, vn.x, vn.y, rx, ry, rw, rh);
+            var collision = this.lineRectangle(vc.x, vc.y, vn.x, vn.y, rx, ry, rw, rh);
             if(collision){
                 return true;
             }
@@ -377,7 +377,7 @@ export default class Collision{
             const y4 = vertices[next].y;
             
             //detect if the vertices lines intersect with the given line
-            var hit = lineLine(x1, y1, x2, y2, x3, y3, x4, y4);
+            var hit = this.lineLine(x1, y1, x2, y2, x3, y3, x4, y4);
             if(hit){
                 return true;
             }
@@ -407,13 +407,13 @@ export default class Collision{
             
             // now we can use these two points (a line) to compare
             // to the other polygon's vertices using polyLine()
-            var collision = polygonLine(v2, vc.x, vc.y, vn.x, vn.y);
+            var collision = this.polygonLine(v2, vc.x, vc.y, vn.x, vn.y);
             if (collision) {
                 return true;
             }
 
             // optional: check if the 2nd polygon is INSIDE the first
-            collision = polygonPoint(v1, v2[0].x, v2[0].y);
+            collision = this.polygonPoint(v1, v2[0].x, v2[0].y);
             if (collision) {
                 return true;
             }

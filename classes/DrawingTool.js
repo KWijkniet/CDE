@@ -80,7 +80,8 @@ export default class DrawingTool {
         });
     }
 
-    update(){
+    update() {
+        this.#generate();
         image(this.#buffer, 0, 0);
     }
 
@@ -94,7 +95,7 @@ export default class DrawingTool {
     }
 
     disable() {
-        var points = JSON.parse(JSON.stringify(this.#points));
+        var points = Vector2.copyAll(this.#points);
         var action = new Action("Disable Drawing tool",
             () => { this.isEnabled = true; this.#originalShape = null; this.#dragOldPos = null; this.#points = points; this.#generate(); }, //enable
             () => { this.isEnabled = false; this.#originalShape = null; this.#dragOldPos = null; this.#points = []; this.#generate(); }
@@ -124,8 +125,8 @@ export default class DrawingTool {
                 if(i != 0){
                     hasFound = true;
                     
-                    var original = JSON.parse(JSON.stringify(this.#points));
-                    var tmp = JSON.parse(JSON.stringify(this.#points));
+                    var original = Vector2.copyAll(this.#points);
+                    var tmp = Vector2.copyAll(this.#points);
                     tmp.splice(i, 1);
 
                     //create history entree
@@ -142,7 +143,7 @@ export default class DrawingTool {
                 else if(this.#points.length > 1){
                     hasFound = true;
                     var shape = new Shape(this.#points, new Color('--shape-allowed'));
-                    var points = JSON.parse(JSON.stringify(this.#points));
+                    var points = Vector2.copyAll(this.#points);
 
                     //create history entree
                     var action = new Action("Created Shape",
@@ -156,7 +157,7 @@ export default class DrawingTool {
                     return;
                 }
                 else {
-                    var points = JSON.parse(JSON.stringify(this.#points));
+                    var points = Vector2.copyAll(this.#points);
                     //create history entree
                     var action = new Action("Deleted Shape",
                         () => { this.#points = points; this.#generate(); },
@@ -234,27 +235,60 @@ export default class DrawingTool {
         this.#buffer.translate(0);
         this.#buffer.scale(1);
 
-        for (let i = 0; i < this.#points.length; i++) {
+        //draw lines between points
+        for (let i = 1; i < this.#points.length; i++) {
             const p1 = this.#points[i];
             const p2 = this.#points[i - 1 >= 0 ? i - 1 : this.#points.length - 1];
 
             //draw line
-            if (this.#points.length > 1) {
-                this.#buffer.line(p1.x, p1.y, p2.x, p2.y);
-            }
+            this.#buffer.line(p1.x, p1.y, p2.x, p2.y);
         }
 
+        //line from last coordinate to cursor
+        if (this.#points.length >= 1) {
+            var cursor = Cursor.get();
+            var pos = cursor.global().remove(cursor.offset);
+            pos.x /= Settings.zoom;
+            pos.y /= Settings.zoom;
+            pos = Cursor.toGrid(pos);
+            var lastPos = this.#points[this.#points.length - 1];
+
+            this.#buffer.push();
+            this.#buffer.line(lastPos.x, lastPos.y, pos.x, pos.y);
+            this.#buffer.fill(255, 0, 0);
+            this.#buffer.circle(pos.x, pos.y, 5);
+
+            var dist = Vector2.distance(lastPos, pos) * 10;
+            this.#buffer.fill(0);
+            this.#buffer.text(dist.toFixed("0") + " mm", pos.x, pos.y + 30);
+            this.#buffer.pop();
+        }
+
+        //draw circles on each coordinate
         for (let i = 0; i < this.#points.length; i++) {
             const p1 = this.#points[i];
-            const p2 = this.#points[i - 1 >= 0 ? i - 1 : this.#points.length - 1];
 
             //draw point
             this.#buffer.circle(p1.x, p1.y, 10);
-            if(i == 0){
+            if (i == 0) {
                 this.#buffer.push();
                 this.#buffer.fill(255, 0, 0);
                 this.#buffer.circle(p1.x, p1.y, 5);
                 this.#buffer.pop();
+            }
+        }
+
+        //show distances
+        if (this.#points.length >= 2) {
+            for (let i = 1; i < this.#points.length; i++) {
+                const p1 = this.#points[i];
+                const p2 = this.#points[i - 1 >= 0 ? i - 1 : this.#points.length - 1];
+
+                var dist = Vector2.distance(p1, p2) * 10;
+                var textPos = p1.getCopy().add(p2).devide(new Vector2(2, 2));
+
+                //draw text
+                this.#buffer.text(dist.toFixed("0") + " mm", textPos.x, textPos.y);
             }
         }
     }

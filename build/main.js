@@ -37,7 +37,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _shapes, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _shape, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _actions, _index;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _shapes, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _actions, _index;
   "use strict";
   class Collision {
     static pointPoint(x1, y1, x2, y2) {
@@ -417,6 +417,13 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Vector2, "equals", (v1, v2) => {
     return v1.x == v2.x && v1.y == v2.y;
   });
+  __publicField(Vector2, "copyAll", (arr) => {
+    var tmp = [];
+    for (let i = 0; i < arr.length; i++) {
+      tmp.push(new _Vector2(arr[i].x, arr[i].y));
+    }
+    return tmp;
+  });
   const _Cursor$1 = class {
     constructor() {
       __privateAdd(this, _event);
@@ -617,6 +624,15 @@ var __privateMethod = (obj, member, method) => {
     getAll() {
       return __privateGet(this, _shapes);
     }
+    get(id) {
+      for (let i = 0; i < __privateGet(this, _shapes).length; i++) {
+        const shape = __privateGet(this, _shapes)[i];
+        if (shape.getId() == id) {
+          return shape;
+        }
+      }
+      return null;
+    }
   };
   let Renderer$1 = _Renderer$1;
   _shapes = new WeakMap();
@@ -625,6 +641,8 @@ var __privateMethod = (obj, member, method) => {
     constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null) {
       __publicField(this, "id", null);
       __publicField(this, "color", null);
+      __publicField(this, "showData", false);
+      __publicField(this, "isAllowed", true);
       __privateAdd(this, _vertices, null);
       __privateAdd(this, _shapebuffer, null);
       __privateAdd(this, _textBuffer, null);
@@ -653,6 +671,21 @@ var __privateMethod = (obj, member, method) => {
         var rgb = Settings.gridBackground.rgb();
         __privateGet(this, _shapebuffer).fill(rgb.r, rgb.g, rgb.b);
         __privateGet(this, _shapebuffer).endShape();
+        var next = 0;
+        for (let i = 0; i < __privateGet(this, _vertices).length; i++) {
+          next = i + 1;
+          if (next >= __privateGet(this, _vertices).length) {
+            next = 0;
+          }
+          const v1 = __privateGet(this, _vertices)[i];
+          const v2 = __privateGet(this, _vertices)[next];
+          var pos = v1.getCopy().add(v2).devide(new Vector2(2, 2));
+          pos.remove(__privateGet(this, _pos));
+          var dist = (Vector2.distance(v1, v2) * 10).toFixed("0");
+          __privateGet(this, _textBuffer).fill(0);
+          __privateGet(this, _textBuffer).textSize(12);
+          __privateGet(this, _textBuffer).text(dist + " mm", pos.x - (dist + "").length * 6, pos.y);
+        }
       });
       __privateAdd(this, _generateUniqSerial, () => {
         return "xxxx-xxxx-xxx-xxxx".replace(/[x]/g, (c) => {
@@ -662,6 +695,8 @@ var __privateMethod = (obj, member, method) => {
       });
       this.id = id;
       this.color = color;
+      this.showData = true;
+      this.isAllowed = true;
       if (this.id == null) {
         this.id = __privateGet(this, _generateUniqSerial).call(this);
       }
@@ -672,6 +707,9 @@ var __privateMethod = (obj, member, method) => {
       image(__privateGet(this, _shapebuffer), __privateGet(this, _pos).x, __privateGet(this, _pos).y);
     }
     updateText() {
+      if (!this.showData) {
+        return;
+      }
       image(__privateGet(this, _textBuffer), __privateGet(this, _pos).x, __privateGet(this, _pos).y);
     }
     getId() {
@@ -681,12 +719,7 @@ var __privateMethod = (obj, member, method) => {
       return __privateGet(this, _vertices);
     }
     clone() {
-      var copy = [];
-      for (let i = 0; i < __privateGet(this, _vertices).length; i++) {
-        const vertice = __privateGet(this, _vertices)[i];
-        copy.push(Vector2.copy(vertice));
-      }
-      return new _Shape(copy, this.color, this.id);
+      return new _Shape(Vector2.copyAll(__privateGet(this, _vertices)), this.color, this.id);
     }
     redraw(vertices = [], color = new Color(null, 255, 255, 255)) {
       if (__privateGet(this, _shapebuffer) != null) {
@@ -800,6 +833,7 @@ var __privateMethod = (obj, member, method) => {
       });
     }
     update() {
+      __privateMethod(this, _generate2, generate_fn).call(this);
       image(__privateGet(this, _buffer2), 0, 0);
     }
     enable() {
@@ -820,7 +854,7 @@ var __privateMethod = (obj, member, method) => {
       action.redo();
     }
     disable() {
-      var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+      var points = Vector2.copyAll(__privateGet(this, _points));
       var action = new Action(
         "Disable Drawing tool",
         () => {
@@ -867,8 +901,8 @@ var __privateMethod = (obj, member, method) => {
       if (dist <= Settings.cursorSize) {
         if (i != 0) {
           hasFound = true;
-          var original = JSON.parse(JSON.stringify(__privateGet(this, _points)));
-          var tmp = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+          var original = Vector2.copyAll(__privateGet(this, _points));
+          var tmp = Vector2.copyAll(__privateGet(this, _points));
           tmp.splice(i, 1);
           var action = new Action(
             "Deleted Coordinates",
@@ -887,7 +921,7 @@ var __privateMethod = (obj, member, method) => {
         } else if (__privateGet(this, _points).length > 1) {
           hasFound = true;
           var shape = new Shape(__privateGet(this, _points), new Color("--shape-allowed"));
-          var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+          var points = Vector2.copyAll(__privateGet(this, _points));
           var action = new Action(
             "Created Shape",
             () => {
@@ -905,7 +939,7 @@ var __privateMethod = (obj, member, method) => {
           action.redo();
           return;
         } else {
-          var points = JSON.parse(JSON.stringify(__privateGet(this, _points)));
+          var points = Vector2.copyAll(__privateGet(this, _points));
           var action = new Action(
             "Deleted Shape",
             () => {
@@ -989,16 +1023,29 @@ var __privateMethod = (obj, member, method) => {
     __privateGet(this, _buffer2).clear();
     __privateGet(this, _buffer2).translate(0);
     __privateGet(this, _buffer2).scale(1);
-    for (let i = 0; i < __privateGet(this, _points).length; i++) {
+    for (let i = 1; i < __privateGet(this, _points).length; i++) {
       const p1 = __privateGet(this, _points)[i];
       const p2 = __privateGet(this, _points)[i - 1 >= 0 ? i - 1 : __privateGet(this, _points).length - 1];
-      if (__privateGet(this, _points).length > 1) {
-        __privateGet(this, _buffer2).line(p1.x, p1.y, p2.x, p2.y);
-      }
+      __privateGet(this, _buffer2).line(p1.x, p1.y, p2.x, p2.y);
+    }
+    if (__privateGet(this, _points).length >= 1) {
+      var cursor = Cursor.get();
+      var pos = cursor.global().remove(cursor.offset);
+      pos.x /= Settings.zoom;
+      pos.y /= Settings.zoom;
+      pos = Cursor.toGrid(pos);
+      var lastPos = __privateGet(this, _points)[__privateGet(this, _points).length - 1];
+      __privateGet(this, _buffer2).push();
+      __privateGet(this, _buffer2).line(lastPos.x, lastPos.y, pos.x, pos.y);
+      __privateGet(this, _buffer2).fill(255, 0, 0);
+      __privateGet(this, _buffer2).circle(pos.x, pos.y, 5);
+      var dist = Vector2.distance(lastPos, pos) * 10;
+      __privateGet(this, _buffer2).fill(0);
+      __privateGet(this, _buffer2).text(dist.toFixed("0") + " mm", pos.x, pos.y + 30);
+      __privateGet(this, _buffer2).pop();
     }
     for (let i = 0; i < __privateGet(this, _points).length; i++) {
       const p1 = __privateGet(this, _points)[i];
-      __privateGet(this, _points)[i - 1 >= 0 ? i - 1 : __privateGet(this, _points).length - 1];
       __privateGet(this, _buffer2).circle(p1.x, p1.y, 10);
       if (i == 0) {
         __privateGet(this, _buffer2).push();
@@ -1007,13 +1054,22 @@ var __privateMethod = (obj, member, method) => {
         __privateGet(this, _buffer2).pop();
       }
     }
+    if (__privateGet(this, _points).length >= 2) {
+      for (let i = 1; i < __privateGet(this, _points).length; i++) {
+        const p1 = __privateGet(this, _points)[i];
+        const p2 = __privateGet(this, _points)[i - 1 >= 0 ? i - 1 : __privateGet(this, _points).length - 1];
+        var dist = Vector2.distance(p1, p2) * 10;
+        var textPos = p1.getCopy().add(p2).devide(new Vector2(2, 2));
+        __privateGet(this, _buffer2).text(dist.toFixed("0") + " mm", textPos.x, textPos.y);
+      }
+    }
   };
   class SelectorTool {
     constructor() {
       __privateAdd(this, _generate3);
       __publicField(this, "isEnabled", false);
+      __publicField(this, "shape", null);
       __privateAdd(this, _buffer3, null);
-      __privateAdd(this, _shape, null);
       __privateAdd(this, _selectedPointIndex2, null);
       __privateAdd(this, _dragOldPos2, null);
       this.isEnabled = false;
@@ -1035,31 +1091,35 @@ var __privateMethod = (obj, member, method) => {
             const shape = shapes[i];
             var vertices = shape.getVertices();
             if (Collision.polygonCircle(vertices, pos.x, pos.y, Settings.cursorSize)) {
-              if (__privateGet(this, _shape) == null) {
+              if (this.shape == null) {
                 var action = new Action(
                   "Selected shape",
                   () => {
-                    __privateSet(this, _shape, null);
+                    this.shape.showData = true;
+                    this.shape = null;
                     __privateGet(this, _buffer3).clear();
                   },
                   () => {
-                    __privateSet(this, _shape, shape);
+                    this.shape = shape;
+                    this.shape.showData = false;
                     __privateMethod(this, _generate3, generate_fn2).call(this);
                   }
                 );
                 History.add(action);
                 action.redo();
                 return;
-              } else if (__privateGet(this, _shape).getId() != shape.getId()) {
-                var oldShape = __privateGet(this, _shape).clone();
+              } else if (this.shape.getId() != shape.getId()) {
+                var oldShape = this.shape.clone();
                 var action = new Action(
                   "Selected different shape",
                   () => {
-                    __privateSet(this, _shape, oldShape);
+                    this.shape = Renderer.instance.get(oldShape.getId());
+                    this.shape.showData = false;
                     __privateMethod(this, _generate3, generate_fn2).call(this);
                   },
                   () => {
-                    __privateSet(this, _shape, shape);
+                    this.shape = shape;
+                    this.shape.showData = false;
                     __privateMethod(this, _generate3, generate_fn2).call(this);
                   }
                 );
@@ -1069,8 +1129,8 @@ var __privateMethod = (obj, member, method) => {
               }
               sameShape = true;
             }
-            if (__privateGet(this, _shape) != null && __privateGet(this, _shape).getId() == shape.getId()) {
-              var points = __privateGet(this, _shape).getVertices();
+            if (this.shape != null && this.shape.getId() == shape.getId()) {
+              var points = this.shape.getVertices();
               for (let v = 0; v < points.length; v++) {
                 const next = points[v + 1 < points.length - 1 ? v + 1 : 0];
                 const prev = points[v];
@@ -1090,8 +1150,8 @@ var __privateMethod = (obj, member, method) => {
                   action.redo();
                   return;
                 } else if (Collision.pointCircle(pos.x, pos.y, prev.x, prev.y, Settings.cursorSize) && v != 0) {
-                  var points = __privateGet(this, _shape).getVertices();
-                  var point2 = JSON.parse(JSON.stringify(points[v]));
+                  var points = this.shape.getVertices();
+                  var point2 = points[v].getCopy();
                   if (points.length - 1 > 1) {
                     var action = new Action(
                       "Deleted Coordinates",
@@ -1107,18 +1167,20 @@ var __privateMethod = (obj, member, method) => {
                     History.add(action);
                     action.redo();
                   } else {
-                    var clone = __privateGet(this, _shape).clone();
+                    var clone = this.shape.clone();
                     var action = new Action(
                       "Deleted Shape",
                       () => {
                         Renderer.instance.add(clone);
-                        __privateSet(this, _shape, clone);
+                        this.shape = clone;
+                        this.shape.showData = false;
                         __privateMethod(this, _generate3, generate_fn2).call(this);
                       },
                       () => {
-                        Renderer.instance.remove(__privateGet(this, _shape));
+                        Renderer.instance.remove(this.shape);
                         __privateGet(this, _buffer3).clear();
-                        __privateSet(this, _shape, null);
+                        this.shape.showData = true;
+                        this.shape = null;
                       }
                     );
                     History.add(action);
@@ -1129,18 +1191,20 @@ var __privateMethod = (obj, member, method) => {
               }
             }
           }
-          if (__privateGet(this, _shape) != null && !sameShape) {
-            var points = __privateGet(this, _shape).getVertices();
-            var oldShape = __privateGet(this, _shape).clone();
+          if (this.shape != null && !sameShape) {
+            var points = this.shape.getVertices();
+            var oldShape = this.shape.clone();
             var action = new Action(
               "Deselect shape",
               () => {
-                __privateSet(this, _shape, oldShape);
+                this.shape = Renderer.instance.get(oldShape.getId());
+                this.shape.showData = false;
                 __privateMethod(this, _generate3, generate_fn2).call(this);
               },
               () => {
-                __privateGet(this, _shape).redraw(points, oldShape.color);
-                __privateSet(this, _shape, null);
+                this.shape.showData = true;
+                this.shape.redraw(points, oldShape.color);
+                this.shape = null;
                 __privateGet(this, _buffer3).clear();
               }
             );
@@ -1150,7 +1214,7 @@ var __privateMethod = (obj, member, method) => {
         }
       });
       cursor.events.subscribe("dragStart", (e) => {
-        if (this.isEnabled && __privateGet(this, _shape) != null) {
+        if (this.isEnabled && this.shape != null) {
           var cursor2 = Cursor.get();
           var pos = cursor2.global().remove(cursor2.offset);
           pos.x /= Settings.zoom;
@@ -1158,7 +1222,7 @@ var __privateMethod = (obj, member, method) => {
           if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) {
             return;
           }
-          var points = __privateGet(this, _shape).getVertices();
+          var points = this.shape.getVertices();
           __privateSet(this, _selectedPointIndex2, null);
           for (let i = 0; i < points.length; i++) {
             const point2 = points[i];
@@ -1173,7 +1237,7 @@ var __privateMethod = (obj, member, method) => {
         }
       });
       cursor.events.subscribe("dragMove", (e) => {
-        if (this.isEnabled && __privateGet(this, _shape) != null && __privateGet(this, _selectedPointIndex2) != null) {
+        if (this.isEnabled && this.shape != null && __privateGet(this, _selectedPointIndex2) != null) {
           var cursor2 = Cursor.get();
           var pos = cursor2.global().remove(cursor2.offset);
           pos.x /= Settings.zoom;
@@ -1181,7 +1245,7 @@ var __privateMethod = (obj, member, method) => {
           if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) {
             return;
           }
-          var points = __privateGet(this, _shape).getVertices();
+          var points = this.shape.getVertices();
           var oldPos = points[__privateGet(this, _selectedPointIndex2)];
           if (!oldPos || !point) {
             return;
@@ -1193,9 +1257,9 @@ var __privateMethod = (obj, member, method) => {
         }
       });
       cursor.events.subscribe("dragEnd", (e) => {
-        if (this.isEnabled && __privateGet(this, _shape) != null) {
+        if (this.isEnabled && this.shape != null) {
           if (__privateGet(this, _selectedPointIndex2) != null) {
-            var points = __privateGet(this, _shape).getVertices();
+            var points = this.shape.getVertices();
             var newPos = points[__privateGet(this, _selectedPointIndex2)].getCopy();
             var oldPos = __privateGet(this, _dragOldPos2).getCopy();
             var index = __privateGet(this, _selectedPointIndex2);
@@ -1218,6 +1282,9 @@ var __privateMethod = (obj, member, method) => {
       });
     }
     update() {
+      if (this.shape != null) {
+        __privateMethod(this, _generate3, generate_fn2).call(this);
+      }
       image(__privateGet(this, _buffer3), 0, 0);
     }
     enable() {
@@ -1228,7 +1295,6 @@ var __privateMethod = (obj, member, method) => {
     }
   }
   _buffer3 = new WeakMap();
-  _shape = new WeakMap();
   _selectedPointIndex2 = new WeakMap();
   _dragOldPos2 = new WeakMap();
   _generate3 = new WeakSet();
@@ -1236,12 +1302,11 @@ var __privateMethod = (obj, member, method) => {
     __privateGet(this, _buffer3).clear();
     __privateGet(this, _buffer3).translate(0);
     __privateGet(this, _buffer3).scale(1);
-    console.log(__privateGet(this, _shape));
-    var points = __privateGet(this, _shape).getVertices();
-    for (let i = 0; i < points.length; i++) {
-      const p1 = points[i];
-      const p2 = points[i - 1 >= 0 ? i - 1 : points.length - 1];
-      if (points.length > 1) {
+    var points = this.shape.getVertices();
+    if (points.length > 1) {
+      for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        const p2 = points[i - 1 >= 0 ? i - 1 : points.length - 1];
         __privateGet(this, _buffer3).line(p1.x, p1.y, p2.x, p2.y);
       }
     }
@@ -1253,6 +1318,15 @@ var __privateMethod = (obj, member, method) => {
         __privateGet(this, _buffer3).fill(255, 0, 0);
         __privateGet(this, _buffer3).circle(p1.x, p1.y, 5);
         __privateGet(this, _buffer3).pop();
+      }
+    }
+    if (points.length >= 2) {
+      for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        const p2 = points[i - 1 >= 0 ? i - 1 : points.length - 1];
+        var dist = Vector2.distance(p1, p2) * 10;
+        var textPos = p1.getCopy().add(p2).devide(new Vector2(2, 2));
+        __privateGet(this, _buffer3).text(dist.toFixed("0") + " mm", textPos.x, textPos.y);
       }
     }
   };

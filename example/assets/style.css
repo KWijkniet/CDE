@@ -183,7 +183,7 @@ main{
     width: 80%;
     border: 0px;
     border-radius: 8px;
-    background-color: #efefef;
+    /* background-color: #efefef; */
 }
 
 .editor .active{
@@ -191,4 +191,14 @@ main{
 }
 .editor .active i, .editor .active span{
     color: white !important;
+}
+
+.sub-menu{
+    position: absolute;
+    left: 75px;
+    top: 0px;
+    width: 62px;
+    height: 124px;
+    background-color: #fff;
+    border-radius: 5px;
 }

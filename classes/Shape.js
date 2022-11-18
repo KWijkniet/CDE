@@ -4,6 +4,8 @@ import Vector2 from "./Vector2";
 export default class Shape {
     id = null;
     color = null;
+    showData = false;
+    isAllowed = true;
 
     #vertices = null;
     #shapebuffer = null;
@@ -13,6 +15,8 @@ export default class Shape {
     constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null) {
         this.id = id;
         this.color = color;
+        this.showData = true;
+        this.isAllowed = true;
 
         if(this.id == null){
             this.id = this.#generateUniqSerial();
@@ -25,6 +29,7 @@ export default class Shape {
         image(this.#shapebuffer, this.#pos.x, this.#pos.y);
     }
     updateText() {
+        if(!this.showData) { return; }
         image(this.#textBuffer, this.#pos.x, this.#pos.y);
     }
 
@@ -37,12 +42,12 @@ export default class Shape {
     }
 
     clone() {
-        var copy = [];
-        for (let i = 0; i < this.#vertices.length; i++) {
-            const vertice = this.#vertices[i];
-            copy.push(Vector2.copy(vertice));
-        }
-        return new Shape(copy, this.color, this.id);
+        // var copy = [];
+        // for (let i = 0; i < this.#vertices.length; i++) {
+        //     const vertice = this.#vertices[i];
+        //     copy.push(Vector2.copy(vertice));
+        // }
+        return new Shape(Vector2.copyAll(this.#vertices), this.color, this.id);
     }
 
     redraw(vertices = [], color = new Color(null, 255, 255, 255)){
@@ -92,6 +97,23 @@ export default class Shape {
         this.#shapebuffer.endShape();
 
         //Generate Text
+        var next = 0;
+        for (let i = 0; i < this.#vertices.length; i++) {
+            next = i + 1;
+            if (next >= this.#vertices.length) {
+                next = 0;
+            }
+            const v1 = this.#vertices[i];
+            const v2 = this.#vertices[next];
+
+            var pos = v1.getCopy().add(v2).devide(new Vector2(2, 2));
+            pos.remove(this.#pos);
+
+            var dist = (Vector2.distance(v1, v2) * 10).toFixed("0");
+            this.#textBuffer.fill(0);
+            this.#textBuffer.textSize(12);
+            this.#textBuffer.text(dist + ' mm', pos.x - ((dist + "").length * 6), pos.y);
+        }
     };
 
     #generateUniqSerial = () => { return 'xxxx-xxxx-xxx-xxxx'.replace(/[x]/g, (c) => { const r = Math.floor(Math.random() * 16); return r.toString(16); }); };

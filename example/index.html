@@ -17,10 +17,7 @@
     <script src="./sketch.js"></script>
 
     <ul class="nav flex-column">
-        <!-- Display FPS -->
-        <li class="nav-item" style="display: none;">
-            <span id="fps" style="font-size: 0.9rem;">0</span>
-        </li>
+        <!-- Selector tool -->
         <li class="nav-item pointer" id="selectorTool">
             <div class="dropdown">
                 <button class="btn btn-secondary" type="button" onclick="toggleSelectorTool()">
@@ -28,7 +25,19 @@
                     <span class="nav-title">Selector</span>
                 </button>
             </div>
+
+            <div class="sub-menu" id="optionsElem" style="display: none;">
+                <!-- Allowed -->
+                <div class="dropdown">
+                    <button class="btn btn-secondary" type="button">
+                        <input type="checkbox" value="" onchange="updateSelected('isAllowed')">
+                        <span class="nav-title" style="position:relative;">Is Allowed</span>
+                    </button>
+                </div>
+            </div>
+
         </li>
+        <!-- Drawing tool -->
         <li class="nav-item pointer" id="drawingTool">
             <div class="dropdown">
                 <button class="btn btn-secondary" type="button" onclick="toggleDrawingTool()">
@@ -37,38 +46,6 @@
                 </button>
             </div>
         </li>
-        <!-- Create shape -->
-        <!-- <li class="nav-item pointer">
-            <div class="dropdown">
-                <button class="btn btn-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                    id="drawingTool">
-                    <i class="fa-solid fa-plus"></i>
-                    <i class="fa-solid fa-caret-down dropdown-icon"></i><br />
-                    <span class="nav-title">Draw</span>
-                </button>
-    
-                <ul class="dropdown-menu" id="drawingTool-dropdown" style="min-width: 126px;">
-                    <li id="drawingToolAllowed">
-                        <i class="fas fa-plus" style="color:green"></i><br />
-                        <span class="nav-title">Add</span>
-                    </li>
-                    <li id="drawingToolForbidden">
-                        <i class="fas fa-plus" style="color:var(--red)"></i><br />
-                        <span class="nav-title">Cutout</span>
-                    </li>
-                </ul>
-            </div>
-        </li> -->
-    
-        <!-- Delete shape -->
-        <!-- <li class="nav-item pointer">
-            <div class="dropdown">
-                <button class="btn btn-secondary" type="button" id="deleteTool">
-                    <i class="fa-solid fa-trash"></i><br />
-                    <span class="nav-title">Delete</span>
-                </button>
-            </div>
-        </li> -->
         <!-- Recenter camera -->
         <li class="nav-item pointer" onclick="recenter()">
             <div class="dropdown">

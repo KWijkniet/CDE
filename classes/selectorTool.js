@@ -4,17 +4,16 @@ import Action from "./Action";
 import Shape from "./Shape";
 
 //Current ToDo:
-//- test all undo/redo actions
-//- show distances
-//- disable texts while editing a shape
-//- draw disabled area
+//- test all undo/redo actions (shape cannot be reset to old shape after updating) (delete + undo doesnt work optimal)
+//- draw disabled area (context menu )
 //- generation
+//- update settings on select (and update values)
 
 export default class SelectorTool {
     isEnabled = false;
+    shape = null;
 
     #buffer = null;
-    #shape = null;
     #selectedPointIndex = null;
     #dragOldPos = null;
 
@@ -40,10 +39,10 @@ export default class SelectorTool {
 
                     var vertices = shape.getVertices();
                     if (Collision.polygonCircle(vertices, pos.x, pos.y, Settings.cursorSize)){
-                        if(this.#shape == null){
+                        if(this.shape == null){
                             var action = new Action("Selected shape",
-                                () => { this.#shape = null; this.#buffer.clear(); }, //undo
-                                () => { this.#shape = shape; this.#generate(); } //redo
+                                () => { this.shape.showData = true; this.shape = null; this.#buffer.clear(); }, //undo
+                                () => { this.shape = shape; this.shape.showData = false; this.#generate(); } //redo
                             );
                             History.add(action);
 
@@ -51,11 +50,11 @@ export default class SelectorTool {
                             action.redo();
                             return;
                         }
-                        else if(this.#shape.getId() != shape.getId()){
-                            var oldShape = this.#shape.clone();
+                        else if(this.shape.getId() != shape.getId()){
+                            var oldShape = this.shape.clone();
                             var action = new Action("Selected different shape",
-                                () => { this.#shape = oldShape; this.#generate(); }, //undo
-                                () => { this.#shape = shape; this.#generate(); } //redo
+                                () => { this.shape = Renderer.instance.get(oldShape.getId()); this.shape.showData = false; this.#generate(); }, //undo
+                                () => { this.shape = shape; this.shape.showData = false; this.#generate(); } //redo
                             );
                             History.add(action);
 
@@ -66,8 +65,8 @@ export default class SelectorTool {
                         sameShape = true;
                     }
 
-                    if(this.#shape != null && this.#shape.getId() == shape.getId()){
-                        var points = this.#shape.getVertices();
+                    if(this.shape != null && this.shape.getId() == shape.getId()){
+                        var points = this.shape.getVertices();
                         for (let v = 0; v < points.length; v++) {
                             const next = points[v + 1 < points.length - 1 ? v + 1 : 0];
                             const prev = points[v];
@@ -84,8 +83,8 @@ export default class SelectorTool {
                                 return;
                             }
                             else if(Collision.pointCircle(pos.x, pos.y, prev.x, prev.y, Settings.cursorSize) && v != 0){
-                                var points = this.#shape.getVertices();
-                                var point = JSON.parse(JSON.stringify(points[v]));
+                                var points = this.shape.getVertices();
+                                var point = points[v].getCopy();
 
                                 if(points.length - 1 > 1){
                                     var action = new Action("Deleted Coordinates",
@@ -98,10 +97,10 @@ export default class SelectorTool {
                                     action.redo();
                                 }
                                 else{
-                                    var clone = this.#shape.clone();
+                                    var clone = this.shape.clone();
                                     var action = new Action("Deleted Shape",
-                                        () => { Renderer.instance.add(clone); this.#shape = clone; this.#generate(); },
-                                        () => { Renderer.instance.remove(this.#shape); this.#buffer.clear(); this.#shape = null; }
+                                        () => { Renderer.instance.add(clone); this.shape = clone; this.shape.showData = false; this.#generate(); },
+                                        () => { Renderer.instance.remove(this.shape); this.#buffer.clear(); this.shape.showData = true; this.shape = null; }
                                     );
                                     History.add(action);
 
@@ -115,12 +114,12 @@ export default class SelectorTool {
                 }
 
                 //No shape selected
-                if(this.#shape != null && !sameShape){
-                    var points = this.#shape.getVertices();
-                    var oldShape = this.#shape.clone();
+                if(this.shape != null && !sameShape){
+                    var points = this.shape.getVertices();
+                    var oldShape = this.shape.clone();
                     var action = new Action("Deselect shape",
-                        () => { this.#shape = oldShape; this.#generate(); }, //undo
-                        () => { this.#shape.redraw(points, oldShape.color); this.#shape = null; this.#buffer.clear(); } //redo
+                        () => { this.shape = Renderer.instance.get(oldShape.getId()); this.shape.showData = false; this.#generate(); }, //undo
+                        () => { this.shape.showData = true; this.shape.redraw(points, oldShape.color); this.shape = null; this.#buffer.clear(); } //redo
                     );
                     History.add(action);
 
@@ -131,14 +130,14 @@ export default class SelectorTool {
         });
 
         cursor.events.subscribe('dragStart', (e) => {
-            if (this.isEnabled && this.#shape != null) {
+            if (this.isEnabled && this.shape != null) {
                 var cursor = Cursor.get();
                 var pos = cursor.global().remove(cursor.offset);
                 pos.x /= Settings.zoom;
                 pos.y /= Settings.zoom;
                 if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) { return; }
 
-                var points = this.#shape.getVertices();
+                var points = this.shape.getVertices();
                 this.#selectedPointIndex = null;
                 for (let i = 0; i < points.length; i++) {
                     const point = points[i];
@@ -155,14 +154,14 @@ export default class SelectorTool {
         });
 
         cursor.events.subscribe('dragMove', (e) => {
-            if (this.isEnabled && this.#shape != null && this.#selectedPointIndex != null) {
+            if (this.isEnabled && this.shape != null && this.#selectedPointIndex != null) {
                 var cursor = Cursor.get();
                 var pos = cursor.global().remove(cursor.offset);
                 pos.x /= Settings.zoom;
                 pos.y /= Settings.zoom;
                 if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) { return; }
                 
-                var points = this.#shape.getVertices();
+                var points = this.shape.getVertices();
                 var oldPos = points[this.#selectedPointIndex];
                 if (!oldPos || !point) { return; }
 
@@ -174,9 +173,9 @@ export default class SelectorTool {
         });
 
         cursor.events.subscribe('dragEnd', (e) => {
-            if (this.isEnabled && this.#shape != null) {
+            if (this.isEnabled && this.shape != null) {
                 if(this.#selectedPointIndex != null){
-                    var points = this.#shape.getVertices();
+                    var points = this.shape.getVertices();
                     var newPos = points[this.#selectedPointIndex].getCopy();
                     var oldPos = this.#dragOldPos.getCopy();
                     var index = this.#selectedPointIndex;
@@ -193,8 +192,10 @@ export default class SelectorTool {
         });
     }
 
-    update(){
-        // console.log(this.#shape != null);
+    update() {
+        if(this.shape != null){
+            this.#generate();
+        }
         image(this.#buffer, 0, 0);
     }
 
@@ -210,20 +211,20 @@ export default class SelectorTool {
         this.#buffer.clear();
         this.#buffer.translate(0);
         this.#buffer.scale(1);
+        var points = this.shape.getVertices();
 
-        console.log(this.#shape);
-        var points = this.#shape.getVertices();
+        //draw lines between points
+        if(points.length > 1){
+            for (let i = 0; i < points.length; i++) {
+                const p1 = points[i];
+                const p2 = points[i - 1 >= 0 ? i - 1 : points.length - 1];
 
-        for (let i = 0; i < points.length; i++) {
-            const p1 = points[i];
-            const p2 = points[i - 1 >= 0 ? i - 1 : points.length - 1];
-
-            //draw line
-            if (points.length > 1) {
+                //draw line
                 this.#buffer.line(p1.x, p1.y, p2.x, p2.y);
             }
         }
 
+        //draw circles on each coordinate
         for (let i = 0; i < points.length; i++) {
             const p1 = points[i];
 
@@ -234,6 +235,20 @@ export default class SelectorTool {
                 this.#buffer.fill(255, 0, 0);
                 this.#buffer.circle(p1.x, p1.y, 5);
                 this.#buffer.pop();
+            }
+        }
+
+        //show distances
+        if (points.length >= 2) {
+            for (let i = 0; i < points.length; i++) {
+                const p1 = points[i];
+                const p2 = points[i - 1 >= 0 ? i - 1 : points.length - 1];
+
+                var dist = Vector2.distance(p1, p2) * 10;
+                var textPos = p1.getCopy().add(p2).devide(new Vector2(2, 2));
+
+                //draw text
+                this.#buffer.text(dist.toFixed("0") + " mm", textPos.x, textPos.y);
             }
         }
     }

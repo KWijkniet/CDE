@@ -12,7 +12,7 @@ var History = window.CDE.History;
 //Core
 var cursor, grid, renderer, drawingTool, selectorTool;
 //Visuals
-var drawingToolElem, selectorToolElem;
+var drawingToolElem, selectorToolElem, optionsElem;
 
 function setup() {
     var canvas = createCanvas(visualViewport.width, visualViewport.height);
@@ -31,6 +31,7 @@ function setup() {
     //Visuals
     drawingToolElem = document.getElementById("drawingTool");
     selectorToolElem = document.getElementById("selectorTool");
+    optionsElem = document.getElementById("optionsElem");
 }
 
 function draw() {
@@ -47,7 +48,7 @@ function draw() {
 
     cursor.update();
     showFPS();
-    showHistory();
+    // showHistory();
     updateVisuals();
 }
 
@@ -99,12 +100,21 @@ function updateVisuals(){
     else if (!drawingTool.isEnabled && drawingToolElem.classList.contains("active")) {
         drawingToolElem.classList.remove("active");
     }
+
     //Selector tool
     if (selectorTool.isEnabled && !selectorToolElem.classList.contains("active")) {
         selectorToolElem.classList.add("active");
     }
     else if (!selectorTool.isEnabled && selectorToolElem.classList.contains("active")) {
         selectorToolElem.classList.remove("active");
+    }
+
+    //Option menu
+    if (selectorTool.shape != null && selectorTool.isEnabled){
+        optionsElem.style.display = "block";
+    }
+    else{
+        optionsElem.style.display = "none";
     }
 }
 
@@ -132,4 +142,13 @@ function toggleSelectorTool() {
 
 function recenter(){
     cursor.resetOffset();
+}
+
+function updateSelected(type){
+    console.log(type);
+    if (type == "isAllowed"){
+        selectorTool.shape.isAllowed = !selectorTool.shape.isAllowed;
+        selectorTool.shape.color = new Color(255, 0, 0);
+        console.log(selectorTool.shape.isAllowed);
+    }
 }

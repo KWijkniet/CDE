@@ -25,66 +25,6 @@
                     <span class="nav-title">Edit Shape</span>
                 </button>
             </div>
-
-            <div class="sub-menu" id="optionsElem" style="display: none;">
-                <!-- Allowed -->
-                <div class="dropdown">
-                    <button class="btn btn-secondary" type="button">
-                        <input type="checkbox" onchange="updateSelected('isAllowed')" id="allowedInput">
-                        <span class="nav-title" style="position:relative;">Allowed</span>
-                    </button>
-                </div>
-                <!-- MultiTool -->
-                <div class="dropdown">
-                    <button class="btn btn-secondary" type="button">
-                        <input class="pointer" type="radio" name="drawingMode" value="multiTool" onchange="updateSelected('toolMode')" checked>
-                        <span class="nav-title" style="position:relative;">Multi Tool</span>
-                    </button>
-                </div>
-                <!-- Add -->
-                <div class="dropdown" id="toolModeAdd">
-                    <button class="btn btn-secondary" type="button">
-                        <input class="pointer" type="radio" name="drawingMode" value="add" onchange="updateSelected('toolMode')">
-                        <span class="nav-title" style="position:relative;">Add</span>
-                    </button>
-                </div>
-                <!-- Move -->
-                <div class="dropdown">
-                    <button class="btn btn-secondary" type="button">
-                        <input class="pointer" type="radio" name="drawingMode" value="move" onchange="updateSelected('toolMode')">
-                        <span class="nav-title" style="position:relative;">Move</span>
-                    </button>
-                </div>
-                <!-- Delete -->
-                <div class="dropdown">
-                    <button class="btn btn-secondary" type="button">
-                        <input class="pointer" type="radio" name="drawingMode" value="delete" onchange="updateSelected('toolMode')">
-                        <span class="nav-title" style="position:relative;">Delete</span>
-                    </button>
-                </div>
-                <!-- Insert -->
-                <div class="dropdown">
-                    <button class="btn btn-secondary" type="button">
-                        <input class="pointer" type="radio" name="drawingMode" value="insert" onchange="updateSelected('toolMode')">
-                        <span class="nav-title" style="position:relative;">Insert</span>
-                    </button>
-                </div>
-                <!-- Confirm -->
-                <div class="dropdown">
-                    <button class="btn btn-secondary" type="button" onclick="confirmSelected()">
-                        <i class="fa-solid fa-check"></i><br />
-                        <span class="nav-title" style="position:relative;">Confirm</span>
-                    </button>
-                </div>
-                <!-- Delete All -->
-                <div class="dropdown">
-                    <button class="btn btn-secondary" type="button" onclick="deleteSelected()">
-                        <i class="fa-solid fa-trash"></i><br />
-                        <span class="nav-title" style="position:relative;">Delete All</span>
-                    </button>
-                </div>
-            </div>
-
         </li>
         <!-- Drawing tool -->
         <li class="nav-item pointer" id="drawingTool">
@@ -123,14 +63,14 @@
             </div>
         </li>
         <!-- Generate -->
-        <!-- <li class="nav-item pointer">
+        <li class="nav-item pointer" id="generatorTool">
             <div class="dropdown">
-                <button class="btn btn-secondary" type="button" id="generate">
+                <button class="btn btn-secondary" type="button" onclick="toggleGeneratorTool()">
                     <i class="fa-solid fa-table-cells"></i><br />
                     <span class="nav-title">Generate</span>
                 </button>
             </div>
-        </li> -->
+        </li>
         <!-- Size -->
         <!-- <li class="nav-item pointer" style="display: none;">
             <div class="dropdown">

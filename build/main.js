@@ -1406,6 +1406,21 @@ var __privateMethod = (obj, member, method) => {
       }
     }
   };
+  class GeneratorTool {
+    constructor() {
+      __publicField(this, "isEnabled", false);
+      __publicField(this, "canAdd", true);
+      __publicField(this, "canDelete", true);
+      __publicField(this, "canInsert", true);
+      __publicField(this, "canMove", true);
+    }
+    enable() {
+      this.isEnabled = true;
+    }
+    disable() {
+      this.isEnabled = false;
+    }
+  }
   const _History$1 = class {
     static instance() {
       __privateSet(_History$1, _actions, []);
@@ -1558,6 +1573,7 @@ var __privateMethod = (obj, member, method) => {
   exports2.Cursor = Cursor$1;
   exports2.DrawingTool = DrawingTool;
   exports2.EventSystem = EventSystem;
+  exports2.GeneratorTool = GeneratorTool;
   exports2.Grid = Grid;
   exports2.History = History$1;
   exports2.Renderer = Renderer$1;

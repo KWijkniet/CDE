@@ -7,6 +7,7 @@ var Grid = window.CDE.Grid;
 var Renderer = window.CDE.Renderer;
 var DrawingTool = window.CDE.DrawingTool;
 var SelectorTool = window.CDE.SelectorTool;
+var GeneratorTool = window.CDE.GeneratorTool;
 var History = window.CDE.History;
 var ContextMenu = window.CDE.ContextMenu;
 var ContextMenuOption = window.CDE.ContextMenuOption;
@@ -14,7 +15,7 @@ var ContextMenuOption = window.CDE.ContextMenuOption;
 //Core
 var cursor, grid, renderer, drawingTool, selectorTool;
 //Visuals
-var drawingToolElem, selectorToolElem, selectorToolMenu, optionsElem, allowedInputElem, toolModeAddElem;
+var drawingToolElem, selectorToolElem, selectorToolMenu, generatorElem, generatorMenu;
 //Other
 var hasSelectedShape;
 
@@ -29,6 +30,7 @@ function setup() {
     grid = new Grid();
     drawingTool = new DrawingTool();
     selectorTool = new SelectorTool();
+    generatorTool = new GeneratorTool();
 
     frameRate(60);
     Window.currentTool = null;
@@ -37,18 +39,20 @@ function setup() {
     //Visuals
     drawingToolElem = document.getElementById("drawingTool");
     selectorToolElem = document.getElementById("selectorTool");
-    optionsElem = document.getElementById("optionsElem");
-    allowedInputElem = document.getElementById("allowedInput");
-    toolModeAddElem = document.getElementById("toolModeAdd");
+    generatorElem = document.getElementById("generatorTool");
 
-    selectorToolMenu = new ContextMenu('selectorTool', [
+    selectorToolMenu = new ContextMenu('selectorToolMenu', [
         new ContextMenuOption('Allowed', 'checkbox', null, null, (e) => { e.querySelector('input').checked = selectorTool.shape != null ? selectorTool.shape.isAllowed : false; }, null, (e) => {
             selectorTool.shape.isAllowed = e.target.checked; selectorTool.shape.color = selectorTool.shape.isAllowed ? Settings.shapeAllowed : Settings.shapeForbidden;selectorTool.shape.redraw(); }),
-        new ContextMenuOption('Multi Tool', 'radio', null, 'toolMode'),
-        new ContextMenuOption('Move', 'radio', null, 'toolMode'),
-        new ContextMenuOption('Insert', 'radio', null, 'toolMode'),
-        new ContextMenuOption('Delete', 'radio', null, 'toolMode'),
-        new ContextMenuOption('Delete All', null, 'fa-solid fa-trash'),
+        new ContextMenuOption('Multi Tool', 'radio', null, 'toolMode', (e) => { e.querySelector('input').checked = true; updateToolMode('multiTool') }, null, (e) => { updateToolMode('multiTool');}),
+        new ContextMenuOption('Move', 'radio', null, 'toolMode', null, null, (e) => { updateToolMode('move'); }),
+        new ContextMenuOption('Insert', 'radio', null, 'toolMode', null, null, (e) => { updateToolMode('insert'); }),
+        new ContextMenuOption('Delete', 'radio', null, 'toolMode', null, null, (e) => { updateToolMode('delete'); }),
+        new ContextMenuOption('Delete All', null, 'fa-solid fa-trash', null, null, (e) => { deleteSelected(); }),
+    ]);
+
+    generatorMenu = new ContextMenu('generatorMenu', [
+        new ContextMenuOption('Allowed', null, 'fa-solid fa-trash'),
     ]);
 }
 
@@ -134,42 +138,32 @@ function updateVisuals(){
         selectorToolElem.classList.remove("active");
     }
 
-    if (!selectorToolMenu.isShown() && Window.currentTool != null && selectorTool.shape != hasSelectedShape){
+    //Generator
+    if (generatorTool.isEnabled && !generatorElem.classList.contains("active")) {
+        generatorElem.classList.add("active");
+    }
+    else if (!generatorTool.isEnabled && generatorElem.classList.contains("active")) {
+        generatorElem.classList.remove("active");
+    }
+
+    //Selector menu
+    if (!selectorToolMenu.isShown() && Window.currentTool == selectorTool && selectorTool.shape != hasSelectedShape) {
         hasSelectedShape = selectorTool.shape;
         selectorToolMenu.show();
     } else if (Window.currentTool != selectorTool || (Window.currentTool == selectorTool && selectorTool.shape == null)) {
         selectorToolMenu.hide();
     }
 
-    // if (Window.currentTool == selectorTool){
-    //     if (optionsElem.style.display == "none"){
-    //         optionsElem.style.display = "block";
-    //         document.querySelector('input[name="drawingMode"][value="multiTool"]').checked = true;
-    //         updateSelected('toolMode');
-            
-    //         if (selectorTool.shape == null) {
-    //             optionsElem.style.display = "none";
-    //             allowedInputElem.parentNode.parentNode.style.display = "block";
-    //             toolModeAddElem.style.display = "none";
-    //         }
-    //     }
-
-    //     if ((hasSelectedShape == null || hasSelectedShape != selectorTool.shape) && selectorTool.shape != null){
-    //         hasSelectedShape = selectorTool.shape;
-    //         allowedInputElem.checked = selectorTool.shape.isAllowed;
-    //     }
-    //     else if (hasSelectedShape != null && selectorTool.shape == null) {
-    //         hasSelectedShape = null;
-    //         optionsElem.style.display = "none";
-    //     }
-    // }
-    // else if (optionsElem.style.display == "block") {
-    //     optionsElem.style.display = "none";
-    // }
+    //Selector menu
+    if (!generatorMenu.isShown() && Window.currentTool == generatorTool) {
+        generatorMenu.show();
+    } else if (Window.currentTool != generatorTool) {
+        generatorMenu.hide();
+    }
 }
 
 function toggleDrawingTool() {
-    if (Window.currentTool != null && Window.currentTool != drawingTool) { Window.currentTool.disable(); optionsElem.style.display = "none"; }
+    if (Window.currentTool != null && Window.currentTool != drawingTool) { Window.currentTool.disable(); }
     Window.currentTool = drawingTool;
     if (drawingTool.isEnabled) {
         drawingTool.disable();
@@ -181,7 +175,7 @@ function toggleDrawingTool() {
 }
 
 function toggleSelectorTool() {
-    if (Window.currentTool != null && Window.currentTool != selectorTool) { Window.currentTool.disable(); optionsElem.style.display = "none"; }
+    if (Window.currentTool != null && Window.currentTool != selectorTool) { Window.currentTool.disable(); }
     Window.currentTool = selectorTool;
     if (selectorTool.isEnabled) {
         selectorTool.disable();
@@ -189,6 +183,18 @@ function toggleSelectorTool() {
     }
     else {
         selectorTool.enable();
+    }
+}
+
+function toggleGeneratorTool() {
+    if (Window.currentTool != null && Window.currentTool != generatorTool) { Window.currentTool.disable(); }
+    Window.currentTool = generatorTool;
+    if (generatorTool.isEnabled) {
+        generatorTool.disable();
+        Window.currentTool = null;
+    }
+    else {
+        generatorTool.enable();
     }
 }
 
@@ -211,30 +217,22 @@ function deleteSelected(){
     }
 }
 
-function updateSelected(type){
-    if (type == "isAllowed"){
-        selectorTool.shape.isAllowed = !selectorTool.shape.isAllowed;
-        selectorTool.shape.color = selectorTool.shape.isAllowed ? Settings.shapeAllowed : Settings.shapeForbidden;
-        selectorTool.shape.redraw();
-    }
-    else if (type == "toolMode"){
-        var value = document.querySelector('input[name="drawingMode"]:checked').value;
-        Window.currentTool.canAdd = value == "multiTool";
-        Window.currentTool.canDelete = value == "multiTool";
-        Window.currentTool.canInsert = value == "multiTool";
-        Window.currentTool.canMove = value == "multiTool";
+function updateToolMode(mode){
+    Window.currentTool.canAdd = mode == "multiTool";
+    Window.currentTool.canDelete = mode == "multiTool";
+    Window.currentTool.canInsert = mode == "multiTool";
+    Window.currentTool.canMove = mode == "multiTool";
 
-        if (value == "add") {
-            Window.currentTool.canAdd = true;
-        }
-        else if (value == "move") {
-            Window.currentTool.canMove = true;
-        }
-        else if (value == "delete") {
-            Window.currentTool.canDelete = true;
-        }
-        else if (value == "insert") {
-            Window.currentTool.canInsert = true;
-        }
+    if (mode == "add") {
+        Window.currentTool.canAdd = true;
+    }
+    else if (mode == "move") {
+        Window.currentTool.canMove = true;
+    }
+    else if (mode == "delete") {
+        Window.currentTool.canDelete = true;
+    }
+    else if (mode == "insert") {
+        Window.currentTool.canInsert = true;
     }
 }

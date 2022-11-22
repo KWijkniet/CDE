@@ -7,6 +7,7 @@ import Grid from './classes/Grid';
 import Renderer from './classes/Renderer';
 import DrawingTool from './classes/DrawingTool';
 import SelectorTool from './classes/SelectorTool';
+import GeneratorTool from './classes/GeneratorTool';
 import History from './classes/History';
 import Action from './classes/Action';
 import ContextMenu from './classes/ContextMenu';
@@ -23,4 +24,4 @@ window.onload = () => {
     }
 };
 
-export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, History, Action, ContextMenu, ContextMenuOption }
+export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, GeneratorTool, History, Action, ContextMenu, ContextMenuOption }

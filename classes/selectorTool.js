@@ -3,15 +3,14 @@ import Collision from "./Collision";
 import Action from "./Action";
 import Shape from "./Shape";
 
-//Current ToDo:
-//- test all undo/redo actions (shape cannot be reset to old shape after updating) (delete + undo doesnt work optimal)
-//- draw disabled area (context menu )
-//- generation
-//- update settings on select (and update values)
-
 export default class SelectorTool {
     isEnabled = false;
     shape = null;
+
+    canAdd = true;  //required but not used
+    canDelete = true;
+    canInsert = true;
+    canMove = true;
 
     #buffer = null;
     #selectedPointIndex = null;
@@ -24,7 +23,7 @@ export default class SelectorTool {
         var cursor = Cursor.get();
         cursor.events.subscribe('click', (e) => {
             var cursor = Cursor.get();
-            var pos = cursor.global().remove(cursor.offset);
+            var pos = cursor.local().remove(cursor.offset);
             pos.x /= Settings.zoom;
             pos.y /= Settings.zoom;
             pos = Cursor.toGrid(pos);
@@ -34,12 +33,12 @@ export default class SelectorTool {
                 var shapes = Renderer.instance.getAll();
                 var sameShape = false;
                 
-                for (let i = 0; i < shapes.length; i++) {
-                    const shape = shapes[i];
 
+                for (let i = shapes.length - 1; i >= 0; i--) {
+                    const shape = shapes[i];
                     var vertices = shape.getVertices();
-                    if (Collision.polygonCircle(vertices, pos.x, pos.y, Settings.cursorSize)){
-                        if(this.shape == null){
+                    if (Collision.polygonCircle(vertices, pos.x, pos.y, Settings.cursorSize)) {
+                        if (this.shape == null) {
                             var action = new Action("Selected shape",
                                 () => { this.shape.showData = true; this.shape = null; this.#buffer.clear(); }, //undo
                                 () => { this.shape = shape; this.shape.showData = false; this.#generate(); } //redo
@@ -50,11 +49,11 @@ export default class SelectorTool {
                             action.redo();
                             return;
                         }
-                        else if(this.shape.getId() != shape.getId()){
+                        else if (this.shape.getId() != shape.getId()) {
                             var oldShape = this.shape.clone();
                             var action = new Action("Selected different shape",
-                                () => { this.shape = Renderer.instance.get(oldShape.getId()); this.shape.showData = false; this.#generate(); }, //undo
-                                () => { this.shape = shape; this.shape.showData = false; this.#generate(); } //redo
+                                () => { this.shape.showData = true; this.shape = Renderer.instance.get(oldShape.getId()); this.shape.showData = false; this.#generate(); }, //undo
+                                () => { this.shape.showData = true; this.shape = shape; this.shape.showData = false; this.#generate(); } //redo
                             );
                             History.add(action);
 
@@ -64,14 +63,17 @@ export default class SelectorTool {
                         }
                         sameShape = true;
                     }
+                }
 
-                    if(this.shape != null && this.shape.getId() == shape.getId()){
-                        var points = this.shape.getVertices();
-                        for (let v = 0; v < points.length; v++) {
-                            const next = points[v + 1 < points.length - 1 ? v + 1 : 0];
-                            const prev = points[v];
-                            
-                            if (Collision.linePoint(next.x, next.y, prev.x, prev.y, pos.x, pos.y) && !Collision.pointCircle(pos.x, pos.y, next.x, next.y, Settings.cursorSize) && !Collision.pointCircle(pos.x, pos.y, prev.x, prev.y, Settings.cursorSize)){
+                //this.shape.getId() == shape.getId()
+                if(this.shape != null){
+                    var points = this.shape.getVertices();
+                    for (let v = 0; v < points.length; v++) {
+                        const next = points[v + 1 < points.length - 1 ? v + 1 : 0];
+                        const prev = points[v];
+                        
+                        if (Collision.linePoint(next.x, next.y, prev.x, prev.y, pos.x, pos.y) && !Collision.pointCircle(pos.x, pos.y, next.x, next.y, Settings.cursorSize) && !Collision.pointCircle(pos.x, pos.y, prev.x, prev.y, Settings.cursorSize)){
+                            if (this.canInsert) {
                                 var action = new Action("Inserted Coordinates",
                                     () => { points.splice(v + 1, 1); this.#generate(); }, //undo
                                     () => { points.splice(v + 1, 0, pos); this.#generate(); } //redo
@@ -80,13 +82,15 @@ export default class SelectorTool {
 
                                 //add point in between
                                 action.redo();
-                                return;
                             }
-                            else if(Collision.pointCircle(pos.x, pos.y, prev.x, prev.y, Settings.cursorSize) && v != 0){
-                                var points = this.shape.getVertices();
-                                var point = points[v].getCopy();
+                            return;
+                        }
+                        else if(Collision.pointCircle(pos.x, pos.y, prev.x, prev.y, Settings.cursorSize) && v != 0){
+                            var points = this.shape.getVertices();
+                            var point = points[v].getCopy();
 
-                                if(points.length - 1 > 1){
+                            if(points.length - 1 > 1){
+                                if (this.canDelete) {
                                     var action = new Action("Deleted Coordinates",
                                         () => { points.splice(v, 0, point); this.#generate(); },
                                         () => { points.splice(v, 1); this.#generate(); }
@@ -96,43 +100,26 @@ export default class SelectorTool {
                                     //delete point
                                     action.redo();
                                 }
-                                else{
-                                    var clone = this.shape.clone();
-                                    var action = new Action("Deleted Shape",
-                                        () => { Renderer.instance.add(clone); this.shape = clone; this.shape.showData = false; this.#generate(); },
-                                        () => { Renderer.instance.remove(this.shape); this.#buffer.clear(); this.shape.showData = true; this.shape = null; }
-                                    );
-                                    History.add(action);
-
-                                    //delete point
-                                    action.redo();
-                                }
-                                return;
                             }
+                            else{
+                                this.deleteSelected();
+                            }
+                            return;
                         }
                     }
                 }
 
                 //No shape selected
                 if(this.shape != null && !sameShape){
-                    var points = this.shape.getVertices();
-                    var oldShape = this.shape.clone();
-                    var action = new Action("Deselect shape",
-                        () => { this.shape = Renderer.instance.get(oldShape.getId()); this.shape.showData = false; this.#generate(); }, //undo
-                        () => { this.shape.showData = true; this.shape.redraw(points, oldShape.color); this.shape = null; this.#buffer.clear(); } //redo
-                    );
-                    History.add(action);
-
-                    //deselect
-                    action.redo();
+                    this.deselectShape();
                 }
             }
         });
 
         cursor.events.subscribe('dragStart', (e) => {
-            if (this.isEnabled && this.shape != null) {
+            if (this.isEnabled && this.shape != null && this.canMove) {
                 var cursor = Cursor.get();
-                var pos = cursor.global().remove(cursor.offset);
+                var pos = cursor.local().remove(cursor.offset);
                 pos.x /= Settings.zoom;
                 pos.y /= Settings.zoom;
                 if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) { return; }
@@ -156,7 +143,7 @@ export default class SelectorTool {
         cursor.events.subscribe('dragMove', (e) => {
             if (this.isEnabled && this.shape != null && this.#selectedPointIndex != null) {
                 var cursor = Cursor.get();
-                var pos = cursor.global().remove(cursor.offset);
+                var pos = cursor.local().remove(cursor.offset);
                 pos.x /= Settings.zoom;
                 pos.y /= Settings.zoom;
                 if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) { return; }
@@ -200,17 +187,56 @@ export default class SelectorTool {
     }
 
     enable(){
-        this.isEnabled = true;
+        var action = new Action("Enabled Selector tool",
+            () => { this.isEnabled = false; }, //disable
+            () => { this.isEnabled = true; }
+        );
+        History.add(action);
+        action.redo();
     }
     
     disable(){
-        this.isEnabled = false;
+        var shape = this.shape != null ? this.shape.clone() : null;
+        var action = new Action("Disable Selector tool",
+            () => { this.isEnabled = true; this.shape = shape; if (this.shape != null) { this.shape.showData = false; } this.#generate(); }, //enable
+            () => { this.isEnabled = false; if (this.shape != null) { this.shape.showData = true; } this.deselectShape(); this.shape = null; this.#generate(); }
+        );
+        History.add(action);
+        action.redo();
+    }
+
+    deleteSelected(){
+        if (this.shape == null){ return; }
+        var clone = this.shape.clone();
+        var action = new Action("Deleted Shape",
+            () => { Renderer.instance.add(clone); this.shape = clone; this.shape.showData = false; this.#generate(); },
+            () => { Renderer.instance.remove(this.shape); this.#buffer.clear(); this.shape.showData = true; this.shape = null; }
+        );
+        History.add(action);
+
+        //delete shape
+        action.redo();
+    }
+
+    deselectShape(){
+        if (this.shape == null) { return; }
+        var points = this.shape.getVertices();
+        var oldShape = this.shape.clone();
+        var action = new Action("Deselect shape",
+            () => { this.shape = Renderer.instance.get(oldShape.getId()); this.shape.showData = false; this.#generate(); }, //undo
+            () => { this.shape.showData = true; this.shape.reCalculate(points, oldShape.color); this.shape = null; this.#buffer.clear(); } //redo
+        );
+        History.add(action);
+
+        //deselect
+        action.redo();
     }
 
     #generate(){
         this.#buffer.clear();
         this.#buffer.translate(0);
         this.#buffer.scale(1);
+        if(this.shape == null) { return; }
         var points = this.shape.getVertices();
 
         //draw lines between points

@@ -1,8 +1,8 @@
 :root{
     --grid-background: rgb(255, 255, 255);
     --grid-lines: rgba(0, 0, 0, 100);
-    --shape-allowed: rgb(255, 255, 255);
-    --shape-forbidden: rgb(255, 0, 0);
+    --shape-allowed: rgba(255, 255, 255, 128);
+    --shape-forbidden: rgba(255, 0, 0, 128);
 }
 
 * {
@@ -179,11 +179,13 @@ main{
 .editor input{
     margin-top: 15px;
     text-align: center;
-    height: 80%;
-    width: 80%;
+    height: 50%;
+    width: 50%;
     border: 0px;
     border-radius: 8px;
     /* background-color: #efefef; */
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
 .editor .active{
@@ -192,13 +194,47 @@ main{
 .editor .active i, .editor .active span{
     color: white !important;
 }
+.editor .active .sub-menu{
+    background-color: #fff;
+}
+.editor .active .sub-menu i, .editor .active .sub-menu span{
+    color: #b30000 !important;
+}
 
 .sub-menu{
     position: absolute;
     left: 75px;
     top: 0px;
     width: 62px;
-    height: 124px;
+    /* height: 124px; */
     background-color: #fff;
     border-radius: 5px;
+}
+
+.sub-menu .option{
+    width: 62px;
+    height: 61px;
+    padding: 0px;
+    margin: 0px;
+    border: none;
+    background-color: #fff;
+    color: #b30000;
+}
+.sub-menu .option:not(:last-child){
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.sub-menu input, .sub-menu i{
+    margin-top: 10px;
+    text-align: center;
+    height: 50%;
+    width: 50%;
+    border: 0px;
+    border-radius: 8px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.sub-menu .text{
+    font-size: 7px;
 }

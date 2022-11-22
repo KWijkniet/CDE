@@ -1,8 +1,8 @@
 import Color from "./Color";
 
 export default class Settings {
-    static mapSizeX = 2500;
-    static mapSizeY = 2500 / 16 * 9;
+    static mapSizeX = 5000;
+    static mapSizeY = 5000 / 16 * 9;
     // static mapSizeX = visualViewport.width;
     // static mapSizeY = visualViewport.height;
     static bufferMargin = 50;
@@ -10,7 +10,7 @@ export default class Settings {
     static gridSizeL = 100;
     static zoom = 1;
     static bufferMargin = 50;
-    static cursorSize = 15;
+    static cursorSize = 10;
 
     static gridBackground = new Color("--grid-background");
     static gridLines = new Color("--grid-lines");

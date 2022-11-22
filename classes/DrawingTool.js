@@ -1,11 +1,15 @@
 import Vector2 from "./Vector2";
 import Collision from "./Collision";
 import Shape from "./Shape";
-import Color from "./Color";
 import Action from "./Action";
 
 export default class DrawingTool {
     isEnabled = false;
+
+    canAdd = true;
+    canDelete = true;
+    canInsert = true;
+    canMove = true;
 
     #buffer = null;
     #points = [];
@@ -16,6 +20,12 @@ export default class DrawingTool {
 
     constructor() {
         this.#buffer = createGraphics(Settings.mapSizeX, Settings.mapSizeY);
+        
+        document.addEventListener('keyup', (event) => {
+            if (this.#points.length > 0 && event.key == "Escape") {
+                this.setData([]);
+            }
+        });
 
         var cursor = Cursor.get();
         cursor.events.subscribe('click', (e) => {
@@ -33,9 +43,9 @@ export default class DrawingTool {
         });
 
         cursor.events.subscribe('dragStart', (e) => {
-            if (this.isEnabled) {
+            if (this.isEnabled && this.canMove) {
                 var cursor = Cursor.get();
-                var pos = cursor.global().remove(cursor.offset);
+                var pos = cursor.local().remove(cursor.offset);
                 pos.x /= Settings.zoom;
                 pos.y /= Settings.zoom;
                 if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) { return; }
@@ -106,11 +116,12 @@ export default class DrawingTool {
 
     setData(points){
         this.#points = points;
+        this.#generate();
     }
 
     #onPlace(e){
         var cursor = Cursor.get();
-        var pos = cursor.global().remove(cursor.offset);
+        var pos = cursor.local().remove(cursor.offset);
         pos.x /= Settings.zoom;
         pos.y /= Settings.zoom;
         pos = Cursor.toGrid(pos);
@@ -125,24 +136,26 @@ export default class DrawingTool {
                 if(i != 0){
                     hasFound = true;
                     
-                    var original = Vector2.copyAll(this.#points);
-                    var tmp = Vector2.copyAll(this.#points);
-                    tmp.splice(i, 1);
+                    if (this.canDelete) {
+                        var original = Vector2.copyAll(this.#points);
+                        var tmp = Vector2.copyAll(this.#points);
+                        tmp.splice(i, 1);
 
-                    //create history entree
-                    var action = new Action("Deleted Coordinates",
-                        () => { this.#points = original; this.#generate(); },
-                        () => { this.#points = tmp; this.#generate(); }
-                    );
-                    History.add(action);
+                        //create history entree
+                        var action = new Action("Deleted Coordinates",
+                            () => { this.#points = original; this.#generate(); },
+                            () => { this.#points = tmp; this.#generate(); }
+                        );
+                        History.add(action);
 
-                    //delete point
-                    action.redo();
+                        //delete point
+                        action.redo();
+                    }
                     break;
                 }
                 else if(this.#points.length > 1){
                     hasFound = true;
-                    var shape = new Shape(this.#points, new Color('--shape-allowed'));
+                    var shape = new Shape(this.#points, Settings.shapeAllowed);
                     var points = Vector2.copyAll(this.#points);
 
                     //create history entree
@@ -173,7 +186,7 @@ export default class DrawingTool {
         }
 
         if(!hasFound){
-            var realPos = cursor.global().remove(cursor.offset);
+            var realPos = cursor.local().remove(cursor.offset);
             //check collision between points
             for (let i = 0; i < this.#points.length; i++) {
                 const next = this.#points[i + 1 < this.#points.length - 1 ? i + 1 : 0];
@@ -183,15 +196,17 @@ export default class DrawingTool {
                 if (Collision.linePoint(next.x, next.y, prev.x, prev.y, realPos.x, realPos.y)) {
                     hasFound = true;
 
-                    //create history entree
-                    var action = new Action("Inserted Coordinates",
-                        () => { this.#points.splice(i + 1, 1); this.#generate(); },
-                        () => { this.#points.splice(i + 1, 0, pos); this.#generate(); }
-                    );
-                    History.add(action);
+                    if (this.canInsert) {
+                        //create history entree
+                        var action = new Action("Inserted Coordinates",
+                            () => { this.#points.splice(i + 1, 1); this.#generate(); },
+                            () => { this.#points.splice(i + 1, 0, pos); this.#generate(); }
+                        );
+                        History.add(action);
 
-                    //add point in between
-                    action.redo();
+                        //add point in between
+                        action.redo();
+                    }
 
                     break;
                 }
@@ -199,14 +214,16 @@ export default class DrawingTool {
 
             if (!hasFound) {
                 if(this.#originalShape == null){
-                    var action = new Action("Added Coordinates",
-                        () => { this.#points.splice(this.#points.length - 1, 1); this.#generate(); },
-                        () => { this.#points.push(pos); this.#generate(); }
-                    );
-                    History.add(action);
-                    
-                    //add
-                    action.redo();
+                    if (this.canAdd) {
+                        var action = new Action("Added Coordinates",
+                            () => { this.#points.splice(this.#points.length - 1, 1); this.#generate(); },
+                            () => { this.#points.push(pos); this.#generate(); }
+                        );
+                        History.add(action);
+
+                        //add
+                        action.redo();
+                    }
                 }
                 else{
                     //update shape
@@ -217,7 +234,7 @@ export default class DrawingTool {
 
     #onDrag(e){
         var cursor = Cursor.get();
-        var pos = cursor.global().remove(cursor.offset);
+        var pos = cursor.local().remove(cursor.offset);
         pos.x /= Settings.zoom;
         pos.y /= Settings.zoom;
         if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) { return; }
@@ -245,9 +262,9 @@ export default class DrawingTool {
         }
 
         //line from last coordinate to cursor
-        if (this.#points.length >= 1) {
+        if (this.#points.length >= 1 && this.canAdd) {
             var cursor = Cursor.get();
-            var pos = cursor.global().remove(cursor.offset);
+            var pos = cursor.local().remove(cursor.offset);
             pos.x /= Settings.zoom;
             pos.y /= Settings.zoom;
             pos = Cursor.toGrid(pos);

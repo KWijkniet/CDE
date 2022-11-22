@@ -16,13 +16,13 @@
     <!-- Custom script to detect collisions -->
     <script src="./sketch.js"></script>
 
-    <ul class="nav flex-column">
+    <ul class="nav flex-column" id="menu">
         <!-- Selector tool -->
         <li class="nav-item pointer" id="selectorTool">
             <div class="dropdown">
                 <button class="btn btn-secondary" type="button" onclick="toggleSelectorTool()">
                     <i class="fa-solid fa-arrow-pointer"></i><br />
-                    <span class="nav-title">Selector</span>
+                    <span class="nav-title">Edit Shape</span>
                 </button>
             </div>
 
@@ -30,8 +30,57 @@
                 <!-- Allowed -->
                 <div class="dropdown">
                     <button class="btn btn-secondary" type="button">
-                        <input type="checkbox" value="" onchange="updateSelected('isAllowed')">
-                        <span class="nav-title" style="position:relative;">Is Allowed</span>
+                        <input type="checkbox" onchange="updateSelected('isAllowed')" id="allowedInput">
+                        <span class="nav-title" style="position:relative;">Allowed</span>
+                    </button>
+                </div>
+                <!-- MultiTool -->
+                <div class="dropdown">
+                    <button class="btn btn-secondary" type="button">
+                        <input class="pointer" type="radio" name="drawingMode" value="multiTool" onchange="updateSelected('toolMode')" checked>
+                        <span class="nav-title" style="position:relative;">Multi Tool</span>
+                    </button>
+                </div>
+                <!-- Add -->
+                <div class="dropdown" id="toolModeAdd">
+                    <button class="btn btn-secondary" type="button">
+                        <input class="pointer" type="radio" name="drawingMode" value="add" onchange="updateSelected('toolMode')">
+                        <span class="nav-title" style="position:relative;">Add</span>
+                    </button>
+                </div>
+                <!-- Move -->
+                <div class="dropdown">
+                    <button class="btn btn-secondary" type="button">
+                        <input class="pointer" type="radio" name="drawingMode" value="move" onchange="updateSelected('toolMode')">
+                        <span class="nav-title" style="position:relative;">Move</span>
+                    </button>
+                </div>
+                <!-- Delete -->
+                <div class="dropdown">
+                    <button class="btn btn-secondary" type="button">
+                        <input class="pointer" type="radio" name="drawingMode" value="delete" onchange="updateSelected('toolMode')">
+                        <span class="nav-title" style="position:relative;">Delete</span>
+                    </button>
+                </div>
+                <!-- Insert -->
+                <div class="dropdown">
+                    <button class="btn btn-secondary" type="button">
+                        <input class="pointer" type="radio" name="drawingMode" value="insert" onchange="updateSelected('toolMode')">
+                        <span class="nav-title" style="position:relative;">Insert</span>
+                    </button>
+                </div>
+                <!-- Confirm -->
+                <div class="dropdown">
+                    <button class="btn btn-secondary" type="button" onclick="confirmSelected()">
+                        <i class="fa-solid fa-check"></i><br />
+                        <span class="nav-title" style="position:relative;">Confirm</span>
+                    </button>
+                </div>
+                <!-- Delete All -->
+                <div class="dropdown">
+                    <button class="btn btn-secondary" type="button" onclick="deleteSelected()">
+                        <i class="fa-solid fa-trash"></i><br />
+                        <span class="nav-title" style="position:relative;">Delete All</span>
                     </button>
                 </div>
             </div>
@@ -42,7 +91,7 @@
             <div class="dropdown">
                 <button class="btn btn-secondary" type="button" onclick="toggleDrawingTool()">
                     <i class="fa-solid fa-plus"></i><br />
-                    <span class="nav-title">Draw</span>
+                    <span class="nav-title">Add Shape</span>
                 </button>
             </div>
         </li>

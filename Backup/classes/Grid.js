@@ -13,7 +13,7 @@ export default class Grid {
         this.#buffer.canvas.id = "GridBufferGraphics";
         this.#buffer.background(255, 255, 255);
         
-        var color = new Color(200, 200, 200);
+        var color = new Color(null, 200, 200, 200);
         var xAmount = Math.ceil((maxWidth + (Settings.bonusSize * 2)) / size);
         var yAmount = Math.ceil((maxHeight + (Settings.bonusSize * 2)) / size);
         

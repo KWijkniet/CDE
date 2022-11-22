@@ -50,7 +50,11 @@ export default class Shape {
         return new Shape(Vector2.copyAll(this.#vertices), this.color, this.id);
     }
 
-    redraw(vertices = [], color = new Color(null, 255, 255, 255)){
+    redraw() {
+        this.#generate();
+    }
+
+    reCalculate(vertices = [], color = new Color(null, 255, 255, 255)){
         if(this.#shapebuffer != null){
             this.#shapebuffer.clear();
             this.#shapebuffer.elt.parentNode.removeChild(this.#shapebuffer.elt);
@@ -59,7 +63,7 @@ export default class Shape {
             this.#textBuffer.elt.parentNode.removeChild(this.#textBuffer.elt);
             this.#textBuffer = null;
         }
-        
+
         this.#vertices = vertices;
         this.color = color;
         this.#generate();
@@ -92,8 +96,8 @@ export default class Shape {
         }
         this.#shapebuffer.vertex(this.#vertices[0].x - this.#pos.x, this.#vertices[0].y - this.#pos.y);
 
-        var rgb = Settings.gridBackground.rgb();
-        this.#shapebuffer.fill(rgb.r, rgb.g, rgb.b);
+        var rgba = this.color.rgba();
+        this.#shapebuffer.fill(rgba.r, rgba.g, rgba.b, rgba.a);
         this.#shapebuffer.endShape();
 
         //Generate Text

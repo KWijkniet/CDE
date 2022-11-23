@@ -15,8 +15,8 @@ export default class Color{
             var value = getComputedStyle(document.body).getPropertyValue(this.string);
             this.value = value.replace("rgba(", "").replace("rgb(", "").replace(")", "").split(',');
         }
-
-        return {r: parseFloat(value[0]), g: parseFloat(value[1]), b: parseFloat(value[2]), a: parseFloat(value[3])};
+        
+        return {r: parseFloat(this.value[0]), g: parseFloat(this.value[1]), b: parseFloat(this.value[2]), a: parseFloat(this.value[3])};
     }
     
     rgb(){

@@ -69,10 +69,7 @@ export default class Cursor{
         });
     }
 
-    update(){
-        // var pos = Cursor.toGrid(this.local());
-        // circle(pos.x, pos.y, 10);
-    }
+    update() {}
 
     resetOffset(){
         this.offset = new Vector2(-Settings.mapSizeX / 8, -Settings.mapSizeY / 8);

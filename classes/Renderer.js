@@ -51,4 +51,14 @@ export default class Renderer {
     getAll() {
         return this.#shapes;
     }
+
+    get(id) {
+        for (let i = 0; i < this.#shapes.length; i++) {
+            const shape = this.#shapes[i];
+            if (shape.getId() == id) {
+                return shape;
+            }
+        }
+        return null;
+    }
 }

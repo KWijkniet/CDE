@@ -1,7 +1,7 @@
 export default class Shape {
     inputs = {};
     vertices = [];
-    color = new Color(255, 255, 255);
+    color = new Color(null, 255, 255, 255);
     showData = true;
     allowed = true;
     
@@ -13,7 +13,7 @@ export default class Shape {
     #cursor = null;
     #margin = 50;
 
-    constructor(cursor, _vertices, _color = new Color(255, 255, 255), _allowed = true, _showData = true) {
+    constructor(cursor, _vertices, _color = new Color(null, 255, 255, 255), _allowed = true, _showData = true) {
         this.#cursor = cursor;
         this.vertices = _vertices;
         this.color = _color;

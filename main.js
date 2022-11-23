@@ -7,8 +7,11 @@ import Grid from './classes/Grid';
 import Renderer from './classes/Renderer';
 import DrawingTool from './classes/DrawingTool';
 import SelectorTool from './classes/SelectorTool';
+import GeneratorTool from './classes/GeneratorTool';
 import History from './classes/History';
 import Action from './classes/Action';
+import ContextMenu from './classes/ContextMenu';
+import ContextMenuOption from './classes/ContextMenuOption';
 
 window.onload = () => {
     if(typeof createCanvas !== 'function'){
@@ -21,4 +24,4 @@ window.onload = () => {
     }
 };
 
-export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, History, Action }
+export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, GeneratorTool, History, Action, ContextMenu, ContextMenuOption }

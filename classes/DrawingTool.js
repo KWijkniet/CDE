@@ -81,7 +81,7 @@ export default class DrawingTool {
                         () => { this.#points[index] = oldPos; this.#generate(); },
                         () => { this.#points[index] = newPos; this.#generate(); }
                     );
-                    History.add(action);
+                    HistoryTool.add(action);
                 }
 
                 this.#selectedPointIndex = null;
@@ -100,7 +100,7 @@ export default class DrawingTool {
             () => { this.isEnabled = false; this.#originalShape = null; this.#dragOldPos = null; }, //disable
             () => { this.isEnabled = true; this.#originalShape = null; this.#dragOldPos = null;  }
         );
-        History.add(action);
+        HistoryTool.add(action);
         action.redo();
     }
 
@@ -110,7 +110,7 @@ export default class DrawingTool {
             () => { this.isEnabled = true; this.#originalShape = null; this.#dragOldPos = null; this.#points = points; this.#generate(); }, //enable
             () => { this.isEnabled = false; this.#originalShape = null; this.#dragOldPos = null; this.#points = []; this.#generate(); }
         );
-        History.add(action);
+        HistoryTool.add(action);
         action.redo();
     }
 
@@ -146,7 +146,7 @@ export default class DrawingTool {
                             () => { this.#points = original; this.#generate(); },
                             () => { this.#points = tmp; this.#generate(); }
                         );
-                        History.add(action);
+                        HistoryTool.add(action);
 
                         //delete point
                         action.redo();
@@ -163,7 +163,7 @@ export default class DrawingTool {
                         () => { Renderer.instance.remove(shape); this.#points = points; this.#generate(); },
                         () => { Renderer.instance.add(shape); this.#points = []; this.#buffer.clear(); }
                     );
-                    History.add(action);
+                    HistoryTool.add(action);
 
                     //complete shape
                     action.redo();[]
@@ -176,7 +176,7 @@ export default class DrawingTool {
                         () => { this.#points = points; this.#generate(); },
                         () => { this.#points = []; this.#buffer.clear(); this.#generate(); }
                     );
-                    History.add(action);
+                    HistoryTool.add(action);
 
                     //delete shape
                     action.redo();
@@ -202,7 +202,7 @@ export default class DrawingTool {
                             () => { this.#points.splice(i + 1, 1); this.#generate(); },
                             () => { this.#points.splice(i + 1, 0, pos); this.#generate(); }
                         );
-                        History.add(action);
+                        HistoryTool.add(action);
 
                         //add point in between
                         action.redo();
@@ -219,7 +219,7 @@ export default class DrawingTool {
                             () => { this.#points.splice(this.#points.length - 1, 1); this.#generate(); },
                             () => { this.#points.push(pos); this.#generate(); }
                         );
-                        History.add(action);
+                        HistoryTool.add(action);
 
                         //add
                         action.redo();

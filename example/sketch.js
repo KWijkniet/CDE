@@ -8,7 +8,7 @@ var Renderer = window.CDE.Renderer;
 var DrawingTool = window.CDE.DrawingTool;
 var SelectorTool = window.CDE.SelectorTool;
 var GeneratorTool = window.CDE.GeneratorTool;
-var History = window.CDE.History;
+var HistoryTool = window.CDE.HistoryTool;
 var ContextMenu = window.CDE.ContextMenu;
 var ContextMenuOption = window.CDE.ContextMenuOption;
 
@@ -22,7 +22,7 @@ var hasSelectedShape;
 function setup() {
     var canvas = createCanvas(visualViewport.width, visualViewport.height);
 
-    History.instance();
+    HistoryTool.instance();
     Settings.setCanvas(canvas);
 
     renderer = new Renderer();
@@ -48,11 +48,12 @@ function setup() {
         new ContextMenuOption('Move', 'radio', null, 'toolMode', null, null, (e) => { updateToolMode('move'); }),
         new ContextMenuOption('Insert', 'radio', null, 'toolMode', null, null, (e) => { updateToolMode('insert'); }),
         new ContextMenuOption('Delete', 'radio', null, 'toolMode', null, null, (e) => { updateToolMode('delete'); }),
-        new ContextMenuOption('Delete All', null, 'fa-solid fa-trash', null, null, (e) => { deleteSelected(); }),
+        new ContextMenuOption('Confirm', null, 'fa-solid fa-check', null, null, (e) => { confirmSelected(); }),
+        new ContextMenuOption('Delete Shape', null, 'fa-solid fa-trash', null, null, (e) => { deleteSelected(); }),
     ]);
 
     generatorMenu = new ContextMenu('generatorMenu', [
-        new ContextMenuOption('Allowed', null, 'fa-solid fa-trash'),
+        new ContextMenuOption('Generate', null, 'fa-solid fa-check', null, null, (e)=>{generatorTool.generate();}),
     ]);
 }
 
@@ -66,6 +67,7 @@ function draw() {
     renderer.update();
     drawingTool.update();
     selectorTool.update();
+    generatorTool.update();
     pop();
 
     cursor.update();
@@ -101,12 +103,12 @@ function showHistory() {
     rect(width - 250, 0, 250, 500);
 
     var count = 0;
-    for (let i = History.count() - 1; i >= 0; i--) {
+    for (let i = HistoryTool.count() - 1; i >= 0; i--) {
         if(count >= 15){break;}
         count++;
         
-        var action = History.get(i);
-        var index = History.getIndex();
+        var action = HistoryTool.get(i);
+        var index = HistoryTool.getIndex();
         noStroke();
         if (index == i) {
             fill(0, 255, 0);

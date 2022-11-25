@@ -1,3 +1,4 @@
+import Vector2 from './classes/Vector2';
 import Collision from './classes/Collision';
 import Settings from './classes/Settings';
 import EventSystem from './classes/EventSystem';
@@ -8,7 +9,7 @@ import Renderer from './classes/Renderer';
 import DrawingTool from './classes/DrawingTool';
 import SelectorTool from './classes/SelectorTool';
 import GeneratorTool from './classes/GeneratorTool';
-import History from './classes/History';
+import HistoryTool from './classes/HistoryTool';
 import Action from './classes/Action';
 import ContextMenu from './classes/ContextMenu';
 import ContextMenuOption from './classes/ContextMenuOption';
@@ -24,4 +25,4 @@ window.onload = () => {
     }
 };
 
-export { Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, GeneratorTool, History, Action, ContextMenu, ContextMenuOption }
+export { Vector2, Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, GeneratorTool, HistoryTool, Action, ContextMenu, ContextMenuOption }

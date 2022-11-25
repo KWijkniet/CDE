@@ -43,7 +43,7 @@ export default class SelectorTool {
                                 () => { this.shape.showData = true; this.shape = null; this.#buffer.clear(); }, //undo
                                 () => { this.shape = shape; this.shape.showData = false; this.#generate(); } //redo
                             );
-                            History.add(action);
+                            HistoryTool.add(action);
 
                             //select
                             action.redo();
@@ -55,7 +55,7 @@ export default class SelectorTool {
                                 () => { this.shape.showData = true; this.shape = Renderer.instance.get(oldShape.getId()); this.shape.showData = false; this.#generate(); }, //undo
                                 () => { this.shape.showData = true; this.shape = shape; this.shape.showData = false; this.#generate(); } //redo
                             );
-                            History.add(action);
+                            HistoryTool.add(action);
 
                             //select different
                             action.redo();
@@ -78,7 +78,7 @@ export default class SelectorTool {
                                     () => { points.splice(v + 1, 1); this.#generate(); }, //undo
                                     () => { points.splice(v + 1, 0, pos); this.#generate(); } //redo
                                 );
-                                History.add(action);
+                                HistoryTool.add(action);
 
                                 //add point in between
                                 action.redo();
@@ -95,7 +95,7 @@ export default class SelectorTool {
                                         () => { points.splice(v, 0, point); this.#generate(); },
                                         () => { points.splice(v, 1); this.#generate(); }
                                     );
-                                    History.add(action);
+                                    HistoryTool.add(action);
 
                                     //delete point
                                     action.redo();
@@ -170,7 +170,7 @@ export default class SelectorTool {
                         () => { points[index] = oldPos; this.#generate(); },
                         () => { points[index] = newPos; this.#generate(); }
                     );
-                    History.add(action);
+                    HistoryTool.add(action);
                 }
 
                 this.#selectedPointIndex = null;
@@ -191,7 +191,7 @@ export default class SelectorTool {
             () => { this.isEnabled = false; }, //disable
             () => { this.isEnabled = true; }
         );
-        History.add(action);
+        HistoryTool.add(action);
         action.redo();
     }
     
@@ -201,7 +201,7 @@ export default class SelectorTool {
             () => { this.isEnabled = true; this.shape = shape; if (this.shape != null) { this.shape.showData = false; } this.#generate(); }, //enable
             () => { this.isEnabled = false; if (this.shape != null) { this.shape.showData = true; } this.deselectShape(); this.shape = null; this.#generate(); }
         );
-        History.add(action);
+        HistoryTool.add(action);
         action.redo();
     }
 
@@ -212,7 +212,7 @@ export default class SelectorTool {
             () => { Renderer.instance.add(clone); this.shape = clone; this.shape.showData = false; this.#generate(); },
             () => { Renderer.instance.remove(this.shape); this.#buffer.clear(); this.shape.showData = true; this.shape = null; }
         );
-        History.add(action);
+        HistoryTool.add(action);
 
         //delete shape
         action.redo();
@@ -226,7 +226,7 @@ export default class SelectorTool {
             () => { this.shape = Renderer.instance.get(oldShape.getId()); this.shape.showData = false; this.#generate(); }, //undo
             () => { this.shape.showData = true; this.shape.reCalculate(points, oldShape.color); this.shape = null; this.#buffer.clear(); } //redo
         );
-        History.add(action);
+        HistoryTool.add(action);
 
         //deselect
         action.redo();

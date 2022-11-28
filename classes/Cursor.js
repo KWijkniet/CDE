@@ -9,6 +9,8 @@ export default class Cursor{
     events = null;
     position = null;
     offset = null;
+    
+    isDisabled = false;
 
     #mousedown = false;
     #mousemoved = false;
@@ -27,7 +29,7 @@ export default class Cursor{
         return new Vector2(x + pos.x, y + pos.y);
     };
 
-    constructor(){
+    constructor() {
         Cursor.get = () => { return this; };
         this.events = new EventSystem(['click', 'dragStart', 'dragMove', 'dragEnd', 'scroll']);
         this.position = Vector2.zero();
@@ -50,6 +52,7 @@ export default class Cursor{
 
         document.addEventListener('wheel', (event) => { this.events.invoke('scroll', event); });
         this.events.subscribe('scroll', (e) => {
+            if (this.isDisabled) { this.#checkBounds(); return; }
             const {x, y, deltaY} = e.detail;
             const direction = deltaY > 0 ? -1 : 1;
             const factor = 0.05;
@@ -76,6 +79,7 @@ export default class Cursor{
     }
 
     #event(e, type) {
+        if (this.isDisabled) { return; }
         var newPos = this.local();
         if(type == 'mousemove'){
             if (this.#mousedown && !this.#mousemoved){

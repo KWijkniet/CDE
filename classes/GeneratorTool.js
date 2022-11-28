@@ -12,6 +12,9 @@ export default class GeneratorTool {
 
     //options
     margin = 25;
+    marginU = 50;
+    marginLR = 25;
+    marginD = 0;
 
     #buffer = null;
     #renderer = null;
@@ -94,6 +97,7 @@ export default class GeneratorTool {
             const vc = points[i];
             const vn = points[i + 1 >= points.length ? 0 : i + 1];
 
+            //detect side (up)
             var dirP = vp.getCopy().remove(vc).normalized().multiply(new Vector2(this.margin, this.margin));
             var dirN = vn.getCopy().remove(vc).normalized().multiply(new Vector2(this.margin, this.margin));
             var p1 = new Vector2(0, 0);

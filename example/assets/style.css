@@ -176,7 +176,7 @@ main{
     opacity: 1 !important;
 }
 
-.editor input{
+.editor input[type="number"]{
     margin-top: 15px;
     text-align: center;
     height: 50%;

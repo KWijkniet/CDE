@@ -71,27 +71,142 @@
                 </button>
             </div>
         </li>
-        <!-- Size -->
-        <!-- <li class="nav-item pointer" style="display: none;">
+        <!-- Settings -->
+        <li class="nav-item pointer" id="generatorTool">
             <div class="dropdown">
-                <input type="number" value="10" id="sizeInput">
-                <span class="nav-title">Size</span>
+                <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="cursor.isDisabled = true;">
+                    <i class="fa-solid fa-cog"></i><br />
+                    <span class="nav-title">Settings</span>
+                </button>
             </div>
-        </li> -->
-        <!-- Margin -->
-        <!-- <li class="nav-item pointer">
-            <div class="dropdown">
-                <input type="number" value="10" id="marginInput" min="1">
-                <span class="nav-title">Margin</span>
-            </div>
-        </li> -->
-        <!-- Spacing -->
-        <!-- <li class="nav-item pointer" style="display: none">
-            <div class="dropdown">
-                <input type="number" value="10" id="spacingInput">
-                <span class="nav-title">Spacing</span>
-            </div>
-        </li> -->
+        </li>
     </ul>
+
+    <!-- Options popup -->
+    <div class="modal fade modal-xl" id="exampleModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="cursor.isDisabled = false;"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="accordion" id="accordionExample">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="Daknok">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
+                                    aria-expanded="true" aria-controls="collapseOne">
+                                    Daknok
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="Daknok"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="daknok" id="daknok1" checked>
+                                            <label class="form-check-label" for="daknok1">
+                                                Alucobond nok
+                                                <img src="./assets/Alucobond_nok.png" alt="Alucobond_nok" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="daknok" id="daknok2">
+                                            <label class="form-check-label" for="daknok2">
+                                                Nokvorst
+                                                <img src="./assets/nokvorst.png" alt="nokvorst" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="daknok" id="daknok3">
+                                            <label class="form-check-label" for="daknok3">
+                                                Pannen nok
+                                                <img src="./assets/Pannen_nok.png" alt="Pannen_nok" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><div class="accordion-item">
+                            <h2 class="accordion-header" id="Dakrand">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo"
+                                    aria-expanded="false" aria-controls="collapseTwo">
+                                    Dakrand
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="Dakrand"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="dakrand" id="dakrand1" checked>
+                                            <label class="form-check-label" for="dakrand1">
+                                                Alucobond
+                                                <img src="./assets/Alucobond.png" alt="Alucobond" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="dakrand" id="dakrand2">
+                                            <label class="form-check-label" for="dakrand2">
+                                                Pannen
+                                                <img src="./assets/Pannen.png" alt="Pannen" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="dakrand" id="dakrand3">
+                                            <label class="form-check-label" for="dakrand3">
+                                                Zetwerk
+                                                <img src="./assets/Zetwerk.png" alt="Zetwerk" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="Gootdetail">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    Gootdetail
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="Gootdetail"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="gootdetail" id="gootdetail1" checked>
+                                            <label class="form-check-label" for="gootdetail1">
+                                                X-Roof
+                                                <img src="./assets/goot_xroof.png" alt="goot_xroof" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="gootdetail" id="gootdetail2">
+                                            <label class="form-check-label" for="gootdetail2">
+                                                Dakpan
+                                                <img src="./assets/goot_dakpan.png" alt="goot_dakpan" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="gootdetail" id="gootdetail3">
+                                            <label class="form-check-label" for="gootdetail3">
+                                                Paspaneel
+                                                <img src="./assets/goot_paspaneel.png" alt="goot_paspaneel" style="max-width: 100%;">
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="cursor.isDisabled = false;">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -53,7 +53,8 @@ function setup() {
     ]);
 
     generatorMenu = new ContextMenu('generatorMenu', [
-        new ContextMenuOption('Generate', null, 'fa-solid fa-check', null, null, (e)=>{generatorTool.generate();}),
+        new ContextMenuOption('Generate', null, 'fa-solid fa-check', null, null, (e) => { generatorTool.generate(); }),
+        // new ContextMenuOption('Randafwerking (bove)', 'dropdown', null, null, null, null, null, ["None", "Alucobond", "Pannen", "Nokvorst"]),
     ]);
 }
 

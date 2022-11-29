@@ -2,7 +2,7 @@ export default class ContextMenuOption {
     #elem = null;
     #loadEvent = () => { };
 
-    constructor(text, type = null, icon = null, group = null, loadEvent = null, clickEvent = null, changeEvent = null) {
+    constructor(text, type = null, icon = null, group = null, loadEvent = null, clickEvent = null, changeEvent = null, dropdownOptions = []) {
         if (loadEvent == null) { loadEvent = (e) => {}; }
         if (clickEvent == null) { clickEvent = (e) => {}; }
         if (changeEvent == null) { changeEvent = (e) => {}; }
@@ -22,6 +22,25 @@ export default class ContextMenuOption {
             }
 
             this.#elem.append(iconElem);
+        }
+        else if (type == "dropdown") {
+            //dropdown
+            var dropdownElem = document.createElement('SELECT');
+            dropdownElem.classList.add('form-control');
+
+            for (let i = 0; i < dropdownOptions.length; i++) {
+                const option = dropdownOptions[i];
+                var optionElem = document.createElement("OPTION");
+                optionElem.innerHTML = option;
+                optionElem.value = option;
+
+                if(i == 0){
+                    optionElem.selected = true;
+                }
+
+                dropdownElem.appendChild(optionElem);
+            }
+            this.#elem.append(dropdownElem);
         }
         else if(type != null){
             var typeElem = document.createElement('INPUT');

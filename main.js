@@ -13,6 +13,7 @@ import HistoryTool from './classes/HistoryTool';
 import Action from './classes/Action';
 import ContextMenu from './classes/ContextMenu';
 import ContextMenuOption from './classes/ContextMenuOption';
+import Tile from './classes/Tile';
 
 window.onload = () => {
     if(typeof createCanvas !== 'function'){
@@ -25,4 +26,4 @@ window.onload = () => {
     }
 };
 
-export { Vector2, Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, GeneratorTool, HistoryTool, Action, ContextMenu, ContextMenuOption }
+export { Vector2, Settings, Collision, EventSystem, Cursor, Color, Grid, Renderer, DrawingTool, SelectorTool, GeneratorTool, HistoryTool, Action, ContextMenu, ContextMenuOption, Tile }

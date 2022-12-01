@@ -4,6 +4,12 @@ export default class Vector2{
 
     static zero = () => { return new Vector2(0,0); };
     static one = () => { return new Vector2(1,1); };
+
+    static up = () => { return new Vector2(0,1); };
+    static right = () => { return new Vector2(1,0); };
+    static down = () => { return new Vector2(0,-1); };
+    static left = () => { return new Vector2(-1,0); };
+
     static copy = (v) => { return new Vector2(v.x, v.y); };
     static angle = (v1, v2) => { return Math.atan((v1.x - v2.x) / (v1.y - v2.y)); };
     static distance = (v1, v2) => { return new Vector2(v1.x - v2.x, v1.y - v2.y).magnitude(); };
@@ -19,6 +25,7 @@ export default class Vector2{
     magnitude = () => { return Math.sqrt(this.x * this.x + this.y * this.y); };
     normalized = () => { var mag = this.magnitude(); return new Vector2(this.x / mag, this.y / mag); };
     getCopy = () => { return new Vector2(this.x, this.y); };
+    toAngle = () => { return Math.atan2(Math.abs(this.x), Math.abs(this.y)) * 180 / Math.PI; };
     minMax = (v1, v2) => {
         this.x = this.x < v1.x ? v1.x : this.x;
         this.y = this.y < v1.y ? v1.y : this.y;

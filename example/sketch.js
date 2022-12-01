@@ -56,6 +56,10 @@ function setup() {
         new ContextMenuOption('Generate', null, 'fa-solid fa-check', null, null, (e) => { generatorTool.generate(); }),
         // new ContextMenuOption('Randafwerking (bove)', 'dropdown', null, null, null, null, null, ["None", "Alucobond", "Pannen", "Nokvorst"]),
     ]);
+
+    //load generation settings
+    updateSettings();
+    generatorTool.generate();
 }
 
 function draw() {
@@ -238,4 +242,40 @@ function updateToolMode(mode){
     else if (mode == "insert") {
         Window.currentTool.canInsert = true;
     }
+}
+
+function updateSettings(){
+    var elems = document.getElementsByName("daknok");
+    var daknok = 0;
+    for (let i = 0; i < elems.length; i++) {
+        const elem = elems[i];
+        if(elem.checked){
+            daknok = parseFloat(elem.getAttribute("data-margin"));
+            break;
+        }
+    }
+
+    elems = document.getElementsByName("dakrand");
+    var dakrand = 0;
+    for (let i = 0; i < elems.length; i++) {
+        const elem = elems[i];
+        if(elem.checked){
+            dakrand = parseFloat(elem.getAttribute("data-margin"));
+            break;
+        }
+    }
+
+    elems = document.getElementsByName("gootdetail");
+    var gootdetail = 0;
+    for (let i = 0; i < elems.length; i++) {
+        const elem = elems[i];
+        if(elem.checked){
+            gootdetail = parseFloat(elem.getAttribute("data-margin"));
+            break;
+        }
+    }
+    
+    generatorTool.marginU = daknok;
+    generatorTool.marginLR = dakrand;
+    generatorTool.marginD = gootdetail;
 }

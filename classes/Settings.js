@@ -16,6 +16,7 @@ export default class Settings {
     static gridLines = new Color("--grid-lines");
     static shapeAllowed = new Color("--shape-allowed");
     static shapeForbidden = new Color("--shape-forbidden");
+    static tileBackground = new Color("--tile-background");
 
     static #canvas = null;
     static setCanvas = (c) => { this.#canvas = c; };

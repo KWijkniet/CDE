@@ -302,22 +302,23 @@ export default class GeneratorTool {
                 this.#tiles.push(tile);
                 return true;
             } else {
-                return false;
-                if (width > 20 && height > 20) {
-                    // //Incase we need to slow down the calculation (if the browser freezes up)
-                    // await this.#sleep(10);
+                //Cannot place tile
+                // if (width > 20 && height > 20) {
+                //     // //Incase we need to slow down the calculation (if the browser freezes up)
+                //     // await this.#sleep(10);
 
-                    // var res = attemptPlaceTile(x, y, width - 1, height);
-                    // if (res) { return res; }
-                    // res = attemptPlaceTile(x, y, width, height - 1);
-                    // if (res) { return res; }
-                    // res = attemptPlaceTile(x - 1, y, width - 1, height);
-                    // if (res) { return res; }
-                    // res = attemptPlaceTile(x, y - 1, width, height - 1);
-                    // if (res) { return res; }
-                    // res = attemptPlaceTile(x - 1, y - 1, width - 1, height - 1);
-                    // return res;
-                }
+                //     // var res = attemptPlaceTile(x, y, width - 1, height);
+                //     // if (res) { return res; }
+                //     // res = attemptPlaceTile(x, y, width, height - 1);
+                //     // if (res) { return res; }
+                //     // res = attemptPlaceTile(x - 1, y, width - 1, height);
+                //     // if (res) { return res; }
+                //     // res = attemptPlaceTile(x, y - 1, width, height - 1);
+                //     // if (res) { return res; }
+                //     // res = attemptPlaceTile(x - 1, y - 1, width - 1, height - 1);
+                //     // return res;
+                // }
+                return false;
             }
             return false;
         }

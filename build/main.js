@@ -1689,8 +1689,11 @@ var __privateMethod = (obj, member, method) => {
         __privateGet(this, _tiles).push(tile);
         return true;
       } else {
-        return false;
+        if (width2 > 20 && height2 > 20) {
+          return false;
+        }
       }
+      return false;
     };
     var syncedFunc = async (x, y) => {
       attemptPlaceTile(x, y, tileWidth, tileHeight);

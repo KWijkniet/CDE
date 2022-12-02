@@ -37,7 +37,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _generate4, generate_fn3, _buffer5, _renderer, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _getTile, getTile_fn, _actions, _index, _options, _elem, _loadEvent;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _getTile, getTile_fn, _actions, _index, _options, _elem, _loadEvent;
   "use strict";
   const _Vector2 = class {
     constructor(x = 0, y = 0) {
@@ -1489,6 +1489,7 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _createOutset);
       __privateAdd(this, _getMargin);
       __privateAdd(this, _generateTiles);
+      __privateAdd(this, _canBePlaced);
       __privateAdd(this, _isColliding);
       __privateAdd(this, _isInside);
       __privateAdd(this, _getTile);
@@ -1500,9 +1501,10 @@ var __privateMethod = (obj, member, method) => {
       __publicField(this, "marginU", 25);
       __publicField(this, "marginLR", 25);
       __publicField(this, "marginD", 25);
-      __publicField(this, "margin", 25);
+      __publicField(this, "margin", 5);
       __privateAdd(this, _buffer5, null);
       __privateAdd(this, _renderer, null);
+      __privateAdd(this, _tiles, []);
       __privateAdd(this, _sleep, (delay) => new Promise((resolve) => setTimeout(resolve, delay)));
       __privateSet(this, _renderer, Renderer.instance);
       __privateSet(this, _buffer5, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
@@ -1525,12 +1527,36 @@ var __privateMethod = (obj, member, method) => {
         const shape = shapes[i];
         if (shape.isAllowed && !shape.isGenerated) {
           var inset = __privateMethod(this, _createInset, createInset_fn).call(this, shape);
-          inset.getVertices();
+          var points = inset.getVertices();
           insets.push(inset);
+          {
+            __privateGet(this, _buffer5).push();
+            for (let i2 = 0; i2 < points.length; i2++) {
+              const vc = points[i2];
+              const vn = points[i2 + 1 < points.length ? i2 + 1 : 0];
+              __privateGet(this, _buffer5).drawingContext.setLineDash([15, 15]);
+              __privateGet(this, _buffer5).stroke(255, 0, 0);
+              __privateGet(this, _buffer5).strokeWeight(2);
+              __privateGet(this, _buffer5).line(vc.x, vc.y, vn.x, vn.y);
+            }
+            __privateGet(this, _buffer5).pop();
+          }
         } else {
           var outset = __privateMethod(this, _createOutset, createOutset_fn).call(this, shape);
-          outset.getVertices();
+          var points = outset.getVertices();
           outsets.push(outset);
+          {
+            __privateGet(this, _buffer5).push();
+            for (let i2 = 0; i2 < points.length; i2++) {
+              const vc = points[i2];
+              const vn = points[i2 + 1 < points.length ? i2 + 1 : 0];
+              __privateGet(this, _buffer5).drawingContext.setLineDash([15, 15]);
+              __privateGet(this, _buffer5).stroke(0, 0, 0);
+              __privateGet(this, _buffer5).strokeWeight(2);
+              __privateGet(this, _buffer5).line(vc.x, vc.y, vn.x, vn.y);
+            }
+            __privateGet(this, _buffer5).pop();
+          }
         }
       }
       for (let i = 0; i < insets.length; i++) {
@@ -1541,6 +1567,7 @@ var __privateMethod = (obj, member, method) => {
   }
   _buffer5 = new WeakMap();
   _renderer = new WeakMap();
+  _tiles = new WeakMap();
   _createInset = new WeakSet();
   createInset_fn = function(shape) {
     var insets = [];
@@ -1648,42 +1675,53 @@ var __privateMethod = (obj, member, method) => {
     var tileHeight = 600 / 10;
     var yWithTile = -1;
     var insetPoints = inset.getVertices();
-    var syncedFunc = async (x, y) => {
+    var attemptPlaceTile = async (x, y, width2, height2) => {
       var points = [
         new Vector2(x, y),
-        new Vector2(x + tileWidth, y),
-        new Vector2(x + tileWidth, y + tileHeight),
-        new Vector2(x, y + tileHeight)
+        new Vector2(x + width2, y),
+        new Vector2(x + width2, y + height2),
+        new Vector2(x, y + height2)
       ];
-      var hasEnoughSpace = true;
-      if (__privateMethod(this, _isInside, isInside_fn).call(this, insetPoints, points)) {
-        for (let i = 0; i < outsets.length; i++) {
-          const outset = outsets[i];
-          const outsetPoints = outset.getVertices();
-          if (__privateMethod(this, _isColliding, isColliding_fn).call(this, outsetPoints, points)) {
-            hasEnoughSpace = false;
-            break;
-          }
-        }
-      } else {
-        hasEnoughSpace = false;
-      }
+      var hasEnoughSpace = __privateMethod(this, _canBePlaced, canBePlaced_fn).call(this, insetPoints, outsets, points);
       if (hasEnoughSpace) {
-        __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points);
+        var tile = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points);
         yWithTile = y;
+        __privateGet(this, _tiles).push(tile);
+        return true;
+      } else {
+        return false;
       }
-      {
-        x += hasEnoughSpace ? tileWidth : 1;
-        if (x + tileWidth >= boundingBox.x + boundingBox.w) {
-          y += y == yWithTile ? tileHeight : 1;
-          x = boundingBox.x;
-        }
-        if (y + tileHeight < boundingBox.y + boundingBox.h) {
-          syncedFunc(x, y);
-        }
+    };
+    var syncedFunc = async (x, y) => {
+      attemptPlaceTile(x, y, tileWidth, tileHeight);
+      await __privateGet(this, _sleep).call(this, 10);
+      x += tileWidth;
+      if (x + tileWidth >= boundingBox.x + boundingBox.w) {
+        y += yWithTile < y ? 1 : tileHeight;
+        x = boundingBox.x;
+      }
+      if (y + 20 <= boundingBox.y + boundingBox.h) {
+        syncedFunc(x, y);
       }
     };
     syncedFunc(boundingBox.x, boundingBox.y);
+  };
+  _canBePlaced = new WeakSet();
+  canBePlaced_fn = function(insetPoints, outsets, points) {
+    var hasEnoughSpace = true;
+    if (__privateMethod(this, _isInside, isInside_fn).call(this, insetPoints, points)) {
+      for (let i = 0; i < outsets.length; i++) {
+        const outset = outsets[i];
+        const outsetPoints = outset.getVertices();
+        if (__privateMethod(this, _isColliding, isColliding_fn).call(this, outsetPoints, points)) {
+          hasEnoughSpace = false;
+          break;
+        }
+      }
+    } else {
+      hasEnoughSpace = false;
+    }
+    return hasEnoughSpace;
   };
   _isColliding = new WeakSet();
   isColliding_fn = function(zonePoints, points) {

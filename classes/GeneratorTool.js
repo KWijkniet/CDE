@@ -16,10 +16,11 @@ export default class GeneratorTool {
     marginU = 25;
     marginLR = 25;
     marginD = 25;
-    margin = 25;
+    margin = 5;
 
     #buffer = null;
     #renderer = null;
+    #tiles = [];
 
     constructor(){
         this.#renderer = Renderer.instance;
@@ -41,7 +42,7 @@ export default class GeneratorTool {
     generate(){
         var insets = [];
         var outsets = [];
-        var hideVisuals = true;
+        var hideVisuals = false;
 
         this.#buffer.clear();
         var shapes = this.#renderer.getAll();
@@ -87,25 +88,25 @@ export default class GeneratorTool {
             }
         }
 
-        if(!hideVisuals){
-            for (let i = 0; i < insets.length; i++) {
-                const inset = insets[i];
-                this.#buffer.stroke(0);
-                this.#buffer.strokeWeight(2);
-                var boundingBox = inset.getBoundingBox();
-                this.#buffer.fill(255, 255, 255, 0);
-                this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
-            }
+        // if(!hideVisuals){
+        //     for (let i = 0; i < insets.length; i++) {
+        //         const inset = insets[i];
+        //         this.#buffer.stroke(0);
+        //         this.#buffer.strokeWeight(2);
+        //         var boundingBox = inset.getBoundingBox();
+        //         this.#buffer.fill(255, 255, 255, 0);
+        //         this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+        //     }
 
-            for (let i = 0; i < outsets.length; i++) {
-                const outset = outsets[i];
-                this.#buffer.stroke(0);
-                this.#buffer.strokeWeight(2);
-                var boundingBox = outset.getBoundingBox();
-                this.#buffer.fill(255, 0, 0, 150);
-                this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
-            }
-        }
+        //     for (let i = 0; i < outsets.length; i++) {
+        //         const outset = outsets[i];
+        //         this.#buffer.stroke(0);
+        //         this.#buffer.strokeWeight(2);
+        //         var boundingBox = outset.getBoundingBox();
+        //         this.#buffer.fill(255, 0, 0, 150);
+        //         this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+        //     }
+        // }
 
         for (let i = 0; i < insets.length; i++) {
             const inset = insets[i];
@@ -284,69 +285,81 @@ export default class GeneratorTool {
         var tileHeight = 600 / 10;
         var yWithTile = -1;
         var insetPoints = inset.getVertices();
-        // var mode = "grid";
-        var mode = "space";
 
-        var syncedFunc = async(x, y) => {
+        var attemptPlaceTile = async(x, y, width, height) => {
             var points = [
                 new Vector2(x, y),
-                new Vector2(x + tileWidth, y),
-                new Vector2(x + tileWidth, y + tileHeight),
-                new Vector2(x, y + tileHeight),
+                new Vector2(x + width, y),
+                new Vector2(x + width, y + height),
+                new Vector2(x, y + height),
             ];
 
-            var hasEnoughSpace = true;
-            if(this.#isInside(insetPoints, points)){
-                for (let i = 0; i < outsets.length; i++) {
-                    const outset = outsets[i];
-                    const outsetPoints = outset.getVertices();
-                    
-                    if(this.#isColliding(outsetPoints, points)){
-                        hasEnoughSpace = false;
-                        break;
-                    }
-                }
-            }
-            else{
-                hasEnoughSpace = false;
-            }
+            var hasEnoughSpace = this.#canBePlaced(insetPoints, outsets, points);
 
-            if(hasEnoughSpace){
+            if (hasEnoughSpace) {
                 var tile = this.#getTile(x, y, points);
                 yWithTile = y;
+                this.#tiles.push(tile);
+                return true;
+            } else {
+                return false;
+                if (width > 20 && height > 20) {
+                    // //Incase we need to slow down the calculation (if the browser freezes up)
+                    // await this.#sleep(10);
+
+                    // var res = attemptPlaceTile(x, y, width - 1, height);
+                    // if (res) { return res; }
+                    // res = attemptPlaceTile(x, y, width, height - 1);
+                    // if (res) { return res; }
+                    // res = attemptPlaceTile(x - 1, y, width - 1, height);
+                    // if (res) { return res; }
+                    // res = attemptPlaceTile(x, y - 1, width, height - 1);
+                    // if (res) { return res; }
+                    // res = attemptPlaceTile(x - 1, y - 1, width - 1, height - 1);
+                    // return res;
+                }
+            }
+            return false;
+        }
+
+        var syncedFunc = async(x, y) => {
+            var tilePlaced = attemptPlaceTile(x, y, tileWidth, tileHeight);
+
+            //Incase we need to slow down the calculation (if the browser freezes up)
+            await this.#sleep(10);
+
+            x += tileWidth;
+            if (x + tileWidth >= boundingBox.x + boundingBox.w) {
+                y += yWithTile < y ? 1 : tileHeight;
+                x = boundingBox.x;
             }
 
-            // //Incase we need to slow down the calculation (if the browser freezes up)
-            // await this.#sleep(0);
-
-            //Space Mode
-            if(mode == "space"){
-                x += hasEnoughSpace ? tileWidth : 1;
-                if(x + tileWidth >= boundingBox.x + boundingBox.w){
-                    y += y == yWithTile ? tileHeight : 1;
-                    x = boundingBox.x;
-                }
-                
-                if(y + tileHeight < boundingBox.y + boundingBox.h){
-                    syncedFunc(x, y);
-                }
-            }
-
-            //Grid mode
-            if(mode == "grid"){
-                x += tileWidth;
-                if(x + tileWidth >= boundingBox.x + boundingBox.w){
-                    y += tileHeight;
-                    x = boundingBox.x;
-                }
-                
-                if(y + tileHeight < boundingBox.y + boundingBox.h){
-                    syncedFunc(x, y);
-                }
+            if (y + 20 <= boundingBox.y + boundingBox.h) {
+                syncedFunc(x, y);
             }
         }
 
         syncedFunc(boundingBox.x, boundingBox.y);
+    }
+    
+    #canBePlaced(insetPoints, outsets, points) {
+        var hasEnoughSpace = true;
+        if (this.#isInside(insetPoints, points)) {
+            for (let i = 0; i < outsets.length; i++) {
+                const outset = outsets[i];
+                const outsetPoints = outset.getVertices();
+
+                if (this.#isColliding(outsetPoints, points)) {
+                    hasEnoughSpace = false;
+                    break;
+                }
+            }
+        }
+        else {
+            hasEnoughSpace = false;
+        }
+
+        return hasEnoughSpace;
     }
 
     #isColliding(zonePoints, points){

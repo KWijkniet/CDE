@@ -3,6 +3,7 @@
     --grid-lines: rgba(0, 0, 0, 100);
     --shape-allowed: rgba(255, 255, 255, 128);
     --shape-forbidden: rgba(255, 0, 0, 128);
+    --tile-background: rgba(100, 100, 100, 255);
 }
 
 * {

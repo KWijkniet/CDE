@@ -6,17 +6,21 @@ export default class Shape {
     color = null;
     showData = false;
     isAllowed = true;
+    isGenerated = false;
 
     #vertices = null;
     #shapebuffer = null;
     #textBuffer = null;
     #pos = null;
 
-    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null) {
+    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
         this.id = id;
         this.color = color;
         this.showData = true;
         this.isAllowed = true;
+        this.isGenerated = isGenerated;
+        this.#shapebuffer = buffer;
+        this.#textBuffer = buffer;
 
         if(this.id == null){
             this.id = this.#generateUniqSerial();
@@ -36,17 +40,18 @@ export default class Shape {
     getId(){
         return this.#shapebuffer.canvas.id.split("_")[1];
     }
-
     getVertices(){
         return this.#vertices;
     }
+    getBoundingBox(){
+        const xArr = this.#vertices.map(a => a.x);
+        const yArr = this.#vertices.map(a => a.y);
+        const width = (Math.max(...xArr) - Math.min(...xArr));
+        const height = (Math.max(...yArr) - Math.min(...yArr));
+        return {"x": this.#pos.x + (Settings.bufferMargin / 2), "y": this.#pos.y + (Settings.bufferMargin / 2), "w": width, "h": height};
+    }
 
     clone() {
-        // var copy = [];
-        // for (let i = 0; i < this.#vertices.length; i++) {
-        //     const vertice = this.#vertices[i];
-        //     copy.push(Vector2.copy(vertice));
-        // }
         return new Shape(Vector2.copyAll(this.#vertices), this.color, this.id);
     }
 

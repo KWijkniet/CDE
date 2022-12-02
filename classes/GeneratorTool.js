@@ -17,6 +17,7 @@ export default class GeneratorTool {
     marginLR = 25;
     marginD = 25;
     margin = 5;
+    rowOffsetMode = true;
 
     #buffer = null;
     #renderer = null;
@@ -285,6 +286,8 @@ export default class GeneratorTool {
         var tileHeight = 600 / 10;
         var yWithTile = -1;
         var insetPoints = inset.getVertices();
+        var rowIndex = 0;
+        var withOffset = false;
 
         var attemptPlaceTile = async(x, y, width, height) => {
             var points = [
@@ -332,7 +335,13 @@ export default class GeneratorTool {
             x += tileWidth;
             if (x + tileWidth >= boundingBox.x + boundingBox.w) {
                 y += yWithTile < y ? 1 : tileHeight;
-                x = boundingBox.x;
+                rowIndex++
+                if (this.rowOffsetMode) {
+                    x = rowIndex % 2 != 0 ? boundingBox.x + (tileWidth / 2) : boundingBox.x;
+                }
+                else{
+                    x = boundingBox.x;
+                }
             }
 
             if (y + 20 <= boundingBox.y + boundingBox.h) {

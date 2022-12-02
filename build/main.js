@@ -1502,6 +1502,7 @@ var __privateMethod = (obj, member, method) => {
       __publicField(this, "marginLR", 25);
       __publicField(this, "marginD", 25);
       __publicField(this, "margin", 5);
+      __publicField(this, "rowOffsetMode", true);
       __privateAdd(this, _buffer5, null);
       __privateAdd(this, _renderer, null);
       __privateAdd(this, _tiles, []);
@@ -1675,6 +1676,7 @@ var __privateMethod = (obj, member, method) => {
     var tileHeight = 600 / 10;
     var yWithTile = -1;
     var insetPoints = inset.getVertices();
+    var rowIndex = 0;
     var attemptPlaceTile = async (x, y, width2, height2) => {
       var points = [
         new Vector2(x, y),
@@ -1689,11 +1691,8 @@ var __privateMethod = (obj, member, method) => {
         __privateGet(this, _tiles).push(tile);
         return true;
       } else {
-        if (width2 > 20 && height2 > 20) {
-          return false;
-        }
+        return false;
       }
-      return false;
     };
     var syncedFunc = async (x, y) => {
       attemptPlaceTile(x, y, tileWidth, tileHeight);
@@ -1701,7 +1700,12 @@ var __privateMethod = (obj, member, method) => {
       x += tileWidth;
       if (x + tileWidth >= boundingBox.x + boundingBox.w) {
         y += yWithTile < y ? 1 : tileHeight;
-        x = boundingBox.x;
+        rowIndex++;
+        if (this.rowOffsetMode) {
+          x = rowIndex % 2 != 0 ? boundingBox.x + tileWidth / 2 : boundingBox.x;
+        } else {
+          x = boundingBox.x;
+        }
       }
       if (y + 20 <= boundingBox.y + boundingBox.h) {
         syncedFunc(x, y);

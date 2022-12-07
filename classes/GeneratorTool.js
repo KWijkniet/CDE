@@ -17,7 +17,7 @@ export default class GeneratorTool {
     marginLR = 25;
     marginD = 25;
     margin = 5;
-    rowOffsetMode = true;
+    rowOffsetMode = false;
 
     #buffer = null;
     #renderer = null;
@@ -305,24 +305,80 @@ export default class GeneratorTool {
                 this.#tiles.push(tile);
                 return true;
             } else {
-                //Cannot place tile
                 // if (width > 20 && height > 20) {
-                //     // //Incase we need to slow down the calculation (if the browser freezes up)
-                //     // await this.#sleep(10);
+                    //Incase we need to slow down the calculation (if the browser freezes up)
+                    await this.#sleep(10);
 
-                //     // var res = attemptPlaceTile(x, y, width - 1, height);
-                //     // if (res) { return res; }
-                //     // res = attemptPlaceTile(x, y, width, height - 1);
-                //     // if (res) { return res; }
-                //     // res = attemptPlaceTile(x - 1, y, width - 1, height);
-                //     // if (res) { return res; }
-                //     // res = attemptPlaceTile(x, y - 1, width, height - 1);
-                //     // if (res) { return res; }
-                //     // res = attemptPlaceTile(x - 1, y - 1, width - 1, height - 1);
-                //     // return res;
-                // }
-                return false;
-            }
+                    var collisionFound = false;
+                    var collisionLines = [];
+                    var newWidth, newHeight;
+                    if (Collision.polygonRectangle(insetPoints, x, y, width, height)){
+                        // Make forloop to check for collision with inset
+                        for (let i = 0; i < insetPoints.length; i++) {
+                            // Check collision 
+                            if(i == insetPoints.length - 1){
+                                if(Collision.lineRectangle(insetPoints[i].x, insetPoints[i].y,insetPoints[0].x, insetPoints[0].y, x,y,width,height)){
+                                    // Add line to array
+                                    var line = [ 
+                                        new Vector2(insetPoints[i].x, insetPoints[i].y),
+                                        new Vector2(insetPoints[0].x, insetPoints[0].y)
+                                    ];
+                                    collisionLines.push(line);
+                                }
+                            }else {
+                                if(Collision.lineRectangle(insetPoints[i].x, insetPoints[i].y,insetPoints[i+1].x, insetPoints[i+1].y, x,y,width,height)){
+                                    // Add line to array
+                                    var line = [ 
+                                        new Vector2(insetPoints[i].x, insetPoints[i].y),
+                                        new Vector2(insetPoints[i+1].x, insetPoints[i+1].y)
+                                    ];
+                                    collisionLines.push(line);
+                                }
+                            }
+
+                            if(collisionLines.length > 0) collisionFound = true;
+                        }
+                        // if true, Calculate collision point
+                        if (collisionFound){
+                            for (let l = 0; l < collisionLines.length; l++) {
+                                // Width check
+                                if(Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y,collisionLines[l][1].x, collisionLines[l][1].y, points[0].x, points[0].y, points[1].x, points[1].x)){
+                                    print('width');
+                                    var intersectionForWidth = this.#lineIntersection(collisionLines[l][0], collisionLines[l][1], points[0], points[1]);
+                                    // Debug - visual collision point
+                                    this.#buffer.circle(intersectionForWidth.x , intersectionForWidth.y ,10);
+                                    // Get distance between points 
+                                    newWidth = Vector2.distance(points[0], intersectionForWidth);
+                                }   
+                                // Height check
+                                if(Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y,collisionLines[l][1].x, collisionLines[l][1].y, points[3].x, points[3].y, points[0].x, points[0].x)){
+                                    print('height');
+                                    var intersectionForHeight = this.#lineIntersection(collisionLines[l][0], collisionLines[l][1], points[3], points[0]);
+                                    // Debug - visual collision point
+                                    this.#buffer.circle(intersectionForHeight.x , intersectionForHeight.y ,10);
+                                    // Get distance between points 
+                                    newHeight = Vector2.distance(points[0], intersectionForHeight);
+                                }
+                            }
+                        }
+                        // 4 overwrite width/ height with new data
+                        if(newWidth > 0 ) width = newWidth;
+                        if(newHeight > 0 ) height = newHeight;
+                        // Overwrite points
+                        var points = [
+                            new Vector2(x, y),
+                            new Vector2(x + width, y),
+                            new Vector2(x + width, y + height),
+                            new Vector2(x, y + height),
+                        ];
+                        // Add tile with the new width and height
+                        var tile = this.#getTile(x, y, points);
+                        yWithTile = y;
+                        this.#tiles.push(tile);
+                        return true;
+                    }             
+                }
+            // }
             return false;
         }
 
@@ -333,7 +389,7 @@ export default class GeneratorTool {
             await this.#sleep(10);
 
             x += tileWidth;
-            if (x + tileWidth >= boundingBox.x + boundingBox.w) {
+            if (x >= boundingBox.x + boundingBox.w) {
                 y += yWithTile < y ? 1 : tileHeight;
                 rowIndex++
                 if (this.rowOffsetMode) {
@@ -388,5 +444,41 @@ export default class GeneratorTool {
 
     #getTile(x,y, vertices){
         return new Tile(vertices, this.#buffer);
+    }
+
+    #getIntersectionPoint(p1, p2, r1, r2, r3, r4)
+    {
+        var intersection;
+        intersection = this.#lineIntersection(p1,p2,r1,r2);
+        if(intersection == null) intersection = this.#lineIntersection(p1,p2,r2,r3);
+        if(intersection == null) intersection = this.#lineIntersection(p1,p2,r3,r4);
+        if(intersection == null) intersection = this.#lineIntersection(p1,p2,r4,r1);
+        return intersection;
+    }
+
+    #lineIntersection(pointA, pointB, pointC, pointD) {
+        var z1 = (pointA.x - pointB.x);
+        var z2 = (pointC.x - pointD.x);
+        var z3 = (pointA.y - pointB.y);
+        var z4 = (pointC.y - pointD.y);
+        var dist = z1 * z4 - z3 * z2;
+        if (dist == 0) {
+          return null;
+        }
+        var tempA = (pointA.x * pointB.y - pointA.y * pointB.x);
+        var tempB = (pointC.x * pointD.y - pointC.y * pointD.x);
+        var xCoor = (tempA * z2 - z1 * tempB) / dist;
+        var yCoor = (tempA * z4 - z3 * tempB) / dist;
+      
+        if (xCoor < Math.min(pointA.x, pointB.x) || xCoor > Math.max(pointA.x, pointB.x) ||
+          xCoor < Math.min(pointC.x, pointD.x) || xCoor > Math.max(pointC.x, pointD.x)) {
+          return null;
+        }
+        if (yCoor < Math.min(pointA.y, pointB.y) || yCoor > Math.max(pointA.y, pointB.y) ||
+          yCoor < Math.min(pointC.y, pointD.y) || yCoor > Math.max(pointC.y, pointD.y)) {
+          return null;
+        }
+      
+        return new Vector2(xCoor, yCoor);
     }
 }

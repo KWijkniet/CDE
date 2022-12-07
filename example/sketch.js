@@ -58,7 +58,7 @@ function setup() {
 
     //load generation settings
     updateSettings();
-    // generatorTool.generate();
+    generatorTool.generate();
 }
 
 function draw() {

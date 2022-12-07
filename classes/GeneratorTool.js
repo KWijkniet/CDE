@@ -339,12 +339,15 @@ export default class GeneratorTool {
                             if(collisionLines.length > 0) collisionFound = true;
                         }
                         // if true, Calculate collision point
-                        if (collisionFound){
+                        if (collisionFound) {
                             for (let l = 0; l < collisionLines.length; l++) {
                                 // Width check
                                 if(Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y,collisionLines[l][1].x, collisionLines[l][1].y, points[0].x, points[0].y, points[1].x, points[1].x)){
                                     print('width');
                                     var intersectionForWidth = this.#lineIntersection(collisionLines[l][0], collisionLines[l][1], points[0], points[1]);
+                                    if (intersectionForWidth == null) {
+                                        continue;
+                                    }
                                     // Debug - visual collision point
                                     this.#buffer.circle(intersectionForWidth.x , intersectionForWidth.y ,10);
                                     // Get distance between points 
@@ -354,6 +357,9 @@ export default class GeneratorTool {
                                 if(Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y,collisionLines[l][1].x, collisionLines[l][1].y, points[3].x, points[3].y, points[0].x, points[0].x)){
                                     print('height');
                                     var intersectionForHeight = this.#lineIntersection(collisionLines[l][0], collisionLines[l][1], points[3], points[0]);
+                                    if(intersectionForHeight == null){
+                                        continue;
+                                    }
                                     // Debug - visual collision point
                                     this.#buffer.circle(intersectionForHeight.x , intersectionForHeight.y ,10);
                                     // Get distance between points 
@@ -400,7 +406,7 @@ export default class GeneratorTool {
                 }
             }
 
-            if (y + 20 <= boundingBox.y + boundingBox.h) {
+            if (y <= boundingBox.y + boundingBox.h) {
                 syncedFunc(x, y);
             }
         }

@@ -86,6 +86,14 @@ var __privateMethod = (obj, member, method) => {
       __publicField(this, "equals", (v) => {
         return this.x == v.x && this.y == v.y;
       });
+      __publicField(this, "toJSON", () => {
+        return { x: this.x, y: this.y };
+      });
+      __publicField(this, "fromJSON", (json) => {
+        this.x = json.x;
+        this.y = json.y;
+        return this;
+      });
       this.x = x;
       this.y = y;
     }
@@ -145,6 +153,12 @@ var __privateMethod = (obj, member, method) => {
       tmp.push(new _Vector2(arr[i].x, arr[i].y));
     }
     return tmp;
+  });
+  __publicField(Vector2, "toJSON", (v) => {
+    return { x: v.x, y: v.y };
+  });
+  __publicField(Vector2, "fromJSON", (json) => {
+    return new _Vector2(json.x, json.y);
   });
   class Collision {
     static pointPoint(x1, y1, x2, y2) {
@@ -357,7 +371,7 @@ var __privateMethod = (obj, member, method) => {
       return false;
     }
   }
-  class Color$1 {
+  class Color {
     constructor(string = null, r = 0, g = 0, b = 0, a = 1) {
       __publicField(this, "string", "");
       __publicField(this, "value", []);
@@ -393,11 +407,11 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Settings$1, "zoom", 1);
   __publicField(Settings$1, "bufferMargin", 50);
   __publicField(Settings$1, "cursorSize", 10);
-  __publicField(Settings$1, "gridBackground", new Color$1("--grid-background"));
-  __publicField(Settings$1, "gridLines", new Color$1("--grid-lines"));
-  __publicField(Settings$1, "shapeAllowed", new Color$1("--shape-allowed"));
-  __publicField(Settings$1, "shapeForbidden", new Color$1("--shape-forbidden"));
-  __publicField(Settings$1, "tileBackground", new Color$1("--tile-background"));
+  __publicField(Settings$1, "gridBackground", new Color("--grid-background"));
+  __publicField(Settings$1, "gridLines", new Color("--grid-lines"));
+  __publicField(Settings$1, "shapeAllowed", new Color("--shape-allowed"));
+  __publicField(Settings$1, "shapeForbidden", new Color("--shape-forbidden"));
+  __publicField(Settings$1, "tileBackground", new Color("--tile-background"));
   __privateAdd(Settings$1, _canvas, null);
   __publicField(Settings$1, "setCanvas", (c) => {
     __privateSet(_Settings$1, _canvas, c);
@@ -606,7 +620,7 @@ var __privateMethod = (obj, member, method) => {
   }
   _buffer = new WeakMap();
   const _Shape = class {
-    constructor(vertices = [], color = new Color$1(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
+    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
       __publicField(this, "id", null);
       __publicField(this, "color", null);
       __publicField(this, "showData", false);
@@ -662,6 +676,9 @@ var __privateMethod = (obj, member, method) => {
           return r.toString(16);
         });
       });
+      if (vertices.length <= 0 && id == null) {
+        return;
+      }
       this.id = id;
       this.color = color;
       this.showData = true;
@@ -703,7 +720,7 @@ var __privateMethod = (obj, member, method) => {
     redraw() {
       __privateGet(this, _generate).call(this);
     }
-    reCalculate(vertices = [], color = new Color$1(null, 255, 255, 255)) {
+    reCalculate(vertices = [], color = new Color(null, 255, 255, 255)) {
       if (__privateGet(this, _shapebuffer) != null) {
         __privateGet(this, _shapebuffer).clear();
         __privateGet(this, _shapebuffer).elt.parentNode.removeChild(__privateGet(this, _shapebuffer).elt);
@@ -714,6 +731,29 @@ var __privateMethod = (obj, member, method) => {
       }
       __privateSet(this, _vertices, vertices);
       this.color = color;
+      __privateGet(this, _generate).call(this);
+    }
+    toJSON() {
+      var vertices = [];
+      for (let i = 0; i < __privateGet(this, _vertices).length; i++) {
+        const vertice = __privateGet(this, _vertices)[i];
+        vertices.push(vertice.toJSON());
+      }
+      return { "id": this.id, "color": this.color.rgba(), "showData": this.showData, "isAllowed": this.isAllowed, "isGenerated": this.isGenerated, "vertices": vertices, "pos": __privateGet(this, _pos).toJSON() };
+    }
+    fromJSON(json) {
+      this.id = json.id;
+      this.color = new Color(null, json.color.r, json.color.g, json.color.b, json.color.a);
+      this.showData = json.showData;
+      this.isAllowed = json.isAllowed;
+      this.isGenerated = json.isGenerated;
+      __privateSet(this, _pos, json.pos);
+      __privateSet(this, _vertices, []);
+      for (let i = 0; i < json.vertices.length; i++) {
+        const vertice = json.vertices[i];
+        __privateGet(this, _vertices).push(new Vector2(0, 0).fromJSON(vertice));
+      }
+      console.log(__privateGet(this, _vertices));
       __privateGet(this, _generate).call(this);
     }
   };
@@ -729,12 +769,6 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _shapes, null);
       _Renderer$1.instance = this;
       __privateSet(this, _shapes, []);
-      this.add(new Shape([
-        new Vector2(750, 750),
-        new Vector2(750 + 50 * 15, 750),
-        new Vector2(750 + 50 * 15, 750 + 50 * 15),
-        new Vector2(750, 750 + 50 * 15)
-      ], new Color(null, 255, 255, 255, 255)));
     }
     update() {
       var keys = Object.keys(__privateGet(this, _shapes));
@@ -1552,6 +1586,24 @@ var __privateMethod = (obj, member, method) => {
           }
         }
       }
+      {
+        for (let i = 0; i < insets.length; i++) {
+          const inset2 = insets[i];
+          __privateGet(this, _buffer5).stroke(0);
+          __privateGet(this, _buffer5).strokeWeight(2);
+          var boundingBox = inset2.getBoundingBox();
+          __privateGet(this, _buffer5).fill(255, 255, 255, 0);
+          __privateGet(this, _buffer5).rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+        }
+        for (let i = 0; i < outsets.length; i++) {
+          const outset2 = outsets[i];
+          __privateGet(this, _buffer5).stroke(0);
+          __privateGet(this, _buffer5).strokeWeight(2);
+          var boundingBox = outset2.getBoundingBox();
+          __privateGet(this, _buffer5).fill(255, 0, 0, 150);
+          __privateGet(this, _buffer5).rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+        }
+      }
       for (let i = 0; i < insets.length; i++) {
         const inset2 = insets[i];
         __privateMethod(this, _generateTiles, generateTiles_fn).call(this, inset2, outsets);
@@ -1997,7 +2049,7 @@ var __privateMethod = (obj, member, method) => {
   };
   exports2.Action = Action;
   exports2.Collision = Collision;
-  exports2.Color = Color$1;
+  exports2.Color = Color;
   exports2.ContextMenu = ContextMenu;
   exports2.ContextMenuOption = ContextMenuOption;
   exports2.Cursor = Cursor$1;
@@ -2009,6 +2061,7 @@ var __privateMethod = (obj, member, method) => {
   exports2.Renderer = Renderer$1;
   exports2.SelectorTool = SelectorTool;
   exports2.Settings = Settings$1;
+  exports2.Shape = Shape;
   exports2.Tile = Tile;
   exports2.Vector2 = Vector2;
   Object.defineProperties(exports2, { __esModule: { value: true }, [Symbol.toStringTag]: { value: "Module" } });

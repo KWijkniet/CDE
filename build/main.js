@@ -37,7 +37,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _getTile, getTile_fn, _getIntersectionPoint, getIntersectionPoint_fn, _lineIntersection, lineIntersection_fn, _actions, _index, _options, _elem, _loadEvent;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _getTile, getTile_fn, _getIntersectionPoint, getIntersectionPoint_fn, _lineIntersection, lineIntersection_fn, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
   "use strict";
   const _Vector2 = class {
     constructor(x = 0, y = 0) {
@@ -222,7 +222,7 @@ var __privateMethod = (obj, member, method) => {
       var dist1 = Math.sqrt(Math.pow(px - x1, 2) + Math.pow(py - y1, 2));
       var dist2 = Math.sqrt(Math.pow(px - x2, 2) + Math.pow(py - y2, 2));
       var lineLength = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-      var buffer = 1;
+      var buffer = 0.3;
       if (dist1 + dist2 >= lineLength - buffer && dist1 + dist2 <= lineLength + buffer) {
         return true;
       }
@@ -371,7 +371,7 @@ var __privateMethod = (obj, member, method) => {
       return false;
     }
   }
-  class Color {
+  class Color$1 {
     constructor(string = null, r = 0, g = 0, b = 0, a = 1) {
       __publicField(this, "string", "");
       __publicField(this, "value", []);
@@ -405,13 +405,12 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Settings$1, "gridSizeS", 10);
   __publicField(Settings$1, "gridSizeL", 100);
   __publicField(Settings$1, "zoom", 1);
-  __publicField(Settings$1, "bufferMargin", 50);
   __publicField(Settings$1, "cursorSize", 10);
-  __publicField(Settings$1, "gridBackground", new Color("--grid-background"));
-  __publicField(Settings$1, "gridLines", new Color("--grid-lines"));
-  __publicField(Settings$1, "shapeAllowed", new Color("--shape-allowed"));
-  __publicField(Settings$1, "shapeForbidden", new Color("--shape-forbidden"));
-  __publicField(Settings$1, "tileBackground", new Color("--tile-background"));
+  __publicField(Settings$1, "gridBackground", new Color$1("--grid-background"));
+  __publicField(Settings$1, "gridLines", new Color$1("--grid-lines"));
+  __publicField(Settings$1, "shapeAllowed", new Color$1("--shape-allowed"));
+  __publicField(Settings$1, "shapeForbidden", new Color$1("--shape-forbidden"));
+  __publicField(Settings$1, "tileBackground", new Color$1("--tile-background"));
   __privateAdd(Settings$1, _canvas, null);
   __publicField(Settings$1, "setCanvas", (c) => {
     __privateSet(_Settings$1, _canvas, c);
@@ -426,7 +425,7 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Settings$1, "getActiveTool", () => {
     return __privateGet(_Settings$1, _activeTool);
   });
-  class EventSystem {
+  class EventSystem$1 {
     constructor(events) {
       __privateAdd(this, _events, {});
       for (let i = 0; i < events.length; i++) {
@@ -479,7 +478,7 @@ var __privateMethod = (obj, member, method) => {
       _Cursor$1.get = () => {
         return this;
       };
-      this.events = new EventSystem(["click", "dragStart", "dragMove", "dragEnd", "scroll"]);
+      this.events = new EventSystem$1(["click", "dragStart", "dragMove", "dragEnd", "scroll"]);
       this.position = Vector2.zero();
       __privateSet(this, _lastPos, Vector2.zero());
       __privateSet(this, _diff, Vector2.zero());
@@ -620,12 +619,13 @@ var __privateMethod = (obj, member, method) => {
   }
   _buffer = new WeakMap();
   const _Shape = class {
-    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
+    constructor(vertices = [], color = new Color$1(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
       __publicField(this, "id", null);
       __publicField(this, "color", null);
       __publicField(this, "showData", false);
       __publicField(this, "isAllowed", true);
       __publicField(this, "isGenerated", false);
+      __publicField(this, "lineMargins", null);
       __privateAdd(this, _vertices, null);
       __privateAdd(this, _shapebuffer, null);
       __privateAdd(this, _textBuffer, null);
@@ -690,6 +690,10 @@ var __privateMethod = (obj, member, method) => {
         this.id = __privateGet(this, _generateUniqSerial).call(this);
       }
       __privateSet(this, _vertices, vertices);
+      this.lineMargins = [];
+      for (let i = 0; i < vertices.length; i++) {
+        this.lineMargins.push(null);
+      }
       __privateGet(this, _generate).call(this);
     }
     update() {
@@ -720,7 +724,7 @@ var __privateMethod = (obj, member, method) => {
     redraw() {
       __privateGet(this, _generate).call(this);
     }
-    reCalculate(vertices = [], color = new Color(null, 255, 255, 255)) {
+    reCalculate(vertices = [], color = new Color$1(null, 255, 255, 255)) {
       if (__privateGet(this, _shapebuffer) != null) {
         __privateGet(this, _shapebuffer).clear();
         __privateGet(this, _shapebuffer).elt.parentNode.removeChild(__privateGet(this, _shapebuffer).elt);
@@ -739,21 +743,21 @@ var __privateMethod = (obj, member, method) => {
         const vertice = __privateGet(this, _vertices)[i];
         vertices.push(vertice.toJSON());
       }
-      return { "id": this.id, "color": this.color.rgba(), "showData": this.showData, "isAllowed": this.isAllowed, "isGenerated": this.isGenerated, "vertices": vertices, "pos": __privateGet(this, _pos).toJSON() };
+      return { "id": this.id, "color": this.color.rgba(), "showData": this.showData, "isAllowed": this.isAllowed, "isGenerated": this.isGenerated, "vertices": vertices, "lineMargins": this.lineMargins, "pos": __privateGet(this, _pos).toJSON() };
     }
     fromJSON(json) {
       this.id = json.id;
-      this.color = new Color(null, json.color.r, json.color.g, json.color.b, json.color.a);
+      this.color = new Color$1(null, json.color.r, json.color.g, json.color.b, json.color.a);
       this.showData = json.showData;
       this.isAllowed = json.isAllowed;
       this.isGenerated = json.isGenerated;
+      this.lineMargins = json.lineMargins;
       __privateSet(this, _pos, json.pos);
       __privateSet(this, _vertices, []);
       for (let i = 0; i < json.vertices.length; i++) {
         const vertice = json.vertices[i];
         __privateGet(this, _vertices).push(new Vector2(0, 0).fromJSON(vertice));
       }
-      console.log(__privateGet(this, _vertices));
       __privateGet(this, _generate).call(this);
     }
   };
@@ -769,6 +773,20 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _shapes, null);
       _Renderer$1.instance = this;
       __privateSet(this, _shapes, []);
+      this.add(new Shape([
+        new Vector2(750, 750),
+        new Vector2(750 + 50 * 15, 750),
+        new Vector2(750 + 50 * 15, 750 + 50 * 15),
+        new Vector2(750, 750 + 50 * 15)
+      ], new Color(null, 255, 255, 255, 255)));
+      var forbidden = new Shape([
+        new Vector2(750 + 50 * 1, 750 + 50 * 1),
+        new Vector2(750 + 50 * 5, 750 + 50 * 1),
+        new Vector2(750 + 50 * 5, 750 + 50 * 5),
+        new Vector2(750 + 50 * 1, 750 + 50 * 5)
+      ], new Color(null, 255, 0, 0, 255));
+      forbidden.isAllowed = false;
+      this.add(forbidden);
     }
     update() {
       var keys = Object.keys(__privateGet(this, _shapes));
@@ -1623,25 +1641,29 @@ var __privateMethod = (obj, member, method) => {
       const vc = points[i];
       const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
       const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
+      var mp = 0;
+      var mn = 0;
+      if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
+        mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[1]);
+      }
+      if (shape.lineMargins[i] != null) {
+        mn = parseInt(shape.lineMargins[i].split("|")[1]);
+      }
       if (vp.x == vc.x && vc.x == vn.x || vp.y == vc.y && vc.y == vn.y) {
         continue;
       }
       var dirN = vn.getCopy().remove(vc).normalized();
-      var marginN = Math.abs(__privateMethod(this, _getMargin, getMargin_fn).call(this, dirN));
-      dirN.multiply(new Vector2(marginN, marginN));
+      dirN.multiply(new Vector2(mp, mp));
       var dirP = vp.getCopy().remove(vc).normalized();
-      var marginP = Math.abs(__privateMethod(this, _getMargin, getMargin_fn).call(this, dirP));
-      dirP.multiply(new Vector2(marginP, marginP));
+      dirP.multiply(new Vector2(mn, mn));
       dirN.getCopy().add(vc);
       dirP.getCopy().add(vc);
       var pos = dirN.getCopy().add(vc).add(dirP);
       if (!Collision.polygonCircle(shape.getVertices(), pos.x, pos.y, 5)) {
         dirN = vn.getCopy().remove(vc).normalized();
-        marginN = Math.abs(__privateMethod(this, _getMargin, getMargin_fn).call(this, dirN));
-        dirN.multiply(new Vector2(marginN, marginN));
+        dirN.multiply(new Vector2(mp, mp));
         dirP = vp.getCopy().remove(vc).normalized();
-        marginP = Math.abs(__privateMethod(this, _getMargin, getMargin_fn).call(this, dirP));
-        dirP.multiply(new Vector2(marginP, marginP));
+        dirP.multiply(new Vector2(mn, mn));
         vc.getCopy().remove(dirN);
         vc.getCopy().remove(dirP);
         pos = vc.getCopy().remove(dirN).remove(dirP);
@@ -1665,11 +1687,19 @@ var __privateMethod = (obj, member, method) => {
       const vc = points[i];
       const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
       const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
+      var mp = 0;
+      var mn = 0;
+      if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
+        mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[1]);
+      }
+      if (shape.lineMargins[i] != null) {
+        mn = parseInt(shape.lineMargins[i].split("|")[1]);
+      }
       if (vp.x == vc.x && vc.x == vn.x || vp.y == vc.y && vc.y == vn.y) {
         continue;
       }
-      var dirP = vp.getCopy().remove(vc).normalized().multiply(new Vector2(this.margin, this.margin));
-      var dirN = vn.getCopy().remove(vc).normalized().multiply(new Vector2(this.margin, this.margin));
+      var dirP = vp.getCopy().remove(vc).normalized().multiply(new Vector2(mn, mn));
+      var dirN = vn.getCopy().remove(vc).normalized().multiply(new Vector2(mp, mp));
       vc.getCopy().remove(dirP);
       vc.getCopy().remove(dirN);
       var pos = vc.getCopy().remove(dirN).remove(dirP);
@@ -1735,58 +1765,8 @@ var __privateMethod = (obj, member, method) => {
         __privateGet(this, _tiles).push(tile);
         return true;
       } else {
-        await __privateGet(this, _sleep).call(this, 10);
-        var collisionFound = false;
-        var collisionLines = [];
-        var newWidth, newHeight;
+        return false;
         if (Collision.polygonRectangle(insetPoints, x, y, width2, height2)) {
-          for (let i = 0; i < insetPoints.length; i++) {
-            if (i == insetPoints.length - 1) {
-              if (Collision.lineRectangle(insetPoints[i].x, insetPoints[i].y, insetPoints[0].x, insetPoints[0].y, x, y, width2, height2)) {
-                var line = [
-                  new Vector2(insetPoints[i].x, insetPoints[i].y),
-                  new Vector2(insetPoints[0].x, insetPoints[0].y)
-                ];
-                collisionLines.push(line);
-              }
-            } else {
-              if (Collision.lineRectangle(insetPoints[i].x, insetPoints[i].y, insetPoints[i + 1].x, insetPoints[i + 1].y, x, y, width2, height2)) {
-                var line = [
-                  new Vector2(insetPoints[i].x, insetPoints[i].y),
-                  new Vector2(insetPoints[i + 1].x, insetPoints[i + 1].y)
-                ];
-                collisionLines.push(line);
-              }
-            }
-            if (collisionLines.length > 0)
-              collisionFound = true;
-          }
-          if (collisionFound) {
-            for (let l = 0; l < collisionLines.length; l++) {
-              if (Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y, collisionLines[l][1].x, collisionLines[l][1].y, points[0].x, points[0].y, points[1].x, points[1].x)) {
-                print("width");
-                var intersectionForWidth = __privateMethod(this, _lineIntersection, lineIntersection_fn).call(this, collisionLines[l][0], collisionLines[l][1], points[0], points[1]);
-                if (intersectionForWidth == null) {
-                  continue;
-                }
-                __privateGet(this, _buffer5).circle(intersectionForWidth.x, intersectionForWidth.y, 10);
-                newWidth = Vector2.distance(points[0], intersectionForWidth);
-              }
-              if (Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y, collisionLines[l][1].x, collisionLines[l][1].y, points[3].x, points[3].y, points[0].x, points[0].x)) {
-                print("height");
-                var intersectionForHeight = __privateMethod(this, _lineIntersection, lineIntersection_fn).call(this, collisionLines[l][0], collisionLines[l][1], points[3], points[0]);
-                if (intersectionForHeight == null) {
-                  continue;
-                }
-                __privateGet(this, _buffer5).circle(intersectionForHeight.x, intersectionForHeight.y, 10);
-                newHeight = Vector2.distance(points[0], intersectionForHeight);
-              }
-            }
-          }
-          if (newWidth > 0)
-            width2 = newWidth;
-          if (newHeight > 0)
-            height2 = newHeight;
           var points = [
             new Vector2(x, y),
             new Vector2(x + width2, y),
@@ -1794,12 +1774,8 @@ var __privateMethod = (obj, member, method) => {
             new Vector2(x, y + height2)
           ];
           var tile = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points);
-          yWithTile = y;
-          __privateGet(this, _tiles).push(tile);
-          return true;
         }
       }
-      return false;
     };
     var syncedFunc = async (x, y) => {
       attemptPlaceTile(x, y, tileWidth, tileHeight);
@@ -1939,7 +1915,7 @@ var __privateMethod = (obj, member, method) => {
   __privateAdd(HistoryTool$1, _actions, []);
   __privateAdd(HistoryTool$1, _index, -1);
   class ContextMenu {
-    constructor(id, options = []) {
+    constructor(id, options = [], parentId = null) {
       __publicField(this, "elem", null);
       __privateAdd(this, _options, []);
       __privateSet(this, _options, options);
@@ -1950,7 +1926,7 @@ var __privateMethod = (obj, member, method) => {
         const option = options[i];
         this.elem.append(option.getHtml());
       }
-      document.getElementById("menu").append(this.elem);
+      document.getElementById(parentId != null ? parentId : "menu").append(this.elem);
       this.hide();
     }
     show() {
@@ -2037,6 +2013,70 @@ var __privateMethod = (obj, member, method) => {
   }
   _elem = new WeakMap();
   _loadEvent = new WeakMap();
+  class LineSelectorTool {
+    constructor() {
+      __privateAdd(this, _detectLine);
+      __publicField(this, "isEnabled", false);
+      __publicField(this, "selectedShape", null);
+      __publicField(this, "selectedPointIndex", -1);
+      __publicField(this, "events", null);
+      __privateAdd(this, _renderer2, null);
+      __privateAdd(this, _buffer6, null);
+      __privateSet(this, _buffer6, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
+      __privateSet(this, _renderer2, Renderer.instance);
+      this.events = new EventSystem(["selectLine", "updateSettings"]);
+      var cursor = Cursor.get();
+      cursor.events.subscribe("click", (e) => {
+        if (e.detail.target.nodeName != "CANVAS" || e.detail.which == 3) {
+          return;
+        }
+        if (this.isEnabled) {
+          __privateMethod(this, _detectLine, detectLine_fn).call(this, e);
+        }
+      });
+    }
+    update() {
+      image(__privateGet(this, _buffer6), 0, 0);
+    }
+    enable() {
+      this.isEnabled = true;
+    }
+    disable() {
+      this.isEnabled = false;
+      __privateGet(this, _buffer6).clear();
+    }
+  }
+  _renderer2 = new WeakMap();
+  _buffer6 = new WeakMap();
+  _detectLine = new WeakSet();
+  detectLine_fn = function(e) {
+    __privateGet(this, _buffer6).clear();
+    var cursor = Cursor.get();
+    var pos = cursor.local().remove(cursor.offset);
+    pos.x /= Settings.zoom;
+    pos.y /= Settings.zoom;
+    if (pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) {
+      return;
+    }
+    var shapes = __privateGet(this, _renderer2).getAll();
+    for (let i = 0; i < shapes.length; i++) {
+      const shape = shapes[i];
+      var points = shape.getVertices();
+      for (let r = 0; r < points.length; r++) {
+        const vc = points[r];
+        const vn = r + 1 >= points.length ? points[0] : points[r + 1];
+        if (Collision.lineCircle(vn.x, vn.y, vc.x, vc.y, pos.x, pos.y, Settings.cursorSize)) {
+          __privateGet(this, _buffer6).stroke(0, 0, 255);
+          __privateGet(this, _buffer6).strokeWeight(5);
+          __privateGet(this, _buffer6).line(vc.x, vc.y, vn.x, vn.y);
+          this.selectedShape = shape;
+          this.selectedPointIndex = r;
+          this.events.invoke("selectLine", e);
+          return;
+        }
+      }
+    }
+  };
   window.onload = () => {
     if (typeof createCanvas !== "function") {
       alert("Please install p5js! (https://p5js.org)");
@@ -2049,15 +2089,16 @@ var __privateMethod = (obj, member, method) => {
   };
   exports2.Action = Action;
   exports2.Collision = Collision;
-  exports2.Color = Color;
+  exports2.Color = Color$1;
   exports2.ContextMenu = ContextMenu;
   exports2.ContextMenuOption = ContextMenuOption;
   exports2.Cursor = Cursor$1;
   exports2.DrawingTool = DrawingTool;
-  exports2.EventSystem = EventSystem;
+  exports2.EventSystem = EventSystem$1;
   exports2.GeneratorTool = GeneratorTool;
   exports2.Grid = Grid;
   exports2.HistoryTool = HistoryTool$1;
+  exports2.LineSelectorTool = LineSelectorTool;
   exports2.Renderer = Renderer$1;
   exports2.SelectorTool = SelectorTool;
   exports2.Settings = Settings$1;

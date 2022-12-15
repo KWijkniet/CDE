@@ -89,25 +89,25 @@ export default class GeneratorTool {
             }
         }
 
-        // if(!hideVisuals){
-        //     for (let i = 0; i < insets.length; i++) {
-        //         const inset = insets[i];
-        //         this.#buffer.stroke(0);
-        //         this.#buffer.strokeWeight(2);
-        //         var boundingBox = inset.getBoundingBox();
-        //         this.#buffer.fill(255, 255, 255, 0);
-        //         this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
-        //     }
+        if(!hideVisuals){
+            for (let i = 0; i < insets.length; i++) {
+                const inset = insets[i];
+                this.#buffer.stroke(0);
+                this.#buffer.strokeWeight(2);
+                var boundingBox = inset.getBoundingBox();
+                this.#buffer.fill(255, 255, 255, 0);
+                this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+            }
 
-        //     for (let i = 0; i < outsets.length; i++) {
-        //         const outset = outsets[i];
-        //         this.#buffer.stroke(0);
-        //         this.#buffer.strokeWeight(2);
-        //         var boundingBox = outset.getBoundingBox();
-        //         this.#buffer.fill(255, 0, 0, 150);
-        //         this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
-        //     }
-        // }
+            for (let i = 0; i < outsets.length; i++) {
+                const outset = outsets[i];
+                this.#buffer.stroke(0);
+                this.#buffer.strokeWeight(2);
+                var boundingBox = outset.getBoundingBox();
+                this.#buffer.fill(255, 0, 0, 150);
+                this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+            }
+        }
 
         for (let i = 0; i < insets.length; i++) {
             const inset = insets[i];

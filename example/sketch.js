@@ -2,6 +2,7 @@ var Collision = window.CDE.Collision;
 var Settings = window.CDE.Settings;
 var EventSystem = window.CDE.EventSystem;
 var Cursor = window.CDE.Cursor;
+var Shape = window.CDE.Shape;
 var Color = window.CDE.Color;
 var Grid = window.CDE.Grid;
 var Renderer = window.CDE.Renderer;
@@ -277,4 +278,28 @@ function updateSettings(){
     generatorTool.marginU = daknok;
     generatorTool.marginLR = dakrand;
     generatorTool.marginD = gootdetail;
+}
+
+function exportData(){
+    var data = {
+        "shapes": [],
+    };
+
+    var shapes = renderer.getAll();
+    for(var i = 0; i < shapes.length; i++){
+        data["shapes"][i] = shapes[i].toJSON();
+    }
+
+    return JSON.stringify(data);
+}
+
+function importData(json){
+    var json = { "shapes": [{ "id": "30d0-7422-90a-9e36", "color": { "r": 255, "g": 255, "b": 255, "a": 255 }, "showData": true, "isAllowed": true, "isGenerated": false, "vertices": [{ "x": 750, "y": 750 }, { "x": 1500, "y": 750 }, { "x": 1500, "y": 1500 }, { "x": 750, "y": 1500 }], "pos": { "x": 725, "y": 725 } }, { "id": "0ac5-ec79-af6-d366", "color": { "r": 255, "g": 255, "b": 255, "a": 128 }, "showData": true, "isAllowed": true, "isGenerated": false, "vertices": [{ "x": 550, "y": 870 }, { "x": 370, "y": 1270 }, { "x": 310, "y": 850 }], "pos": { "x": 285, "y": 825 } }] };
+    for (let i = 0; i < json.shapes.length; i++) {
+        const shape = json.shapes[i];
+        
+        var newShape = new Shape();
+        newShape.fromJSON(shape);
+        renderer.add(newShape);
+    }
 }

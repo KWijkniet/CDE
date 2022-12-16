@@ -16,7 +16,7 @@ export default class GeneratorTool {
     marginU = 25;
     marginLR = 25;
     marginD = 25;
-    margin = 5;
+    margin = 25;
     rowOffsetMode = false;
 
     #buffer = null;
@@ -190,7 +190,7 @@ export default class GeneratorTool {
         var outsets = [];
         this.#buffer.beginShape();
         var points = shape.getVertices();
-        var hideVisuals = true;
+        var hideVisuals = false;
         this.#buffer.push();
 
         for (let i = 0; i < points.length; i++) {
@@ -305,84 +305,122 @@ export default class GeneratorTool {
                 this.#tiles.push(tile);
                 return true;
             } else {
-                if (width > 20 && height > 20) {
+                // if (width > 20 && height > 20) {
                     //Incase we need to slow down the calculation (if the browser freezes up)
-                    await this.#sleep(10);
+                    await this.#sleep(100);
 
                     var placeTile = true; 
                     var count = 0;
                     var newPoints = [];
                     // Loop through the vector point of the tile
-                    for(let i =0; i < points.length; i++){
+                    for(let i = 0; i < points.length; i++){
                         const vc = points[i];
                         const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
                         const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
+                        var previousStatus; 
+                        var nextStatus; 
 
-                        //check if point is outside the inset shape
-                        //check if the previous point is inside the inset shape
-                        //check if the next point is inside the inset shape
-
-                        // if(!this.#isInside(insetPoints, [vc, vc, vc, vc])){
-                        //     this.#buffer.fill(200, 0, 0);
-                        //     this.#buffer.circle(vc.x, vc.y, 10);
-                        //     await this.#sleep(1000);
-                        // }
-
-                        // if(true){
-
-                            // Check if the vector point is outside of the insetpoints
-                            if(!Collision.polygonPoint(insetPoints, points[i].x, points[i].y)){
-                                var intersection;
-                                count++;
-                                this.#buffer.circle(points[i].x , points[i].y ,10);
-                                // Draw invisible line to previous vector and the next one
-                                if (i == points.length - 1) {
-                                    // // Previous
-                                    // // this.#buffer.line(points[i].x , points[i].y, points[i - 1].x , points[i - 1].y);
-                                    // // await this.#sleep(100);
-                                    // if (Collision.polygonLine(insetPoints, points[i], points[i - 1])){
-                                    //     intersection = this.#polygonLineWithCoordinates(insetPoints, points[i], points[i - 1]);
-                                    //     newPoints.push(intersection);
-                                    // }
-                                    // // Next
-                                    // // this.#buffer.line(points[i].x , points[i].y, points[0].x , points[0].y);
-                                    // // await this.#sleep(100);
-                                    // if (Collision.polygonLine(insetPoints, points[i], points[0])){
-                                    //     intersection = this.#polygonLineWithCoordinates(insetPoints, points[i], points[0]);
-                                    //     newPoints.push(intersection);
-                                    // }
+                        // Check if the vector point is outside of the insetpoints
+                        // if(!Collision.polygonPoint(insetPoints, vc.x, vc.y)){
+                        if(!this.#isInsidePoint(insetPoints, vc) ){
+                            // count++;
+                            // var newPointsFromFunction = this.#calculateNewVectorPosition(points, vc, vp, vn, insetPoints, previousStatus, nextStatus);
+                            // if(newPointsFromFunction.length > 0) {
+                            //     for(let k = 0; k < newPointsFromFunction.length; k++){
+                            //         newPoints.push(newPointsFromFunction[k]);
+                            //     }
+                            // }
+                            var intersectionPrevious, intersectionNext;
+                            count++;
+                            var previousCollision = false;
+                            var nextCollision = false;
+                            
+                            // Previous 1
+                            if (Collision.polygonLine(insetPoints, vc.x, vc.y, vp.x, vp.y)){
+                                intersectionPrevious = this.#polygonLineWithCoordinates(insetPoints, vc, vp);
+                                if(intersectionPrevious != null){
+                                    previousCollision = true;
                                 } else {
-                                    // Previous
+                                    previousStatus = false;
+                                }
+                            }
+
+                            // Next  3
+                            if (Collision.polygonLine(insetPoints, vc.x, vc.y, vn.x, vn.y)){
+                                intersectionNext = this.#polygonLineWithCoordinates(insetPoints, vc, vn);
+                                if(intersectionNext != null){
+                                    nextCollision = true;
+                                } else {
+                                    nextStatus = false;
+                                }
+                            }
+
+                            if(previousCollision){
+                                newPoints.push(intersectionPrevious);
+                                this.#buffer.fill(12, 72, 250); // Blue
+                                this.#buffer.circle(intersectionPrevious.x , intersectionPrevious.y ,10);
+                            }
+
+                            // 2
+                            if (!previousStatus && !nextStatus) {
+                                for(let j = 0; j < insetPoints.length; j++){
+                                    const current = insetPoints[j];
+                                    const past = insetPoints[j  - 1 >= 0 ? j  - 1 : insetPoints.length - 1];
+                                    const next = insetPoints[j  + 1 <= insetPoints.length - 1 ? j  + 1 : 0];
                                     
-                                    // if (Collision.polygonLine(insetPoints, points[i], points[i - 1])){
-                                    //     this.#buffer.line(points[i].x , points[i].y, points[i - 1].x , points[i - 1].y);
-                                    // await this.#sleep(100);
-                                    //     intersection = this.#polygonLineWithCoordinates(insetPoints, points[i], points[i - 1]);
-                                    //     newPoints.push(intersection);
-                                    // }
-                                    // Next
-                                    
-                                    if (Collision.polygonLine(insetPoints, points[i], points[i + 1])){
-                                        this.#buffer.line(points[i].x , points[i].y, points[i + 1].x , points[i + 1].y);
-                                        await this.#sleep(100);
-                                        intersection = this.#polygonLineWithCoordinates(insetPoints, points[i], points[i + 1]);
-                                        newPoints.push(intersection);
+                                    if(Collision.polygonPoint(points, current.x, current.y)){
+                                        this.#buffer.circle(current.x , current.y ,10);
+                                        newPoints.push(current);
+                                        previousStatus = true;
+                                        nextStatus = true;
+                                    } else {
+                                        for(let i = 0; i < points.length; i++){
+                                            const vCurrent = points[i];
+                                            const vNext = points[i + 1 <= points.length - 1 ? i + 1 : 0];
+                                            if(Collision.linePoint(vCurrent.x, vCurrent.y, vNext.x, vNext.y, current.x, current.y)){
+                                                this.#buffer.circle(current.x , current.y ,10);
+                                                newPoints.push(current);
+                                                previousStatus = true;
+                                                nextStatus = true;
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
-                                
-                                // // Update x and y of point
-                                // points[i].x = intersection.x;
-                                // points[i].y = intersection.y;
                             }
-                            // Check if all the vector point is outside of the insetpoints 
-                            if(count == 4 ) placeTile = false
-    
-                           
+
+                            if(nextCollision){
+                                newPoints.push(intersectionNext); 
+                                this.#buffer.fill(12, 72, 250); // Blue
+                                this.#buffer.circle(intersectionNext.x , intersectionNext.y ,10);
+                            }
+                        }else {
+                            if(this.#isInsideForbiddenZone(outsets, vc)){
+                                this.#buffer.fill(55, 12, 4);
+                                this.#buffer.circle(vc.x , vc.y ,10);
+                                var newPointsFromFunction = this.#calculateNewVectorPosition(points, vc, vp, vn, outsets, previousStatus, nextStatus);
+                                if(newPointsFromFunction.length > 0) {
+                                    for(let k = 0; k < newPointsFromFunction.length; k++){
+                                        newPoints.push(newPointsFromFunction[k]);
+                                    }
+                                }
+                            } else {
+                                this.#buffer.fill(255, 127, 80); // orange
+                                this.#buffer.circle(vc.x , vc.y ,10);
+                                newPoints.push(points[i]);
+                            }
+                        }
+
+                        // if(!Collision.polygonPoint(insetPoints, vc.x, vc.y)){
+                        //     this.#buffer.fill(25, 22, 4);
+                        //     this.#buffer.circle(vc.x , vc.y ,10);
                         // }
+
+                        // Check if all the vector point is outside of the insetpoints 
+                        if(count == 4 ) placeTile = false
                     }
-                    print(points);
-                    print(newPoints);
-                }
+                // }
+                // print(newPoints);
                 // Place Tile
                 if(placeTile){
                     var tile = this.#getTile(x, y, newPoints);
@@ -398,7 +436,7 @@ export default class GeneratorTool {
             var tilePlaced = attemptPlaceTile(x, y, tileWidth, tileHeight);
 
             //Incase we need to slow down the calculation (if the browser freezes up)
-            await this.#sleep(10);
+            await this.#sleep(20);
 
             x += tileWidth;
             if (x >= boundingBox.x + boundingBox.w) {
@@ -454,18 +492,64 @@ export default class GeneratorTool {
         return false;
     }
 
+    #isInsidePoint(zonePoints, point){
+        // if Point is inside of the inset shape
+        if (Collision.polygonPoint(zonePoints, point.x, point.y)) {
+            return true; 
+        }
+        // if Point is on the line
+        for (let r = 0; r < zonePoints.length; r++) {
+            const c = zonePoints[r];
+            const n = zonePoints[r + 1 <= zonePoints.length - 1 ? r + 1 : 0];
+            if (Collision.linePoint(c.x, c.y, n.x, n.y, point.x, point.y)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    #isInsideForbiddenZone(zonePoints, point){
+        // if Point is inside of the inset shape
+        for (let i = 0; i < zonePoints.length; i++) {
+            const outset = zonePoints[i];
+            const outsetPoints = outset.getVertices();
+
+            if (Collision.polygonPoint(outsetPoints, point.x, point.y)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     #getTile(x,y, vertices){
         return new Tile(vertices, this.#buffer);
     }
 
-    #getIntersectionPoint(p1, p2, r1, r2, r3, r4)
-    {
-        var intersection;
-        intersection = this.#lineIntersection(p1,p2,r1,r2);
-        if(intersection == null) intersection = this.#lineIntersection(p1,p2,r2,r3);
-        if(intersection == null) intersection = this.#lineIntersection(p1,p2,r3,r4);
-        if(intersection == null) intersection = this.#lineIntersection(p1,p2,r4,r1);
-        return intersection;
+    #polygonLineWithCoordinates(vertices, vector1, vector2){
+        //loop over all vertices
+        var next = 0;
+        for (let current = 0; current < vertices.length; current++) {
+
+            //get next vertice in list (wrap around to 0 if we exceed the vertices array length)
+            next = current + 1;
+            if(next == vertices.length){
+                next = 0;
+            }
+
+            //convert 2 vertices into a line
+            const x3 = vertices[current].x;
+            const y3 = vertices[current].y;
+            const x4 = vertices[next].x;
+            const y4 = vertices[next].y;
+            
+            //detect if the vertices lines intersect with the given line
+            var hit = this.#lineIntersection(vector1, vector2, vertices[current], vertices[next]);
+            if(hit != null){
+                return hit;
+            }
+        }
+
+        return null;
     }
 
     #lineIntersection(pointA, pointB, pointC, pointD) {
@@ -494,30 +578,65 @@ export default class GeneratorTool {
         return new Vector2(xCoor, yCoor);
     }
 
-    #polygonLineWithCoordinates(vertices, vector1, vector2){
-        //loop over all vertices
-        var next = 0;
-        for (let current = 0; current < vertices.length; current++) {
+    #calculateNewVectorPosition(points, vc, vp, vn, insetPoints, previousStatus, nextStatus){
+        var _points = [];
+        var intersectionPrevious, intersectionNext;
+        var previousCollision = false;
+        var nextCollision = false;
 
-            //get next vertice in list (wrap around to 0 if we exceed the vertices array length)
-            next = current + 1;
-            if(next == vertices.length){
-                next = 0;
-            }
+        for (let i = 0; i < insetPoints.length; i++) {
+            const outset = insetPoints[i];
+            const outsetPoints = outset.getVertices();
 
-            //convert 2 vertices into a line
-            const x3 = vertices[current].x;
-            const y3 = vertices[current].y;
-            const x4 = vertices[next].x;
-            const y4 = vertices[next].y;
-            
-            //detect if the vertices lines intersect with the given line
-            var hit = this.#lineIntersection(vector1, vector2, vertices[current], vertices[next]);
-            if(hit != null){
-                return hit;
+            // Previous vector collision check
+        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)){
+            intersectionPrevious = this.#polygonLineWithCoordinates(outsetPoints, vc, vp);
+            if(intersectionPrevious != null){
+                previousCollision = true;
+            } else {
+                previousStatus = false;
             }
         }
 
-        return false;
+        // Next vector collision check
+        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)){
+            intersectionNext = this.#polygonLineWithCoordinates(outsetPoints, vc, vn);
+            if(intersectionNext != null){
+                nextCollision = true;
+            } else {
+                nextStatus = false;
+            }
+        }
+
+        if(previousCollision){
+            _points.push(intersectionPrevious);
+            this.#buffer.fill(12, 72, 250); // Blue
+            this.#buffer.circle(intersectionPrevious.x , intersectionPrevious.y ,10);
+        }
+
+        // 2
+        if (!previousStatus && !nextStatus) {
+            for(let j = 0; j < outsetPoints.length; j++){
+                const current = outsetPoints[j];
+
+                if(Collision.polygonPoint(points, current.x, current.y)){
+                    this.#buffer.circle(current.x , current.y ,10);
+                    _points.push(current);
+                    previousStatus = true;
+                    nextStatus = true;
+                }
+            }
+        }
+
+        if(nextCollision){
+            _points.push(intersectionNext); 
+            this.#buffer.fill(12, 72, 250); // Blue
+            this.#buffer.circle(intersectionNext.x , intersectionNext.y ,10);
+        }
+        }
+        
+        
+
+        return _points;
     }
 }

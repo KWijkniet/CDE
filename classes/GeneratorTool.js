@@ -21,11 +21,12 @@ export default class GeneratorTool {
 
     #buffer = null;
     #renderer = null;
-    #tiles = [];
+    #tiles = null;
 
     constructor(){
         this.#renderer = Renderer.instance;
         this.#buffer = createGraphics(Settings.mapSizeX, Settings.mapSizeY);
+        this.#tiles = {'tiles': 0, 'dummy': 0};
     }
 
     update(){
@@ -306,6 +307,7 @@ export default class GeneratorTool {
         var insetPoints = inset.getVertices();
         var rowIndex = 0;
         var withOffset = false;
+        var self = this;
 
         var attemptPlaceTile = async(x, y, width, height) => {
             var points = [
@@ -320,7 +322,7 @@ export default class GeneratorTool {
             if (hasEnoughSpace) {
                 var tile = this.#getTile(x, y, points);
                 yWithTile = y;
-                this.#tiles.push(tile);
+                self.#tiles['tiles']++;
                 return true;
             } else {
                 return false;
@@ -402,8 +404,8 @@ export default class GeneratorTool {
                         this.#tiles.push(tile);
                         return true;
                     }             
-                }
-            // }
+                // }
+            }
             return false;
         }
 
@@ -505,5 +507,13 @@ export default class GeneratorTool {
         }
       
         return new Vector2(xCoor, yCoor);
+    }
+
+    toJSON(){
+        return this.#tiles;
+    }
+
+    fromJSON(json){
+        this.#tiles = json;
     }
 }

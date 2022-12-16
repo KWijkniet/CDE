@@ -371,7 +371,7 @@ var __privateMethod = (obj, member, method) => {
       return false;
     }
   }
-  class Color$1 {
+  class Color {
     constructor(string = null, r = 0, g = 0, b = 0, a = 1) {
       __publicField(this, "string", "");
       __publicField(this, "value", []);
@@ -406,11 +406,11 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Settings$1, "gridSizeL", 100);
   __publicField(Settings$1, "zoom", 1);
   __publicField(Settings$1, "cursorSize", 10);
-  __publicField(Settings$1, "gridBackground", new Color$1("--grid-background"));
-  __publicField(Settings$1, "gridLines", new Color$1("--grid-lines"));
-  __publicField(Settings$1, "shapeAllowed", new Color$1("--shape-allowed"));
-  __publicField(Settings$1, "shapeForbidden", new Color$1("--shape-forbidden"));
-  __publicField(Settings$1, "tileBackground", new Color$1("--tile-background"));
+  __publicField(Settings$1, "gridBackground", new Color("--grid-background"));
+  __publicField(Settings$1, "gridLines", new Color("--grid-lines"));
+  __publicField(Settings$1, "shapeAllowed", new Color("--shape-allowed"));
+  __publicField(Settings$1, "shapeForbidden", new Color("--shape-forbidden"));
+  __publicField(Settings$1, "tileBackground", new Color("--tile-background"));
   __privateAdd(Settings$1, _canvas, null);
   __publicField(Settings$1, "setCanvas", (c) => {
     __privateSet(_Settings$1, _canvas, c);
@@ -619,7 +619,7 @@ var __privateMethod = (obj, member, method) => {
   }
   _buffer = new WeakMap();
   const _Shape = class {
-    constructor(vertices = [], color = new Color$1(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
+    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
       __publicField(this, "id", null);
       __publicField(this, "color", null);
       __publicField(this, "showData", false);
@@ -724,7 +724,7 @@ var __privateMethod = (obj, member, method) => {
     redraw() {
       __privateGet(this, _generate).call(this);
     }
-    reCalculate(vertices = [], color = new Color$1(null, 255, 255, 255)) {
+    reCalculate(vertices = [], color = new Color(null, 255, 255, 255)) {
       if (__privateGet(this, _shapebuffer) != null) {
         __privateGet(this, _shapebuffer).clear();
         __privateGet(this, _shapebuffer).elt.parentNode.removeChild(__privateGet(this, _shapebuffer).elt);
@@ -747,7 +747,7 @@ var __privateMethod = (obj, member, method) => {
     }
     fromJSON(json) {
       this.id = json.id;
-      this.color = new Color$1(null, json.color.r, json.color.g, json.color.b, json.color.a);
+      this.color = new Color(null, json.color.r, json.color.g, json.color.b, json.color.a);
       this.showData = json.showData;
       this.isAllowed = json.isAllowed;
       this.isGenerated = json.isGenerated;
@@ -773,20 +773,6 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _shapes, null);
       _Renderer$1.instance = this;
       __privateSet(this, _shapes, []);
-      this.add(new Shape([
-        new Vector2(750, 750),
-        new Vector2(750 + 50 * 15, 750),
-        new Vector2(750 + 50 * 15, 750 + 50 * 15),
-        new Vector2(750, 750 + 50 * 15)
-      ], new Color(null, 255, 255, 255, 255)));
-      var forbidden = new Shape([
-        new Vector2(750 + 50 * 1, 750 + 50 * 1),
-        new Vector2(750 + 50 * 5, 750 + 50 * 1),
-        new Vector2(750 + 50 * 5, 750 + 50 * 5),
-        new Vector2(750 + 50 * 1, 750 + 50 * 5)
-      ], new Color(null, 255, 0, 0, 255));
-      forbidden.isAllowed = false;
-      this.add(forbidden);
     }
     update() {
       var keys = Object.keys(__privateGet(this, _shapes));
@@ -1549,10 +1535,11 @@ var __privateMethod = (obj, member, method) => {
       __publicField(this, "rowOffsetMode", false);
       __privateAdd(this, _buffer5, null);
       __privateAdd(this, _renderer, null);
-      __privateAdd(this, _tiles, []);
+      __privateAdd(this, _tiles, null);
       __privateAdd(this, _sleep, (delay) => new Promise((resolve) => setTimeout(resolve, delay)));
       __privateSet(this, _renderer, Renderer.instance);
       __privateSet(this, _buffer5, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
+      __privateSet(this, _tiles, { "tiles": 0, "dummy": 0 });
     }
     update() {
       image(__privateGet(this, _buffer5), 0, 0);
@@ -1626,6 +1613,12 @@ var __privateMethod = (obj, member, method) => {
         const inset2 = insets[i];
         __privateMethod(this, _generateTiles, generateTiles_fn).call(this, inset2, outsets);
       }
+    }
+    toJSON() {
+      return __privateGet(this, _tiles);
+    }
+    fromJSON(json) {
+      __privateSet(this, _tiles, json);
     }
   }
   _buffer5 = new WeakMap();
@@ -1751,6 +1744,7 @@ var __privateMethod = (obj, member, method) => {
     var yWithTile = -1;
     var insetPoints = inset.getVertices();
     var rowIndex = 0;
+    var self2 = this;
     var attemptPlaceTile = async (x, y, width2, height2) => {
       var points = [
         new Vector2(x, y),
@@ -1760,9 +1754,9 @@ var __privateMethod = (obj, member, method) => {
       ];
       var hasEnoughSpace = __privateMethod(this, _canBePlaced, canBePlaced_fn).call(this, insetPoints, outsets, points);
       if (hasEnoughSpace) {
-        var tile = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points);
+        __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points);
         yWithTile = y;
-        __privateGet(this, _tiles).push(tile);
+        __privateGet(self2, _tiles)["tiles"]++;
         return true;
       } else {
         return false;
@@ -1773,7 +1767,6 @@ var __privateMethod = (obj, member, method) => {
             new Vector2(x + width2, y + height2),
             new Vector2(x, y + height2)
           ];
-          var tile = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points);
         }
       }
     };
@@ -2089,7 +2082,7 @@ var __privateMethod = (obj, member, method) => {
   };
   exports2.Action = Action;
   exports2.Collision = Collision;
-  exports2.Color = Color$1;
+  exports2.Color = Color;
   exports2.ContextMenu = ContextMenu;
   exports2.ContextMenuOption = ContextMenuOption;
   exports2.Cursor = Cursor$1;

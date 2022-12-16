@@ -73,7 +73,7 @@ function draw() {
     pop();
 
     cursor.update();
-    showFPS();
+    // showFPS();
     // showHistory();
     updateVisuals();
 
@@ -309,6 +309,7 @@ function exportData(){
     for(var i = 0; i < shapes.length; i++){
         data["shapes"][i] = shapes[i].toJSON();
     }
+    data['generated'] = generatorTool.toJSON();
 
     return JSON.stringify(data);
 }
@@ -321,4 +322,5 @@ function importData(json){
         newShape.fromJSON(shape);
         renderer.add(newShape);
     }
+    generatorTool.fromJSON(json['generated']);
 }

@@ -21,6 +21,7 @@ export default class Vector2{
     static devide = (v1, v2) => { return new Vector2(v1.x / v2.x, v1.y / v2.y); };
     static equals = (v1, v2) => { return v1.x == v2.x && v1.y == v2.y; };
     static copyAll = (arr) => { var tmp = []; for (let i = 0; i < arr.length; i++) { tmp.push(new Vector2(arr[i].x, arr[i].y));} return tmp; };
+    static dot = (v1, v2) => { return v1.x * v2.x + v1.y * v2.y; };
 
     static toJSON = (v) => { return { x: v.x, y: v.y }; };
     static fromJSON = (json) => { return new Vector2(json.x, json.y); };

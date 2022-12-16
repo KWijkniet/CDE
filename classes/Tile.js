@@ -23,7 +23,7 @@ export default class Tile {
         this.#buffer.vertex(this.#vertices[0].x, this.#vertices[0].y);
 
         var rgba = Settings.tileBackground.rgb();
-        this.#buffer.fill(rgba.r, rgba.g, rgba.b, rgba.a);
+        this.#buffer.fill(rgba.r, rgba.g, rgba.b, 50);
         this.#buffer.endShape();
     }
 }

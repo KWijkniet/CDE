@@ -37,7 +37,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _getTile, getTile_fn, _getIntersectionPoint, getIntersectionPoint_fn, _lineIntersection, lineIntersection_fn, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _isInsidePoint, isInsidePoint_fn, _isInsideForbiddenZone, isInsideForbiddenZone_fn, _getTile, getTile_fn, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn, _lineIntersection, lineIntersection_fn, _calculateNewVectorPosition, calculateNewVectorPosition_fn, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
   "use strict";
   const _Vector2 = class {
     constructor(x = 0, y = 0) {
@@ -154,6 +154,9 @@ var __privateMethod = (obj, member, method) => {
     }
     return tmp;
   });
+  __publicField(Vector2, "dot", (v1, v2) => {
+    return v1.x * v2.x + v1.y * v2.y;
+  });
   __publicField(Vector2, "toJSON", (v) => {
     return { x: v.x, y: v.y };
   });
@@ -222,7 +225,7 @@ var __privateMethod = (obj, member, method) => {
       var dist1 = Math.sqrt(Math.pow(px - x1, 2) + Math.pow(py - y1, 2));
       var dist2 = Math.sqrt(Math.pow(px - x2, 2) + Math.pow(py - y2, 2));
       var lineLength = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-      var buffer = 0.3;
+      var buffer = 0.01;
       if (dist1 + dist2 >= lineLength - buffer && dist1 + dist2 <= lineLength + buffer) {
         return true;
       }
@@ -371,7 +374,7 @@ var __privateMethod = (obj, member, method) => {
       return false;
     }
   }
-  class Color {
+  class Color$1 {
     constructor(string = null, r = 0, g = 0, b = 0, a = 1) {
       __publicField(this, "string", "");
       __publicField(this, "value", []);
@@ -406,11 +409,11 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Settings$1, "gridSizeL", 100);
   __publicField(Settings$1, "zoom", 1);
   __publicField(Settings$1, "cursorSize", 10);
-  __publicField(Settings$1, "gridBackground", new Color("--grid-background"));
-  __publicField(Settings$1, "gridLines", new Color("--grid-lines"));
-  __publicField(Settings$1, "shapeAllowed", new Color("--shape-allowed"));
-  __publicField(Settings$1, "shapeForbidden", new Color("--shape-forbidden"));
-  __publicField(Settings$1, "tileBackground", new Color("--tile-background"));
+  __publicField(Settings$1, "gridBackground", new Color$1("--grid-background"));
+  __publicField(Settings$1, "gridLines", new Color$1("--grid-lines"));
+  __publicField(Settings$1, "shapeAllowed", new Color$1("--shape-allowed"));
+  __publicField(Settings$1, "shapeForbidden", new Color$1("--shape-forbidden"));
+  __publicField(Settings$1, "tileBackground", new Color$1("--tile-background"));
   __privateAdd(Settings$1, _canvas, null);
   __publicField(Settings$1, "setCanvas", (c) => {
     __privateSet(_Settings$1, _canvas, c);
@@ -619,7 +622,7 @@ var __privateMethod = (obj, member, method) => {
   }
   _buffer = new WeakMap();
   const _Shape = class {
-    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
+    constructor(vertices = [], color = new Color$1(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
       __publicField(this, "id", null);
       __publicField(this, "color", null);
       __publicField(this, "showData", false);
@@ -724,7 +727,7 @@ var __privateMethod = (obj, member, method) => {
     redraw() {
       __privateGet(this, _generate).call(this);
     }
-    reCalculate(vertices = [], color = new Color(null, 255, 255, 255)) {
+    reCalculate(vertices = [], color = new Color$1(null, 255, 255, 255)) {
       if (__privateGet(this, _shapebuffer) != null) {
         __privateGet(this, _shapebuffer).clear();
         __privateGet(this, _shapebuffer).elt.parentNode.removeChild(__privateGet(this, _shapebuffer).elt);
@@ -747,7 +750,7 @@ var __privateMethod = (obj, member, method) => {
     }
     fromJSON(json) {
       this.id = json.id;
-      this.color = new Color(null, json.color.r, json.color.g, json.color.b, json.color.a);
+      this.color = new Color$1(null, json.color.r, json.color.g, json.color.b, json.color.a);
       this.showData = json.showData;
       this.isAllowed = json.isAllowed;
       this.isGenerated = json.isGenerated;
@@ -773,6 +776,50 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _shapes, null);
       _Renderer$1.instance = this;
       __privateSet(this, _shapes, []);
+      this.add(new Shape([
+        new Vector2(750, 750),
+        new Vector2(750 + 50 * 15, 750),
+        new Vector2(750 + 50 * 15, 750 + 50 * 15),
+        new Vector2(750, 750 + 50 * 15)
+      ], new Color(null, 255, 255, 255, 255)));
+      this.add(new Shape([
+        new Vector2(1600, 750),
+        new Vector2(1600 + 50 * 10, 750),
+        new Vector2(1600 + 50 * 10, 750 + 50 * 10),
+        new Vector2(1600, 750 + 50 * 10)
+      ], new Color(null, 255, 255, 255, 255)));
+      this.add(new Shape([
+        new Vector2(1600, 1400),
+        new Vector2(2300, 1400),
+        new Vector2(2300, 2e3),
+        new Vector2(1900, 2e3),
+        new Vector2(1900, 1700),
+        new Vector2(1600, 1700)
+      ], new Color(null, 255, 255, 255, 255)));
+      this.add(new Shape([
+        new Vector2(2900, 990),
+        new Vector2(2900, 1600),
+        new Vector2(3300, 1600),
+        new Vector2(3300, 1890),
+        new Vector2(3750, 1890),
+        new Vector2(3750, 1370),
+        new Vector2(3510, 1370),
+        new Vector2(3510, 1160),
+        new Vector2(3740, 1160),
+        new Vector2(3740, 960),
+        new Vector2(3340, 960),
+        new Vector2(3340, 1110),
+        new Vector2(3060, 1110),
+        new Vector2(3060, 990)
+      ], new Color(null, 255, 255, 255, 255)));
+      var forbidden = new Shape([
+        new Vector2(750 + 50 * 1.3, 750 + 50 * 1.2),
+        new Vector2(750 + 50 * 5, 750 + 50 * 1.2),
+        new Vector2(750 + 50 * 5, 750 + 50 * 5),
+        new Vector2(750 + 50 * 1.3, 750 + 50 * 5)
+      ], new Color(null, 255, 0, 0, 255));
+      forbidden.isAllowed = false;
+      this.add(forbidden);
     }
     update() {
       var keys = Object.keys(__privateGet(this, _shapes));
@@ -1508,7 +1555,7 @@ var __privateMethod = (obj, member, method) => {
     }
     __privateGet(this, _buffer4).vertex(__privateGet(this, _vertices2)[0].x, __privateGet(this, _vertices2)[0].y);
     var rgba = Settings.tileBackground.rgb();
-    __privateGet(this, _buffer4).fill(rgba.r, rgba.g, rgba.b, rgba.a);
+    __privateGet(this, _buffer4).fill(rgba.r, rgba.g, rgba.b, 50);
     __privateGet(this, _buffer4).endShape();
   };
   class GeneratorTool {
@@ -1520,9 +1567,12 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _canBePlaced);
       __privateAdd(this, _isColliding);
       __privateAdd(this, _isInside);
+      __privateAdd(this, _isInsidePoint);
+      __privateAdd(this, _isInsideForbiddenZone);
       __privateAdd(this, _getTile);
-      __privateAdd(this, _getIntersectionPoint);
+      __privateAdd(this, _polygonLineWithCoordinates);
       __privateAdd(this, _lineIntersection);
+      __privateAdd(this, _calculateNewVectorPosition);
       __publicField(this, "isEnabled", false);
       __publicField(this, "canAdd", true);
       __publicField(this, "canDelete", true);
@@ -1531,7 +1581,7 @@ var __privateMethod = (obj, member, method) => {
       __publicField(this, "marginU", 25);
       __publicField(this, "marginLR", 25);
       __publicField(this, "marginD", 25);
-      __publicField(this, "margin", 5);
+      __publicField(this, "margin", 25);
       __publicField(this, "rowOffsetMode", false);
       __privateAdd(this, _buffer5, null);
       __privateAdd(this, _renderer, null);
@@ -1693,13 +1743,25 @@ var __privateMethod = (obj, member, method) => {
       }
       var dirP = vp.getCopy().remove(vc).normalized().multiply(new Vector2(mn, mn));
       var dirN = vn.getCopy().remove(vc).normalized().multiply(new Vector2(mp, mp));
-      vc.getCopy().remove(dirP);
-      vc.getCopy().remove(dirN);
+      var posP = vc.getCopy().remove(dirP);
+      var posN = vc.getCopy().remove(dirN);
       var pos = vc.getCopy().remove(dirN).remove(dirP);
+      {
+        __privateGet(this, _buffer5).fill(0, 255, 0);
+        __privateGet(this, _buffer5).circle(posP.x, posP.y, 10);
+        __privateGet(this, _buffer5).circle(posN.x, posN.y, 10);
+        __privateGet(this, _buffer5).circle(pos.x, pos.y, 10);
+      }
       if (Collision.polygonCircle(shape.getVertices(), pos.x, pos.y, 5)) {
-        vc.getCopy().add(dirP);
-        vc.getCopy().add(dirN);
+        var posP = vc.getCopy().add(dirP);
+        var posN = vc.getCopy().add(dirN);
         var pos = vc.getCopy().add(dirN).add(dirP);
+        {
+          __privateGet(this, _buffer5).fill(0, 0, 255);
+          __privateGet(this, _buffer5).circle(posP.x, posP.y, 10);
+          __privateGet(this, _buffer5).circle(posN.x, posN.y, 10);
+          __privateGet(this, _buffer5).circle(pos.x, pos.y, 10);
+        }
       }
       outsets.push(pos);
     }
@@ -1759,20 +1821,105 @@ var __privateMethod = (obj, member, method) => {
         __privateGet(self2, _tiles)["tiles"]++;
         return true;
       } else {
-        return false;
-        if (Collision.polygonRectangle(insetPoints, x, y, width2, height2)) {
-          var points = [
-            new Vector2(x, y),
-            new Vector2(x + width2, y),
-            new Vector2(x + width2, y + height2),
-            new Vector2(x, y + height2)
-          ];
+        await __privateGet(this, _sleep).call(this, 100);
+        var placeTile = true;
+        var count = 0;
+        var newPoints = [];
+        for (let i = 0; i < points.length; i++) {
+          const vc = points[i];
+          const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
+          const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
+          var previousStatus;
+          var nextStatus;
+          if (!__privateMethod(this, _isInsidePoint, isInsidePoint_fn).call(this, insetPoints, vc)) {
+            var intersectionPrevious, intersectionNext;
+            count++;
+            var previousCollision = false;
+            var nextCollision = false;
+            if (Collision.polygonLine(insetPoints, vc.x, vc.y, vp.x, vp.y)) {
+              intersectionPrevious = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, insetPoints, vc, vp);
+              if (intersectionPrevious != null) {
+                previousCollision = true;
+              } else {
+                previousStatus = false;
+              }
+            }
+            if (Collision.polygonLine(insetPoints, vc.x, vc.y, vn.x, vn.y)) {
+              intersectionNext = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, insetPoints, vc, vn);
+              if (intersectionNext != null) {
+                nextCollision = true;
+              } else {
+                nextStatus = false;
+              }
+            }
+            if (previousCollision) {
+              newPoints.push(intersectionPrevious);
+              __privateGet(this, _buffer5).fill(12, 72, 250);
+              __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
+            }
+            if (!previousStatus && !nextStatus) {
+              for (let j = 0; j < insetPoints.length; j++) {
+                const current = insetPoints[j];
+                insetPoints[j - 1 >= 0 ? j - 1 : insetPoints.length - 1];
+                insetPoints[j + 1 <= insetPoints.length - 1 ? j + 1 : 0];
+                if (Collision.polygonPoint(points, current.x, current.y)) {
+                  __privateGet(this, _buffer5).circle(current.x, current.y, 10);
+                  newPoints.push(current);
+                  previousStatus = true;
+                  nextStatus = true;
+                } else {
+                  for (let i2 = 0; i2 < points.length; i2++) {
+                    const vCurrent = points[i2];
+                    const vNext = points[i2 + 1 <= points.length - 1 ? i2 + 1 : 0];
+                    if (Collision.linePoint(vCurrent.x, vCurrent.y, vNext.x, vNext.y, current.x, current.y)) {
+                      __privateGet(this, _buffer5).circle(current.x, current.y, 10);
+                      newPoints.push(current);
+                      previousStatus = true;
+                      nextStatus = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            if (nextCollision) {
+              newPoints.push(intersectionNext);
+              __privateGet(this, _buffer5).fill(12, 72, 250);
+              __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
+            }
+          } else {
+            if (__privateMethod(this, _isInsideForbiddenZone, isInsideForbiddenZone_fn).call(this, outsets, vc)) {
+              __privateGet(this, _buffer5).fill(55, 12, 4);
+              __privateGet(this, _buffer5).circle(vc.x, vc.y, 10);
+              var newPointsFromFunction = __privateMethod(this, _calculateNewVectorPosition, calculateNewVectorPosition_fn).call(this, points, vc, vp, vn, outsets, previousStatus, nextStatus);
+              if (newPointsFromFunction.length > 0) {
+                for (let k = 0; k < newPointsFromFunction.length; k++) {
+                  newPoints.push(newPointsFromFunction[k]);
+                }
+              }
+            } else {
+              __privateGet(this, _buffer5).fill(255, 127, 80);
+              __privateGet(this, _buffer5).circle(vc.x, vc.y, 10);
+              newPoints.push(points[i]);
+            }
+          }
+          if (count == 4)
+            placeTile = false;
+        }
+        if (placeTile) {
+          if (newPoints.length > 0) {
+            __privateMethod(this, _getTile, getTile_fn).call(this, x, y, newPoints);
+            yWithTile = y;
+            __privateGet(self2, _tiles)["dummy"]++;
+            return true;
+          }
         }
       }
+      return false;
     };
     var syncedFunc = async (x, y) => {
       attemptPlaceTile(x, y, tileWidth, tileHeight);
-      await __privateGet(this, _sleep).call(this, 10);
+      await __privateGet(this, _sleep).call(this, 20);
       x += tileWidth;
       if (x >= boundingBox.x + boundingBox.w) {
         y += yWithTile < y ? 1 : tileHeight;
@@ -1820,21 +1967,53 @@ var __privateMethod = (obj, member, method) => {
     }
     return false;
   };
+  _isInsidePoint = new WeakSet();
+  isInsidePoint_fn = function(zonePoints, point2) {
+    if (Collision.polygonPoint(zonePoints, point2.x, point2.y)) {
+      return true;
+    }
+    for (let r = 0; r < zonePoints.length; r++) {
+      const c = zonePoints[r];
+      const n = zonePoints[r + 1 <= zonePoints.length - 1 ? r + 1 : 0];
+      if (Collision.linePoint(c.x, c.y, n.x, n.y, point2.x, point2.y)) {
+        return true;
+      }
+    }
+    return false;
+  };
+  _isInsideForbiddenZone = new WeakSet();
+  isInsideForbiddenZone_fn = function(zonePoints, point2) {
+    for (let i = 0; i < zonePoints.length; i++) {
+      const outset = zonePoints[i];
+      const outsetPoints = outset.getVertices();
+      if (Collision.polygonPoint(outsetPoints, point2.x, point2.y)) {
+        return true;
+      }
+    }
+    return false;
+  };
   _getTile = new WeakSet();
   getTile_fn = function(x, y, vertices) {
     return new Tile(vertices, __privateGet(this, _buffer5));
   };
-  _getIntersectionPoint = new WeakSet();
-  getIntersectionPoint_fn = function(p1, p2, r1, r2, r3, r4) {
-    var intersection;
-    intersection = __privateMethod(this, _lineIntersection, lineIntersection_fn).call(this, p1, p2, r1, r2);
-    if (intersection == null)
-      intersection = __privateMethod(this, _lineIntersection, lineIntersection_fn).call(this, p1, p2, r2, r3);
-    if (intersection == null)
-      intersection = __privateMethod(this, _lineIntersection, lineIntersection_fn).call(this, p1, p2, r3, r4);
-    if (intersection == null)
-      intersection = __privateMethod(this, _lineIntersection, lineIntersection_fn).call(this, p1, p2, r4, r1);
-    return intersection;
+  _polygonLineWithCoordinates = new WeakSet();
+  polygonLineWithCoordinates_fn = function(vertices, vector1, vector2) {
+    var next = 0;
+    for (let current = 0; current < vertices.length; current++) {
+      next = current + 1;
+      if (next == vertices.length) {
+        next = 0;
+      }
+      vertices[current].x;
+      vertices[current].y;
+      vertices[next].x;
+      vertices[next].y;
+      var hit = __privateMethod(this, _lineIntersection, lineIntersection_fn).call(this, vector1, vector2, vertices[current], vertices[next]);
+      if (hit != null) {
+        return hit;
+      }
+    }
+    return null;
   };
   _lineIntersection = new WeakSet();
   lineIntersection_fn = function(pointA, pointB, pointC, pointD) {
@@ -1857,6 +2036,55 @@ var __privateMethod = (obj, member, method) => {
       return null;
     }
     return new Vector2(xCoor, yCoor);
+  };
+  _calculateNewVectorPosition = new WeakSet();
+  calculateNewVectorPosition_fn = function(points, vc, vp, vn, insetPoints, previousStatus, nextStatus) {
+    var _points2 = [];
+    var intersectionPrevious, intersectionNext;
+    var previousCollision = false;
+    var nextCollision = false;
+    for (let i = 0; i < insetPoints.length; i++) {
+      const outset = insetPoints[i];
+      const outsetPoints = outset.getVertices();
+      if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)) {
+        intersectionPrevious = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vp);
+        if (intersectionPrevious != null) {
+          previousCollision = true;
+        } else {
+          previousStatus = false;
+        }
+      }
+      if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)) {
+        intersectionNext = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vn);
+        if (intersectionNext != null) {
+          nextCollision = true;
+        } else {
+          nextStatus = false;
+        }
+      }
+      if (previousCollision) {
+        _points2.push(intersectionPrevious);
+        __privateGet(this, _buffer5).fill(12, 72, 250);
+        __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
+      }
+      if (!previousStatus && !nextStatus) {
+        for (let j = 0; j < outsetPoints.length; j++) {
+          const current = outsetPoints[j];
+          if (Collision.polygonPoint(points, current.x, current.y)) {
+            __privateGet(this, _buffer5).circle(current.x, current.y, 10);
+            _points2.push(current);
+            previousStatus = true;
+            nextStatus = true;
+          }
+        }
+      }
+      if (nextCollision) {
+        _points2.push(intersectionNext);
+        __privateGet(this, _buffer5).fill(12, 72, 250);
+        __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
+      }
+    }
+    return _points2;
   };
   const _HistoryTool$1 = class {
     static instance() {
@@ -2082,7 +2310,7 @@ var __privateMethod = (obj, member, method) => {
   };
   exports2.Action = Action;
   exports2.Collision = Collision;
-  exports2.Color = Color;
+  exports2.Color = Color$1;
   exports2.ContextMenu = ContextMenu;
   exports2.ContextMenuOption = ContextMenuOption;
   exports2.Cursor = Cursor$1;

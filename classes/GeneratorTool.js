@@ -443,10 +443,12 @@ export default class GeneratorTool {
                 // print(newPoints);
                 // Place Tile
                 if(placeTile){
-                    var tile = this.#getTile(x, y, newPoints);
-                    yWithTile = y;
-                    this.#tiles.push(tile);
-                    return true;
+                    if (newPoints.length > 0){
+                        var tile = this.#getTile(x, y, newPoints);
+                        yWithTile = y;
+                        self.#tiles['dummy']++;
+                        return true;
+                    }
                 }
             }
             return false;
@@ -609,52 +611,52 @@ export default class GeneratorTool {
             const outsetPoints = outset.getVertices();
 
             // Previous vector collision check
-        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)){
-            intersectionPrevious = this.#polygonLineWithCoordinates(outsetPoints, vc, vp);
-            if(intersectionPrevious != null){
-                previousCollision = true;
-            } else {
-                previousStatus = false;
-            }
-        }
-
-        // Next vector collision check
-        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)){
-            intersectionNext = this.#polygonLineWithCoordinates(outsetPoints, vc, vn);
-            if(intersectionNext != null){
-                nextCollision = true;
-            } else {
-                nextStatus = false;
-            }
-        }
-
-        if(previousCollision){
-            _points.push(intersectionPrevious);
-            this.#buffer.fill(12, 72, 250); // Blue
-            this.#buffer.circle(intersectionPrevious.x , intersectionPrevious.y ,10);
-        }
-
-        // 2
-        if (!previousStatus && !nextStatus) {
-            for(let j = 0; j < outsetPoints.length; j++){
-                const current = outsetPoints[j];
-
-                if(Collision.polygonPoint(points, current.x, current.y)){
-                    this.#buffer.circle(current.x , current.y ,10);
-                    _points.push(current);
-                    previousStatus = true;
-                    nextStatus = true;
+            if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)){
+                intersectionPrevious = this.#polygonLineWithCoordinates(outsetPoints, vc, vp);
+                if(intersectionPrevious != null){
+                    previousCollision = true;
+                } else {
+                    previousStatus = false;
                 }
             }
-        }
 
-        if(nextCollision){
-            _points.push(intersectionNext); 
-            this.#buffer.fill(12, 72, 250); // Blue
-            this.#buffer.circle(intersectionNext.x , intersectionNext.y ,10);
+            // Next vector collision check
+            if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)){
+                intersectionNext = this.#polygonLineWithCoordinates(outsetPoints, vc, vn);
+                if(intersectionNext != null){
+                    nextCollision = true;
+                } else {
+                    nextStatus = false;
+                }
+            }
+
+            if(previousCollision){
+                _points.push(intersectionPrevious);
+                this.#buffer.fill(12, 72, 250); // Blue
+                this.#buffer.circle(intersectionPrevious.x , intersectionPrevious.y ,10);
+            }
+
+            // 2
+            if (!previousStatus && !nextStatus) {
+                for(let j = 0; j < outsetPoints.length; j++){
+                    const current = outsetPoints[j];
+
+                    if(Collision.polygonPoint(points, current.x, current.y)){
+                        this.#buffer.circle(current.x , current.y ,10);
+                        _points.push(current);
+                        previousStatus = true;
+                        nextStatus = true;
+                    }
+                }
+            }
+
+            if(nextCollision){
+                _points.push(intersectionNext); 
+                this.#buffer.fill(12, 72, 250); // Blue
+                this.#buffer.circle(intersectionNext.x , intersectionNext.y ,10);
+            }
         }
-      }
-      return _points;
+        return _points;
     }
     
     toJSON(){

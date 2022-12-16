@@ -9,7 +9,6 @@ export default class Settings {
     static gridSizeS = 10;
     static gridSizeL = 100;
     static zoom = 1;
-    static bufferMargin = 50;
     static cursorSize = 10;
 
     static gridBackground = new Color("--grid-background");

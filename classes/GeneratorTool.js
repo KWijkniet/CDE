@@ -21,11 +21,12 @@ export default class GeneratorTool {
 
     #buffer = null;
     #renderer = null;
-    #tiles = [];
+    #tiles = null;
 
     constructor(){
         this.#renderer = Renderer.instance;
         this.#buffer = createGraphics(Settings.mapSizeX, Settings.mapSizeY);
+        this.#tiles = {'tiles': 0, 'dummy': 0};
     }
 
     update(){
@@ -127,7 +128,16 @@ export default class GeneratorTool {
             const vc = points[i];
             const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
             const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
-            
+
+            var mp = 0;
+            var mn = 0;
+            if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
+                mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
+            }
+            if (shape.lineMargins[i] != null) {
+                mn = parseInt(shape.lineMargins[i].split('|')[1]);
+            }
+
             //ToDo: make it detect diagonal as well
             //If aligned with previous and next vertice along the x OR y axis
             if ((vp.x == vc.x && vc.x == vn.x) || (vp.y == vc.y && vc.y == vn.y)) {
@@ -135,12 +145,12 @@ export default class GeneratorTool {
             }
             
             var dirN = vn.getCopy().remove(vc).normalized();
-            var marginN = Math.abs(this.#getMargin(dirN));
-            dirN.multiply(new Vector2(marginN, marginN));
+            // var marginN = Math.abs(this.#getMargin(dirN));
+            dirN.multiply(new Vector2(mp, mp));
             
             var dirP = vp.getCopy().remove(vc).normalized();
-            var marginP = Math.abs(this.#getMargin(dirP));
-            dirP.multiply(new Vector2(marginP, marginP));
+            // var marginP = Math.abs(this.#getMargin(dirP));
+            dirP.multiply(new Vector2(mn, mn));
             
             var posN = dirN.getCopy().add(vc);
             var posP = dirP.getCopy().add(vc);
@@ -155,12 +165,12 @@ export default class GeneratorTool {
 
             if(!Collision.polygonCircle(shape.getVertices(), pos.x, pos.y, 5)){
                 dirN = vn.getCopy().remove(vc).normalized();
-                marginN = Math.abs(this.#getMargin(dirN));
-                dirN.multiply(new Vector2(marginN, marginN))
+                // marginN = Math.abs(this.#getMargin(dirN));
+                dirN.multiply(new Vector2(mp, mp))
                 
                 dirP = vp.getCopy().remove(vc).normalized();
-                marginP = Math.abs(this.#getMargin(dirP));
-                dirP.multiply(new Vector2(marginP, marginP));
+                // marginP = Math.abs(this.#getMargin(dirP));
+                dirP.multiply(new Vector2(mn, mn));
                 
                 posN = vc.getCopy().remove(dirN);
                 posP = vc.getCopy().remove(dirP);
@@ -197,6 +207,15 @@ export default class GeneratorTool {
             const vc = points[i];
             const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
             const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
+
+            var mp = 0;
+            var mn = 0;
+            if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
+                mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
+            }
+            if (shape.lineMargins[i] != null) {
+                mn = parseInt(shape.lineMargins[i].split('|')[1]);
+            }
             
             //ToDo: make it detect diagonal as well
             //If aligned with previous and next vertice along the x OR y axis
@@ -204,8 +223,8 @@ export default class GeneratorTool {
                 continue;
             }
 
-            var dirP = vp.getCopy().remove(vc).normalized().multiply(new Vector2(this.margin, this.margin));
-            var dirN = vn.getCopy().remove(vc).normalized().multiply(new Vector2(this.margin, this.margin));
+            var dirP = vp.getCopy().remove(vc).normalized().multiply(new Vector2(mn, mn));
+            var dirN = vn.getCopy().remove(vc).normalized().multiply(new Vector2(mp, mp));
             
             var posP = vc.getCopy().remove(dirP);
             var posN = vc.getCopy().remove(dirN);
@@ -288,6 +307,7 @@ export default class GeneratorTool {
         var insetPoints = inset.getVertices();
         var rowIndex = 0;
         var withOffset = false;
+        var self = this;
 
         var attemptPlaceTile = async(x, y, width, height) => {
             var points = [
@@ -302,7 +322,7 @@ export default class GeneratorTool {
             if (hasEnoughSpace) {
                 var tile = this.#getTile(x, y, points);
                 yWithTile = y;
-                this.#tiles.push(tile);
+                self.#tiles['tiles']++;
                 return true;
             } else {
                 // if (width > 20 && height > 20) {
@@ -633,10 +653,15 @@ export default class GeneratorTool {
             this.#buffer.fill(12, 72, 250); // Blue
             this.#buffer.circle(intersectionNext.x , intersectionNext.y ,10);
         }
-        }
-        
-        
+      }
+      return _points;
+    }
+    
+    toJSON(){
+        return this.#tiles;
+    }
 
-        return _points;
+    fromJSON(json){
+        this.#tiles = json;
     }
 }

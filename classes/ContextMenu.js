@@ -2,7 +2,7 @@ export default class ContextMenu {
     elem = null;
     #options = [];
 
-    constructor(id, options = []) {
+    constructor(id, options = [], parentId = null) {
         this.#options = options;
         this.elem = document.createElement('DIV');
         this.elem.classList.add('sub-menu');
@@ -13,7 +13,7 @@ export default class ContextMenu {
             this.elem.append(option.getHtml());
         }
 
-        document.getElementById('menu').append(this.elem);
+        document.getElementById(parentId != null ? parentId : 'menu').append(this.elem);
         this.hide();
     }
 

@@ -445,10 +445,11 @@ export default class GeneratorTool {
                 // print(newPoints);
                 // Place Tile
                 if(placeTile){
-                    if(newPoints.length > 0){
+
+                    if (newPoints.length > 0){
                         var tile = this.#getTile(x, y, newPoints);
                         yWithTile = y;
-                        this.#tiles.push(tile);
+                        self.#tiles['dummy']++;
                         return true;
                     }
                 }

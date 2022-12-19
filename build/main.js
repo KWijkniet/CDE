@@ -775,45 +775,17 @@ var __privateMethod = (obj, member, method) => {
       this.add(new Shape([
         new Vector2(750, 750),
         new Vector2(750 + 50 * 15, 750),
+        new Vector2(750 + 50 * 10, 750 + 50 * 10),
+        new Vector2(750 + 50 * 15, 750 + 50 * 12),
         new Vector2(750 + 50 * 15, 750 + 50 * 15),
         new Vector2(750, 750 + 50 * 15)
-      ], new Color(null, 255, 255, 255, 255)));
-      this.add(new Shape([
-        new Vector2(1600, 750),
-        new Vector2(1600 + 50 * 10, 750),
-        new Vector2(1600 + 50 * 10, 750 + 50 * 10),
-        new Vector2(1600, 750 + 50 * 10)
-      ], new Color(null, 255, 255, 255, 255)));
-      this.add(new Shape([
-        new Vector2(1600, 1400),
-        new Vector2(2300, 1400),
-        new Vector2(2300, 2e3),
-        new Vector2(1900, 2e3),
-        new Vector2(1900, 1700),
-        new Vector2(1600, 1700)
-      ], new Color(null, 255, 255, 255, 255)));
-      this.add(new Shape([
-        new Vector2(2900, 990),
-        new Vector2(2900, 1600),
-        new Vector2(3300, 1600),
-        new Vector2(3300, 1890),
-        new Vector2(3750, 1890),
-        new Vector2(3750, 1370),
-        new Vector2(3510, 1370),
-        new Vector2(3510, 1160),
-        new Vector2(3740, 1160),
-        new Vector2(3740, 960),
-        new Vector2(3340, 960),
-        new Vector2(3340, 1110),
-        new Vector2(3060, 1110),
-        new Vector2(3060, 990)
       ], new Color(null, 255, 255, 255, 255)));
       var forbidden = new Shape([
         new Vector2(750 + 50 * 1.3, 750 + 50 * 1.2),
         new Vector2(750 + 50 * 5, 750 + 50 * 1.2),
         new Vector2(750 + 50 * 5, 750 + 50 * 5),
         new Vector2(750 + 50 * 1.3, 750 + 50 * 5)
-      ], new Color(null, 255, 0, 0, 255));
+      ], new Color(null, 255, 0, 0, 50));
       forbidden.isAllowed = false;
       this.add(forbidden);
     }
@@ -1574,14 +1546,15 @@ var __privateMethod = (obj, member, method) => {
       __publicField(this, "canDelete", true);
       __publicField(this, "canInsert", true);
       __publicField(this, "canMove", true);
-      __publicField(this, "marginU", 25);
-      __publicField(this, "marginLR", 25);
-      __publicField(this, "marginD", 25);
-      __publicField(this, "margin", 25);
+      __publicField(this, "marginU", 0);
+      __publicField(this, "marginLR", 0);
+      __publicField(this, "marginD", 0);
+      __publicField(this, "margin", 0);
       __publicField(this, "rowOffsetMode", false);
       __privateAdd(this, _buffer5, null);
       __privateAdd(this, _renderer, null);
       __privateAdd(this, _tiles, []);
+      __publicField(this, "index", 0);
       __privateAdd(this, _sleep, (delay) => new Promise((resolve) => setTimeout(resolve, delay)));
       __privateSet(this, _renderer, Renderer.instance);
       __privateSet(this, _buffer5, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
@@ -1613,7 +1586,7 @@ var __privateMethod = (obj, member, method) => {
               const vn = points[i2 + 1 < points.length ? i2 + 1 : 0];
               __privateGet(this, _buffer5).drawingContext.setLineDash([15, 15]);
               __privateGet(this, _buffer5).stroke(255, 0, 0);
-              __privateGet(this, _buffer5).strokeWeight(2);
+              __privateGet(this, _buffer5).strokeWeight(5);
               __privateGet(this, _buffer5).line(vc.x, vc.y, vn.x, vn.y);
             }
             __privateGet(this, _buffer5).pop();
@@ -1629,7 +1602,7 @@ var __privateMethod = (obj, member, method) => {
               const vn = points[i2 + 1 < points.length ? i2 + 1 : 0];
               __privateGet(this, _buffer5).drawingContext.setLineDash([15, 15]);
               __privateGet(this, _buffer5).stroke(0, 0, 0);
-              __privateGet(this, _buffer5).strokeWeight(2);
+              __privateGet(this, _buffer5).strokeWeight(5);
               __privateGet(this, _buffer5).line(vc.x, vc.y, vn.x, vn.y);
             }
             __privateGet(this, _buffer5).pop();
@@ -1883,10 +1856,12 @@ var __privateMethod = (obj, member, method) => {
             placeTile = false;
         }
         if (placeTile) {
-          var tile = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, newPoints);
-          yWithTile = y;
-          __privateGet(this, _tiles).push(tile);
-          return true;
+          if (newPoints.length > 0) {
+            var tile = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, newPoints);
+            yWithTile = y;
+            __privateGet(this, _tiles).push(tile);
+            return true;
+          }
         }
       }
       return false;
@@ -2019,43 +1994,49 @@ var __privateMethod = (obj, member, method) => {
     var nextCollision = false;
     for (let i = 0; i < insetPoints.length; i++) {
       const outset = insetPoints[i];
+      const nextOutset = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
       const outsetPoints = outset.getVertices();
-      if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)) {
-        intersectionPrevious = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vp);
-        if (intersectionPrevious != null) {
-          previousCollision = true;
-        } else {
-          previousStatus = false;
-        }
-      }
-      if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)) {
-        intersectionNext = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vn);
-        if (intersectionNext != null) {
-          nextCollision = true;
-        } else {
-          nextStatus = false;
-        }
-      }
-      if (previousCollision) {
-        _points2.push(intersectionPrevious);
-        __privateGet(this, _buffer5).fill(12, 72, 250);
-        __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
-      }
-      if (!previousStatus && !nextStatus) {
-        for (let j = 0; j < outsetPoints.length; j++) {
-          const current = outsetPoints[j];
-          if (Collision.polygonPoint(points, current.x, current.y)) {
-            __privateGet(this, _buffer5).circle(current.x, current.y, 10);
-            _points2.push(current);
-            previousStatus = true;
-            nextStatus = true;
+      if (!Collision.linePoint(outset.x, outset.y, nextOutset.x, nextOutset.y, vc.x, vc.y)) {
+        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)) {
+          intersectionPrevious = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vp);
+          if (intersectionPrevious != null) {
+            previousCollision = true;
+          } else {
+            previousStatus = false;
           }
         }
-      }
-      if (nextCollision) {
-        _points2.push(intersectionNext);
-        __privateGet(this, _buffer5).fill(12, 72, 250);
-        __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
+        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)) {
+          intersectionNext = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vn);
+          if (intersectionNext != null) {
+            nextCollision = true;
+          } else {
+            nextStatus = false;
+          }
+        }
+        if (previousCollision) {
+          _points2.push(intersectionPrevious);
+          __privateGet(this, _buffer5).fill(173, 255, 47);
+          __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
+        }
+        if (!previousStatus && !nextStatus) {
+          for (let j = 0; j < outsetPoints.length; j++) {
+            const current = outsetPoints[j];
+            insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
+            if (Collision.linePoint(vc.x, vc.y, vn.x, vn.y, current.x, current.y) || Collision.polygonPoint(points, current.x, current.y)) {
+              __privateGet(this, _buffer5).circle(current.x, current.y, 10);
+              _points2.push(current);
+              previousStatus = true;
+              nextStatus = true;
+            }
+          }
+        }
+        if (nextCollision) {
+          _points2.push(intersectionNext);
+          __privateGet(this, _buffer5).fill(173, 255, 47);
+          __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
+        }
+      } else {
+        _points2.push(nextOutset);
       }
     }
     return _points2;

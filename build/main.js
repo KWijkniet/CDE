@@ -1534,14 +1534,15 @@ var __privateMethod = (obj, member, method) => {
       __publicField(this, "canDelete", true);
       __publicField(this, "canInsert", true);
       __publicField(this, "canMove", true);
-      __publicField(this, "marginU", 25);
-      __publicField(this, "marginLR", 25);
-      __publicField(this, "marginD", 25);
-      __publicField(this, "margin", 25);
+      __publicField(this, "marginU", 0);
+      __publicField(this, "marginLR", 0);
+      __publicField(this, "marginD", 0);
+      __publicField(this, "margin", 0);
       __publicField(this, "rowOffsetMode", false);
       __privateAdd(this, _buffer5, null);
       __privateAdd(this, _renderer, null);
       __privateAdd(this, _tiles, null);
+      __publicField(this, "index", 0);
       __privateAdd(this, _sleep, (delay) => new Promise((resolve) => setTimeout(resolve, delay)));
       __privateSet(this, _renderer, Renderer.instance);
       __privateSet(this, _buffer5, createGraphics(Settings.mapSizeX, Settings.mapSizeY));
@@ -1574,7 +1575,7 @@ var __privateMethod = (obj, member, method) => {
               const vn = points[i2 + 1 < points.length ? i2 + 1 : 0];
               __privateGet(this, _buffer5).drawingContext.setLineDash([15, 15]);
               __privateGet(this, _buffer5).stroke(255, 0, 0);
-              __privateGet(this, _buffer5).strokeWeight(2);
+              __privateGet(this, _buffer5).strokeWeight(5);
               __privateGet(this, _buffer5).line(vc.x, vc.y, vn.x, vn.y);
             }
             __privateGet(this, _buffer5).pop();
@@ -1590,7 +1591,7 @@ var __privateMethod = (obj, member, method) => {
               const vn = points[i2 + 1 < points.length ? i2 + 1 : 0];
               __privateGet(this, _buffer5).drawingContext.setLineDash([15, 15]);
               __privateGet(this, _buffer5).stroke(0, 0, 0);
-              __privateGet(this, _buffer5).strokeWeight(2);
+              __privateGet(this, _buffer5).strokeWeight(5);
               __privateGet(this, _buffer5).line(vc.x, vc.y, vn.x, vn.y);
             }
             __privateGet(this, _buffer5).pop();
@@ -2001,43 +2002,49 @@ var __privateMethod = (obj, member, method) => {
     var nextCollision = false;
     for (let i = 0; i < insetPoints.length; i++) {
       const outset = insetPoints[i];
+      const nextOutset = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
       const outsetPoints = outset.getVertices();
-      if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)) {
-        intersectionPrevious = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vp);
-        if (intersectionPrevious != null) {
-          previousCollision = true;
-        } else {
-          previousStatus = false;
-        }
-      }
-      if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)) {
-        intersectionNext = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vn);
-        if (intersectionNext != null) {
-          nextCollision = true;
-        } else {
-          nextStatus = false;
-        }
-      }
-      if (previousCollision) {
-        _points2.push(intersectionPrevious);
-        __privateGet(this, _buffer5).fill(12, 72, 250);
-        __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
-      }
-      if (!previousStatus && !nextStatus) {
-        for (let j = 0; j < outsetPoints.length; j++) {
-          const current = outsetPoints[j];
-          if (Collision.polygonPoint(points, current.x, current.y)) {
-            __privateGet(this, _buffer5).circle(current.x, current.y, 10);
-            _points2.push(current);
-            previousStatus = true;
-            nextStatus = true;
+      if (!Collision.linePoint(outset.x, outset.y, nextOutset.x, nextOutset.y, vc.x, vc.y)) {
+        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)) {
+          intersectionPrevious = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vp);
+          if (intersectionPrevious != null) {
+            previousCollision = true;
+          } else {
+            previousStatus = false;
           }
         }
-      }
-      if (nextCollision) {
-        _points2.push(intersectionNext);
-        __privateGet(this, _buffer5).fill(12, 72, 250);
-        __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
+        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)) {
+          intersectionNext = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vn);
+          if (intersectionNext != null) {
+            nextCollision = true;
+          } else {
+            nextStatus = false;
+          }
+        }
+        if (previousCollision) {
+          _points2.push(intersectionPrevious);
+          __privateGet(this, _buffer5).fill(173, 255, 47);
+          __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
+        }
+        if (!previousStatus && !nextStatus) {
+          for (let j = 0; j < outsetPoints.length; j++) {
+            const current = outsetPoints[j];
+            insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
+            if (Collision.linePoint(vc.x, vc.y, vn.x, vn.y, current.x, current.y) || Collision.polygonPoint(points, current.x, current.y)) {
+              __privateGet(this, _buffer5).circle(current.x, current.y, 10);
+              _points2.push(current);
+              previousStatus = true;
+              nextStatus = true;
+            }
+          }
+        }
+        if (nextCollision) {
+          _points2.push(intersectionNext);
+          __privateGet(this, _buffer5).fill(173, 255, 47);
+          __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
+        }
+      } else {
+        _points2.push(nextOutset);
       }
     }
     return _points2;

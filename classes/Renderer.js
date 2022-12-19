@@ -8,25 +8,14 @@ export default class Renderer {
     constructor() {
         Renderer.instance = this;
         this.#shapes = [];
-        this.add(new Shape([
-            new Vector2(750, 750),
-            new Vector2(750 + (50 * 15), 750),
-            new Vector2(750 + (50 * 10), 750 + (50 * 10)),
-            new Vector2(750 + (50 * 15), 750 + (50 * 12)),
-            new Vector2(750 + (50 * 15), 750 + (50 * 15)),
-            new Vector2(750, 750 + (50 * 15)),
-        ], new Color(null, 255, 255, 255, 255)));
-
-        // this.add(new Shape([
-        //     new Vector2(1600, 750),
-        //     new Vector2(1600 + (50 * 10), 750),
-        //     new Vector2(1600 + (50 * 10), 750 + (50 * 10)),
-        //     new Vector2(1600, 750 + (50 * 10)),
+        //     new Vector2(750, 750),
+        //     new Vector2(750 + (50 * 15), 750),
+        //     // new Vector2(750 + (50 * 10), 750 + (50 * 10)),
+        //     // new Vector2(750 + (50 * 15), 750 + (50 * 12)),
+        //     new Vector2(750 + (50 * 15), 750 + (50 * 15)),
+        //     new Vector2(750, 750 + (50 * 15)),
         // ], new Color(null, 255, 255, 255, 255)));
 
-        // this.add(new Shape([
-        //     new Vector2(1600, 1400),
-        //     new Vector2(2300, 1400),
         //     new Vector2(2300, 2000),
         //     new Vector2(1900, 2000),
         //     new Vector2(1900, 1700),
@@ -52,14 +41,14 @@ export default class Renderer {
 
 
 
-        var forbidden = new Shape([
-            new Vector2(750 + (50 * 1.3), 750 + (50 * 1.2)),
-            new Vector2(750 + (50 * 5), 750 + (50 * 1.2)),
-            new Vector2(750 + (50 * 5), 750 + (50 * 5)),
-            new Vector2(750 + (50 * 1.3), 750 + (50 * 5)),
-        ], new Color(null, 255, 0, 0, 50));
-        forbidden.isAllowed = false;
-        this.add(forbidden);
+        // var forbidden = new Shape([
+        //     new Vector2(750 + (50 * 1.3), 750 + (50 * 1.2)),
+        //     new Vector2(750 + (50 * 5), 750 + (50 * 1.2)),
+        //     new Vector2(750 + (50 * 5), 750 + (50 * 5)),
+        //     new Vector2(750 + (50 * 1.3), 750 + (50 * 5)),
+        // ], new Color(null, 255, 0, 0, 255));
+        // forbidden.isAllowed = false;
+        // this.add(forbidden);
     }
 
     update(){

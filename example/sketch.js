@@ -330,7 +330,7 @@ function importData(json){
     }
     generatorTool.fromJSON(json['generated']);
     document.getElementById("useRowOffset").checked = json['useRowOffset'];
-    document.getElementById("tileType").value = data['tileType'];
+    document.getElementById("tileType").value = json['tileType'];
 }
 
 function canvasAsImage(){

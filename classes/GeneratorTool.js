@@ -470,7 +470,7 @@ export default class GeneratorTool {
             x += tileWidth;
             if (x >= boundingBox.x + boundingBox.w) {
                 y += yWithTile < y ? 1 : tileHeight;
-                rowIndex++
+                rowIndex++;
                 if (this.rowOffsetMode) {
                     x = rowIndex % 2 != 0 ? boundingBox.x + (tileWidth / 2) : boundingBox.x;
                 }

@@ -203,9 +203,9 @@ main{
 }
 
 .sub-menu{
-    position: absolute;
-    left: 75px;
-    top: 0px;
+    position: relative;
+    left: 67px;
+    top: -52px;
     width: 62px;
     /* height: 124px; */
     background-color: #fff;
@@ -238,4 +238,5 @@ main{
 
 .sub-menu .text{
     font-size: 7px;
+    display: block;
 }

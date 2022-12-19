@@ -7,6 +7,7 @@ export default class Shape {
     showData = false;
     isAllowed = true;
     isGenerated = false;
+    lineMargins = null;
 
     #vertices = null;
     #shapebuffer = null;
@@ -22,11 +23,16 @@ export default class Shape {
         this.isGenerated = isGenerated;
         this.#shapebuffer = buffer;
         this.#textBuffer = buffer;
-
+        
         if(this.id == null){
             this.id = this.#generateUniqSerial();
         }
         this.#vertices = vertices;
+        this.lineMargins = [];
+        for (let i = 0; i < vertices.length; i++) {
+            this.lineMargins.push(null);
+        }
+        
         this.#generate();
     }
 
@@ -82,7 +88,7 @@ export default class Shape {
             vertices.push(vertice.toJSON());
         }
 
-        return { "id": this.id, "color": this.color.rgba(), "showData": this.showData, "isAllowed": this.isAllowed, "isGenerated": this.isGenerated, "vertices": vertices, "pos": this.#pos.toJSON() };
+        return { "id": this.id, "color": this.color.rgba(), "showData": this.showData, "isAllowed": this.isAllowed, "isGenerated": this.isGenerated, "vertices": vertices, "lineMargins": this.lineMargins, "pos": this.#pos.toJSON() };
     }
 
     fromJSON(json) {
@@ -91,6 +97,7 @@ export default class Shape {
         this.showData = json.showData;
         this.isAllowed = json.isAllowed;
         this.isGenerated = json.isGenerated;
+        this.lineMargins = json.lineMargins;
         this.#pos = json.pos;
 
         this.#vertices = [];
@@ -98,7 +105,6 @@ export default class Shape {
             const vertice = json.vertices[i];
             this.#vertices.push(new Vector2(0, 0).fromJSON(vertice));
         }
-        console.log(this.#vertices);
         this.#generate();
     }
 

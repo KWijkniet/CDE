@@ -38,19 +38,19 @@ export default class Cursor{
         this.resetOffset();
 
         //Track mouse position
-        document.addEventListener('mousemove', (e) => { this.position = new Vector2(e.clientX, e.clientY); });
+        Settings.getCanvas().elt.addEventListener('mousemove', (e) => { this.position = new Vector2(e.clientX, e.clientY); });
         
         //Mouse based
-        document.addEventListener('mousemove', (event) => { this.#event(event, 'mousemove'); });
-        document.addEventListener('mousedown', (event) => { this.#event(event, 'mousedown'); });
-        document.addEventListener('mouseup', (event) => { this.#event(event, 'mouseup'); });
+        Settings.getCanvas().elt.addEventListener('mousemove', (event) => { this.#event(event, 'mousemove'); });
+        Settings.getCanvas().elt.addEventListener('mousedown', (event) => { this.#event(event, 'mousedown'); });
+        Settings.getCanvas().elt.addEventListener('mouseup', (event) => { this.#event(event, 'mouseup'); });
 
         //Touch based
-        document.addEventListener('touchmove', (event) => { this.#event(event, 'mousemove') });
-        document.addEventListener('touchstart', (event) => { this.#event(event, 'mousedown') });
-        document.addEventListener('touchend', (event) => { this.#event(event, 'mouseup') });
+        Settings.getCanvas().elt.addEventListener('touchmove', (event) => { this.#event(event, 'mousemove') });
+        Settings.getCanvas().elt.addEventListener('touchstart', (event) => { this.#event(event, 'mousedown') });
+        Settings.getCanvas().elt.addEventListener('touchend', (event) => { this.#event(event, 'mouseup') });
 
-        document.addEventListener('wheel', (event) => { this.events.invoke('scroll', event); });
+        Settings.getCanvas().elt.addEventListener('wheel', (event) => { this.events.invoke('scroll', event); });
         this.events.subscribe('scroll', (e) => {
             if (this.isDisabled) { this.#checkBounds(); return; }
             const {x, y, deltaY} = e.detail;

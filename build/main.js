@@ -374,7 +374,7 @@ var __privateMethod = (obj, member, method) => {
       return false;
     }
   }
-  class Color$1 {
+  class Color {
     constructor(string = null, r = 0, g = 0, b = 0, a = 1) {
       __publicField(this, "string", "");
       __publicField(this, "value", []);
@@ -409,11 +409,11 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Settings$1, "gridSizeL", 100);
   __publicField(Settings$1, "zoom", 1);
   __publicField(Settings$1, "cursorSize", 10);
-  __publicField(Settings$1, "gridBackground", new Color$1("--grid-background"));
-  __publicField(Settings$1, "gridLines", new Color$1("--grid-lines"));
-  __publicField(Settings$1, "shapeAllowed", new Color$1("--shape-allowed"));
-  __publicField(Settings$1, "shapeForbidden", new Color$1("--shape-forbidden"));
-  __publicField(Settings$1, "tileBackground", new Color$1("--tile-background"));
+  __publicField(Settings$1, "gridBackground", new Color("--grid-background"));
+  __publicField(Settings$1, "gridLines", new Color("--grid-lines"));
+  __publicField(Settings$1, "shapeAllowed", new Color("--shape-allowed"));
+  __publicField(Settings$1, "shapeForbidden", new Color("--shape-forbidden"));
+  __publicField(Settings$1, "tileBackground", new Color("--tile-background"));
   __privateAdd(Settings$1, _canvas, null);
   __publicField(Settings$1, "setCanvas", (c) => {
     __privateSet(_Settings$1, _canvas, c);
@@ -486,28 +486,28 @@ var __privateMethod = (obj, member, method) => {
       __privateSet(this, _lastPos, Vector2.zero());
       __privateSet(this, _diff, Vector2.zero());
       this.resetOffset();
-      document.addEventListener("mousemove", (e) => {
+      Settings.getCanvas().elt.addEventListener("mousemove", (e) => {
         this.position = new Vector2(e.clientX, e.clientY);
       });
-      document.addEventListener("mousemove", (event) => {
+      Settings.getCanvas().elt.addEventListener("mousemove", (event) => {
         __privateMethod(this, _event, event_fn).call(this, event, "mousemove");
       });
-      document.addEventListener("mousedown", (event) => {
+      Settings.getCanvas().elt.addEventListener("mousedown", (event) => {
         __privateMethod(this, _event, event_fn).call(this, event, "mousedown");
       });
-      document.addEventListener("mouseup", (event) => {
+      Settings.getCanvas().elt.addEventListener("mouseup", (event) => {
         __privateMethod(this, _event, event_fn).call(this, event, "mouseup");
       });
-      document.addEventListener("touchmove", (event) => {
+      Settings.getCanvas().elt.addEventListener("touchmove", (event) => {
         __privateMethod(this, _event, event_fn).call(this, event, "mousemove");
       });
-      document.addEventListener("touchstart", (event) => {
+      Settings.getCanvas().elt.addEventListener("touchstart", (event) => {
         __privateMethod(this, _event, event_fn).call(this, event, "mousedown");
       });
-      document.addEventListener("touchend", (event) => {
+      Settings.getCanvas().elt.addEventListener("touchend", (event) => {
         __privateMethod(this, _event, event_fn).call(this, event, "mouseup");
       });
-      document.addEventListener("wheel", (event) => {
+      Settings.getCanvas().elt.addEventListener("wheel", (event) => {
         this.events.invoke("scroll", event);
       });
       this.events.subscribe("scroll", (e) => {
@@ -622,7 +622,7 @@ var __privateMethod = (obj, member, method) => {
   }
   _buffer = new WeakMap();
   const _Shape = class {
-    constructor(vertices = [], color = new Color$1(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
+    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
       __publicField(this, "id", null);
       __publicField(this, "color", null);
       __publicField(this, "showData", false);
@@ -695,7 +695,7 @@ var __privateMethod = (obj, member, method) => {
       __privateSet(this, _vertices, vertices);
       this.lineMargins = [];
       for (let i = 0; i < vertices.length; i++) {
-        this.lineMargins.push(null);
+        this.lineMargins.push(5);
       }
       __privateGet(this, _generate).call(this);
     }
@@ -727,7 +727,7 @@ var __privateMethod = (obj, member, method) => {
     redraw() {
       __privateGet(this, _generate).call(this);
     }
-    reCalculate(vertices = [], color = new Color$1(null, 255, 255, 255)) {
+    reCalculate(vertices = [], color = new Color(null, 255, 255, 255)) {
       if (__privateGet(this, _shapebuffer) != null) {
         __privateGet(this, _shapebuffer).clear();
         __privateGet(this, _shapebuffer).elt.parentNode.removeChild(__privateGet(this, _shapebuffer).elt);
@@ -750,7 +750,7 @@ var __privateMethod = (obj, member, method) => {
     }
     fromJSON(json) {
       this.id = json.id;
-      this.color = new Color$1(null, json.color.r, json.color.g, json.color.b, json.color.a);
+      this.color = new Color(null, json.color.r, json.color.g, json.color.b, json.color.a);
       this.showData = json.showData;
       this.isAllowed = json.isAllowed;
       this.isGenerated = json.isGenerated;
@@ -776,50 +776,6 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _shapes, null);
       _Renderer$1.instance = this;
       __privateSet(this, _shapes, []);
-      this.add(new Shape([
-        new Vector2(750, 750),
-        new Vector2(750 + 50 * 15, 750),
-        new Vector2(750 + 50 * 15, 750 + 50 * 15),
-        new Vector2(750, 750 + 50 * 15)
-      ], new Color(null, 255, 255, 255, 255)));
-      this.add(new Shape([
-        new Vector2(1600, 750),
-        new Vector2(1600 + 50 * 10, 750),
-        new Vector2(1600 + 50 * 10, 750 + 50 * 10),
-        new Vector2(1600, 750 + 50 * 10)
-      ], new Color(null, 255, 255, 255, 255)));
-      this.add(new Shape([
-        new Vector2(1600, 1400),
-        new Vector2(2300, 1400),
-        new Vector2(2300, 2e3),
-        new Vector2(1900, 2e3),
-        new Vector2(1900, 1700),
-        new Vector2(1600, 1700)
-      ], new Color(null, 255, 255, 255, 255)));
-      this.add(new Shape([
-        new Vector2(2900, 990),
-        new Vector2(2900, 1600),
-        new Vector2(3300, 1600),
-        new Vector2(3300, 1890),
-        new Vector2(3750, 1890),
-        new Vector2(3750, 1370),
-        new Vector2(3510, 1370),
-        new Vector2(3510, 1160),
-        new Vector2(3740, 1160),
-        new Vector2(3740, 960),
-        new Vector2(3340, 960),
-        new Vector2(3340, 1110),
-        new Vector2(3060, 1110),
-        new Vector2(3060, 990)
-      ], new Color(null, 255, 255, 255, 255)));
-      var forbidden = new Shape([
-        new Vector2(750 + 50 * 1.3, 750 + 50 * 1.2),
-        new Vector2(750 + 50 * 5, 750 + 50 * 1.2),
-        new Vector2(750 + 50 * 5, 750 + 50 * 5),
-        new Vector2(750 + 50 * 1.3, 750 + 50 * 5)
-      ], new Color(null, 255, 0, 0, 255));
-      forbidden.isAllowed = false;
-      this.add(forbidden);
     }
     update() {
       var keys = Object.keys(__privateGet(this, _shapes));
@@ -2310,7 +2266,7 @@ var __privateMethod = (obj, member, method) => {
   };
   exports2.Action = Action;
   exports2.Collision = Collision;
-  exports2.Color = Color$1;
+  exports2.Color = Color;
   exports2.ContextMenu = ContextMenu;
   exports2.ContextMenuOption = ContextMenuOption;
   exports2.Cursor = Cursor$1;

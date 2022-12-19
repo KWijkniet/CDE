@@ -695,7 +695,7 @@ var __privateMethod = (obj, member, method) => {
       __privateSet(this, _vertices, vertices);
       this.lineMargins = [];
       for (let i = 0; i < vertices.length; i++) {
-        this.lineMargins.push(5);
+        this.lineMargins.push("default|5");
       }
       __privateGet(this, _generate).call(this);
     }

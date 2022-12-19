@@ -352,6 +352,8 @@ export default class GeneratorTool {
                             //         newPoints.push(newPointsFromFunction[k]);
                             //     }
                             // }
+                            this.#buffer.fill(12, 72, 250); // Blue
+                                this.#buffer.circle(vc.x , vc.y ,10);
                             var intersectionPrevious, intersectionNext;
                             count++;
                             var previousCollision = false;
@@ -378,9 +380,10 @@ export default class GeneratorTool {
                             }
 
                             if(previousCollision){
+                                this.#buffer.text('x', intersectionPrevious.x, intersectionPrevious.y);
                                 newPoints.push(intersectionPrevious);
                                 this.#buffer.fill(12, 72, 250); // Blue
-                                this.#buffer.circle(intersectionPrevious.x , intersectionPrevious.y ,10);
+                                // this.#buffer.circle(intersectionPrevious.x , intersectionPrevious.y ,10);
                             }
 
                             // 2
@@ -412,9 +415,10 @@ export default class GeneratorTool {
                             }
 
                             if(nextCollision){
+                                this.#buffer.text('x', intersectionNext.x, intersectionNext.y);
                                 newPoints.push(intersectionNext); 
                                 this.#buffer.fill(12, 72, 250); // Blue
-                                this.#buffer.circle(intersectionNext.x , intersectionNext.y ,10);
+                                // this.#buffer.circle(intersectionNext.x , intersectionNext.y ,10);
                             }
                         }else {
                             if(this.#isInsideForbiddenZone(outsets, vc)){
@@ -560,12 +564,6 @@ export default class GeneratorTool {
             if(next == vertices.length){
                 next = 0;
             }
-
-            //convert 2 vertices into a line
-            const x3 = vertices[current].x;
-            const y3 = vertices[current].y;
-            const x4 = vertices[next].x;
-            const y4 = vertices[next].y;
             
             //detect if the vertices lines intersect with the given line
             var hit = this.#lineIntersection(vector1, vector2, vertices[current], vertices[next]);
@@ -583,9 +581,7 @@ export default class GeneratorTool {
         var z3 = (pointA.y - pointB.y);
         var z4 = (pointC.y - pointD.y);
         var dist = z1 * z4 - z3 * z2;
-        if (dist == 0) {
-          return null;
-        }
+
         var tempA = (pointA.x * pointB.y - pointA.y * pointB.x);
         var tempB = (pointC.x * pointD.y - pointC.y * pointD.x);
         var xCoor = (tempA * z2 - z1 * tempB) / dist;
@@ -652,7 +648,8 @@ export default class GeneratorTool {
                         const current = outsetPoints[j];
                         const next = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
                         // this.#isInsideForbiddenZone(insetPoints, current) ||
-                        if(Collision.linePoint(vc.x, vc.y, vn.x ,vn.y, current.x, current.y)|| Collision.polygonPoint(points, current.x, current.y)){
+                        //Collision.linePoint(vc.x, vc.y, vn.x ,vn.y, current.x, current.y)|| 
+                        if(Collision.polygonPoint(points, current.x, current.y)){
                             
                             this.#buffer.circle(current.x , current.y ,10);
                             _points.push(current);

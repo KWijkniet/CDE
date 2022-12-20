@@ -22,13 +22,19 @@ export default class GeneratorTool {
     #buffer = null;
     #renderer = null;
     #tiles = null;
+    #totalWidth = 0;
+    #totalHeight = 0;
+    #dummyWidth = 0;
+    #dummyHeight = 0;
+    #tileWidth = 0;
+    #tileHeight = 0;
 
     index = 0;
 
     constructor(){
         this.#renderer = Renderer.instance;
         this.#buffer = createGraphics(Settings.mapSizeX, Settings.mapSizeY);
-        this.#tiles = {'tiles': 0, 'dummy': 0};
+        this.#tiles = { 'X-Roof': 0, 'Alucobond': 0};
     }
 
     update(){
@@ -323,8 +329,13 @@ export default class GeneratorTool {
 
             if (hasEnoughSpace) {
                 var tile = this.#getTile(x, y, points);
+                this.#totalWidth += tile.width;
+                this.#totalHeight += tile.height;
+                this.#tileWidth += tile.width;
+                this.#tileHeight += tile.height;
+
                 yWithTile = y;
-                self.#tiles['tiles']++;
+                self.#tiles['X-Roof']++;
                 return true;
             } else {
                 // if (width > 20 && height > 20) {
@@ -452,8 +463,13 @@ export default class GeneratorTool {
 
                     if (newPoints.length > 0){
                         var tile = this.#getTile(x, y, newPoints);
+                        this.#totalWidth += tile.width;
+                        this.#totalHeight += tile.height;
+                        this.#dummyWidth += tile.width;
+                        this.#dummyHeight += tile.height;
+
                         yWithTile = y;
-                        self.#tiles['dummy']++;
+                        self.#tiles['Alucobond']++;
                         return true;
                     }
                 }
@@ -672,10 +688,16 @@ export default class GeneratorTool {
     }
 
     toJSON(){
-        return this.#tiles;
+        return { 'tiles': this.#tiles, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
     }
 
     fromJSON(json){
-        this.#tiles = json;
+        this.#tiles = json.tiles;
+        this.#totalWidth = json.width;
+        this.#totalHeight = json.height;
+        this.#dummyWidth += tile.width;
+        this.#dummyHeight += tile.height;
+        this.#tileWidth += tile.width;
+        this.#tileHeight += tile.height;
     }
 }

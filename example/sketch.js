@@ -264,6 +264,7 @@ function updateToolMode(mode){
 
 function updateSettings(){
     generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
+    Settings.type = document.getElementById("tileType").value;
 }
 
 function updateMargin() {
@@ -304,18 +305,23 @@ function loadMargin() {
     }
 }
 
-function exportData(){
+function exportData() {
     var data = {
         "shapes": [],
+        "generator": [],
+        "useRowOffset": 0,
+        "tileType": "",
     };
 
     var shapes = renderer.getAll();
     for(var i = 0; i < shapes.length; i++){
         data["shapes"][i] = shapes[i].toJSON();
     }
-    data['generated'] = generatorTool.toJSON();
+    data['generator'] = generatorTool.toJSON();
     data['useRowOffset'] = document.getElementById("useRowOffset").checked;
     data['tileType'] = document.getElementById("tileType").value;
+    data['dakvoetprofielen'] = document.getElementById("dakvoetprofielen").value;
+    data['vogelschroten'] = document.getElementById("vogelschroten").value;
 
     return JSON.stringify(data);
 }
@@ -331,6 +337,8 @@ function importData(json){
     generatorTool.fromJSON(json['generated']);
     document.getElementById("useRowOffset").checked = json['useRowOffset'];
     document.getElementById("tileType").value = json['tileType'];
+    document.getElementById("dakvoetprofielen").value = data['dakvoetprofielen'];
+    document.getElementById("vogelschroten").value = data['vogelschroten'];
 }
 
 function canvasAsImage(){

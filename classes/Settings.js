@@ -10,12 +10,14 @@ export default class Settings {
     static gridSizeL = 100;
     static zoom = 1;
     static cursorSize = 10;
+    static type = "Zwart";
 
     static gridBackground = new Color("--grid-background");
     static gridLines = new Color("--grid-lines");
     static shapeAllowed = new Color("--shape-allowed");
     static shapeForbidden = new Color("--shape-forbidden");
-    static tileBackground = new Color("--tile-background");
+    static tileTerracottaBackground = new Color("--tile-background-terracotta");
+    static tileZwartBackground = new Color("--tile-background-zwart");
 
     static #canvas = null;
     static setCanvas = (c) => { this.#canvas = c; };

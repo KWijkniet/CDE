@@ -6,8 +6,9 @@ export default class Tile {
     height = 0;
     #buffer = null;
     #vertices = [];
+    #color = null;
 
-    constructor(vertices = [], buffer = null) {
+    constructor(vertices = [], buffer = null, isDummy = false) {
         this.#buffer = buffer;
         this.#vertices = vertices;
         this.width = 0;
@@ -18,6 +19,12 @@ export default class Tile {
             if(isNaN(vc.x) || isNaN(vc.y)){
                 this.#vertices.splice(i, 1);
             }
+        }
+
+        if(isDummy){
+            this.#color = Settings.type == "Zwart" ? Settings.dummyZwartBackground : Settings.dummyTerracottaBackground;
+        }else{
+            this.#color = Settings.type == "Zwart" ? Settings.tileZwartBackground : Settings.tileTerracottaBackground;
         }
 
         const xArr = this.#vertices.map(a => a.x);
@@ -48,7 +55,7 @@ export default class Tile {
             this.#buffer.vertex(this.#vertices[i].x, this.#vertices[i].y);
         }
         this.#buffer.vertex(this.#vertices[0].x, this.#vertices[0].y);
-        var rgba = Settings.type == "Zwart" ? Settings.tileZwartBackground.rgba() : Settings.tileTerracottaBackground.rgba();
+        var rgba = this.#color.rgba();
         this.#buffer.fill(rgba.r, rgba.g, rgba.b, rgba.a);
         this.#buffer.endShape();
     }

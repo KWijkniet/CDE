@@ -18,6 +18,8 @@ export default class Settings {
     static shapeForbidden = new Color("--shape-forbidden");
     static tileTerracottaBackground = new Color("--tile-background-terracotta");
     static tileZwartBackground = new Color("--tile-background-zwart");
+    static dummyTerracottaBackground = new Color("--tile-background-terracotta-dummy");
+    static dummyZwartBackground = new Color("--tile-background-zwart-dummy");
 
     static #canvas = null;
     static setCanvas = (c) => { this.#canvas = c; };

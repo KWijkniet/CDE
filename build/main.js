@@ -37,7 +37,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _totalWidth, _totalHeight, _dummyWidth, _dummyHeight, _tileWidth, _tileHeight, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _isInsidePoint, isInsidePoint_fn, _isInsideForbiddenZone, isInsideForbiddenZone_fn, _getTile, getTile_fn, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn, _lineIntersection, lineIntersection_fn, _calculateNewVectorPosition, calculateNewVectorPosition_fn, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _color, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _totalWidth, _totalHeight, _dummyWidth, _dummyHeight, _tileWidth, _tileHeight, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _isInsidePoint, isInsidePoint_fn, _isInsideForbiddenZone, isInsideForbiddenZone_fn, _getTile, getTile_fn, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn, _lineIntersection, lineIntersection_fn, _calculateNewVectorPosition, calculateNewVectorPosition_fn, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
   "use strict";
   const _Vector2 = class {
     constructor(x = 0, y = 0) {
@@ -417,6 +417,8 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Settings$1, "shapeForbidden", new Color("--shape-forbidden"));
   __publicField(Settings$1, "tileTerracottaBackground", new Color("--tile-background-terracotta"));
   __publicField(Settings$1, "tileZwartBackground", new Color("--tile-background-zwart"));
+  __publicField(Settings$1, "dummyTerracottaBackground", new Color("--tile-background-terracotta-dummy"));
+  __publicField(Settings$1, "dummyZwartBackground", new Color("--tile-background-zwart-dummy"));
   __privateAdd(Settings$1, _canvas, null);
   __publicField(Settings$1, "setCanvas", (c) => {
     __privateSet(_Settings$1, _canvas, c);
@@ -1492,12 +1494,13 @@ var __privateMethod = (obj, member, method) => {
     }
   };
   class Tile {
-    constructor(vertices = [], buffer = null) {
+    constructor(vertices = [], buffer = null, isDummy = false) {
       __privateAdd(this, _generate4);
       __publicField(this, "width", 0);
       __publicField(this, "height", 0);
       __privateAdd(this, _buffer4, null);
       __privateAdd(this, _vertices2, []);
+      __privateAdd(this, _color, null);
       __privateSet(this, _buffer4, buffer);
       __privateSet(this, _vertices2, vertices);
       this.width = 0;
@@ -1510,6 +1513,11 @@ var __privateMethod = (obj, member, method) => {
         if (isNaN(vc.x) || isNaN(vc.y)) {
           __privateGet(this, _vertices2).splice(i, 1);
         }
+      }
+      if (isDummy) {
+        __privateSet(this, _color, Settings.type == "Zwart" ? Settings.dummyZwartBackground : Settings.dummyTerracottaBackground);
+      } else {
+        __privateSet(this, _color, Settings.type == "Zwart" ? Settings.tileZwartBackground : Settings.tileTerracottaBackground);
       }
       const xArr = __privateGet(this, _vertices2).map((a) => a.x);
       const yArr = __privateGet(this, _vertices2).map((a) => a.y);
@@ -1531,6 +1539,7 @@ var __privateMethod = (obj, member, method) => {
   }
   _buffer4 = new WeakMap();
   _vertices2 = new WeakMap();
+  _color = new WeakMap();
   _generate4 = new WeakSet();
   generate_fn3 = function() {
     __privateGet(this, _buffer4).beginShape();
@@ -1538,7 +1547,7 @@ var __privateMethod = (obj, member, method) => {
       __privateGet(this, _buffer4).vertex(__privateGet(this, _vertices2)[i].x, __privateGet(this, _vertices2)[i].y);
     }
     __privateGet(this, _buffer4).vertex(__privateGet(this, _vertices2)[0].x, __privateGet(this, _vertices2)[0].y);
-    var rgba = Settings.type == "Zwart" ? Settings.tileZwartBackground.rgba() : Settings.tileTerracottaBackground.rgba();
+    var rgba = __privateGet(this, _color).rgba();
     __privateGet(this, _buffer4).fill(rgba.r, rgba.g, rgba.b, rgba.a);
     __privateGet(this, _buffer4).endShape();
   };
@@ -1819,7 +1828,7 @@ var __privateMethod = (obj, member, method) => {
       ];
       var hasEnoughSpace = __privateMethod(this, _canBePlaced, canBePlaced_fn).call(this, insetPoints, outsets, points);
       if (hasEnoughSpace) {
-        var tile2 = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points);
+        var tile2 = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points, false);
         __privateSet(this, _totalWidth, __privateGet(this, _totalWidth) + tile2.width);
         __privateSet(this, _totalHeight, __privateGet(this, _totalHeight) + tile2.height);
         __privateSet(this, _tileWidth, __privateGet(this, _tileWidth) + tile2.width);
@@ -1917,7 +1926,7 @@ var __privateMethod = (obj, member, method) => {
         }
         if (placeTile) {
           if (newPoints.length > 0) {
-            var tile2 = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, newPoints);
+            var tile2 = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, newPoints, true);
             __privateSet(this, _totalWidth, __privateGet(this, _totalWidth) + tile2.width);
             __privateSet(this, _totalHeight, __privateGet(this, _totalHeight) + tile2.height);
             __privateSet(this, _dummyWidth, __privateGet(this, _dummyWidth) + tile2.width);
@@ -2006,8 +2015,8 @@ var __privateMethod = (obj, member, method) => {
     return false;
   };
   _getTile = new WeakSet();
-  getTile_fn = function(x, y, vertices) {
-    return new Tile(vertices, __privateGet(this, _buffer5));
+  getTile_fn = function(x, y, vertices, isDummy) {
+    return new Tile(vertices, __privateGet(this, _buffer5), isDummy);
   };
   _polygonLineWithCoordinates = new WeakSet();
   polygonLineWithCoordinates_fn = function(vertices, vector1, vector2) {

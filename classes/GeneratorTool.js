@@ -328,7 +328,7 @@ export default class GeneratorTool {
             var hasEnoughSpace = this.#canBePlaced(insetPoints, outsets, points);
 
             if (hasEnoughSpace) {
-                var tile = this.#getTile(x, y, points);
+                var tile = this.#getTile(x, y, points, false);
                 this.#totalWidth += tile.width;
                 this.#totalHeight += tile.height;
                 this.#tileWidth += tile.width;
@@ -462,7 +462,7 @@ export default class GeneratorTool {
                 if(placeTile){
 
                     if (newPoints.length > 0){
-                        var tile = this.#getTile(x, y, newPoints);
+                        var tile = this.#getTile(x, y, newPoints, true);
                         this.#totalWidth += tile.width;
                         this.#totalHeight += tile.height;
                         this.#dummyWidth += tile.width;
@@ -566,8 +566,8 @@ export default class GeneratorTool {
         return false;
     }
 
-    #getTile(x,y, vertices){
-        return new Tile(vertices, this.#buffer);
+    #getTile(x,y, vertices, isDummy){
+        return new Tile(vertices, this.#buffer, isDummy);
     }
 
     #polygonLineWithCoordinates(vertices, vector1, vector2){

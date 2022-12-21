@@ -171,7 +171,7 @@ export default class GeneratorTool {
                 this.#buffer.circle(posN.x, posN.y, 10);
             }
 
-            if (!Collision.polygonCircle(shape.getVertices(), pos.x, pos.y, 5)) {
+            if (!Collision.polygonCircle(shape.getVertices(), pos.x, pos.y, 1)) {
                 dirN = vn.getCopy().remove(vc).normalized();
                 // marginN = Math.abs(this.#getMargin(dirN));
                 dirN.multiply(new Vector2(mp, mp))

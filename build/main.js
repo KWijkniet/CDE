@@ -779,10 +779,38 @@ var __privateMethod = (obj, member, method) => {
       this.add(new Shape([
         new Vector2(750, 750),
         new Vector2(750 + 50 * 15, 750),
-        new Vector2(750 + 50 * 10, 750 + 50 * 10),
-        new Vector2(750 + 50 * 15, 750 + 50 * 12),
         new Vector2(750 + 50 * 15, 750 + 50 * 15),
         new Vector2(750, 750 + 50 * 15)
+      ], new Color(null, 255, 255, 255, 255)));
+      this.add(new Shape([
+        new Vector2(1600, 750),
+        new Vector2(1600 + 50 * 10, 750),
+        new Vector2(1600 + 50 * 10, 750 + 50 * 10),
+        new Vector2(1600, 750 + 50 * 10)
+      ], new Color(null, 255, 255, 255, 255)));
+      this.add(new Shape([
+        new Vector2(1600, 1400),
+        new Vector2(2300, 1400),
+        new Vector2(2300, 2e3),
+        new Vector2(1900, 2e3),
+        new Vector2(1900, 1700),
+        new Vector2(1600, 1700)
+      ], new Color(null, 255, 255, 255, 255)));
+      this.add(new Shape([
+        new Vector2(2900, 990),
+        new Vector2(2900, 1600),
+        new Vector2(3300, 1600),
+        new Vector2(3300, 1890),
+        new Vector2(3750, 1890),
+        new Vector2(3750, 1370),
+        new Vector2(3510, 1370),
+        new Vector2(3510, 1160),
+        new Vector2(3740, 1160),
+        new Vector2(3740, 960),
+        new Vector2(3340, 960),
+        new Vector2(3340, 1110),
+        new Vector2(3060, 1110),
+        new Vector2(3060, 990)
       ], new Color(null, 255, 255, 255, 255)));
       var forbidden = new Shape([
         new Vector2(750 + 50 * 1.3, 750 + 50 * 1.2),
@@ -1794,7 +1822,6 @@ var __privateMethod = (obj, member, method) => {
         __privateGet(self2, _tiles)["tiles"]++;
         return true;
       } else {
-        await __privateGet(this, _sleep).call(this, 100);
         var placeTile = true;
         var count = 0;
         var newPoints = [];
@@ -1804,9 +1831,7 @@ var __privateMethod = (obj, member, method) => {
           const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
           var previousStatus;
           var nextStatus;
-          if (!__privateMethod(this, _isInsidePoint, isInsidePoint_fn).call(this, insetPoints, vc)) {
-            __privateGet(this, _buffer5).fill(12, 72, 250);
-            __privateGet(this, _buffer5).circle(vc.x, vc.y, 10);
+          if (!__privateMethod(this, _isInsidePoint, isInsidePoint_fn).call(this, insetPoints, vc) && !__privateMethod(this, _isInsideForbiddenZone, isInsideForbiddenZone_fn).call(this, outsets, vc)) {
             var intersectionPrevious, intersectionNext;
             count++;
             var previousCollision = false;
@@ -1828,7 +1853,6 @@ var __privateMethod = (obj, member, method) => {
               }
             }
             if (previousCollision) {
-              __privateGet(this, _buffer5).text("x", intersectionPrevious.x, intersectionPrevious.y);
               newPoints.push(intersectionPrevious);
               __privateGet(this, _buffer5).fill(12, 72, 250);
             }
@@ -1858,14 +1882,11 @@ var __privateMethod = (obj, member, method) => {
               }
             }
             if (nextCollision) {
-              __privateGet(this, _buffer5).text("x", intersectionNext.x, intersectionNext.y);
               newPoints.push(intersectionNext);
               __privateGet(this, _buffer5).fill(12, 72, 250);
             }
           } else {
             if (__privateMethod(this, _isInsideForbiddenZone, isInsideForbiddenZone_fn).call(this, outsets, vc)) {
-              __privateGet(this, _buffer5).fill(55, 12, 4);
-              __privateGet(this, _buffer5).circle(vc.x, vc.y, 10);
               var newPointsFromFunction = __privateMethod(this, _calculateNewVectorPosition, calculateNewVectorPosition_fn).call(this, points, vc, vp, vn, outsets, previousStatus, nextStatus);
               if (newPointsFromFunction.length > 0) {
                 for (let k = 0; k < newPointsFromFunction.length; k++) {
@@ -1873,8 +1894,6 @@ var __privateMethod = (obj, member, method) => {
                 }
               }
             } else {
-              __privateGet(this, _buffer5).fill(255, 127, 80);
-              __privateGet(this, _buffer5).circle(vc.x, vc.y, 10);
               newPoints.push(points[i]);
             }
           }
@@ -1883,10 +1902,30 @@ var __privateMethod = (obj, member, method) => {
         }
         if (placeTile) {
           if (newPoints.length > 0) {
-            __privateMethod(this, _getTile, getTile_fn).call(this, x, y, newPoints);
-            yWithTile = y;
-            __privateGet(self2, _tiles)["dummy"]++;
-            return true;
+            var width2 = 0;
+            var height2 = 0;
+            var vertices = newPoints;
+            if (vertices.length <= 0) {
+              return;
+            }
+            for (let i = vertices.length - 1; i >= 0; i--) {
+              const vc = vertices[i];
+              if (isNaN(vc.x) || isNaN(vc.y)) {
+                vertices.splice(i, 1);
+              }
+            }
+            const xArr = vertices.map((a) => a.x);
+            const yArr = vertices.map((a) => a.y);
+            width2 = Math.max(...xArr) - Math.min(...xArr);
+            height2 = Math.max(...yArr) - Math.min(...yArr);
+            if (width2 > 20 && height2 > 20) {
+              __privateMethod(this, _getTile, getTile_fn).call(this, x, y, newPoints);
+              yWithTile = y;
+              __privateGet(self2, _tiles)["dummy"]++;
+              return true;
+            } else {
+              print(boundingBox);
+            }
           }
         }
       }
@@ -1963,6 +2002,13 @@ var __privateMethod = (obj, member, method) => {
       const outsetPoints = outset.getVertices();
       if (Collision.polygonPoint(outsetPoints, point2.x, point2.y)) {
         return true;
+      }
+      for (let r = 0; r < outsetPoints.length; r++) {
+        const c = outsetPoints[r];
+        const n = outsetPoints[r + 1 <= outsetPoints.length - 1 ? r + 1 : 0];
+        if (Collision.linePoint(c.x, c.y, n.x, n.y, point2.x, point2.y)) {
+          return true;
+        }
       }
     }
     return false;

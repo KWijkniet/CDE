@@ -254,7 +254,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="cursor.isDisabled = false;">Close</button>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="cursor.isDisabled = false; updateSettings();">Save changes</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="cursor.isDisabled = false; updateMargin();">Save changes</button>
                 </div>
                                         
             </div>
@@ -273,9 +273,24 @@
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-12">
-                            <label class="form-check-label" style="margin-right: 10px;" for="useRowOffset">Metsel patroon: (werkt binnenkort)</label>
+                        <div class="col-md-12 mb-3 form-check">
+                            <label class="form-check-label" style="margin-right: 10px;" for="useRowOffset">Metsel patroon:</label>
                             <input class="form-check-input" type="checkbox" value="" id="useRowOffset">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-check-label" style="margin-right: 10px;" for="tileType">Xroof Type:</label>
+                            <select class="form-select col-md-6" aria-label="Tile Type" value="Zwart" id="tileType">
+                                <option value="Zwart">Zwart</option>
+                                <option value="Terracotta">Terracotta</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="dakvoetprofielen" class="form-label">Dakvoet Profielen</label>
+                            <input type="number" class="form-control" id="dakvoetprofielen">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="vogelschroten" class="form-label">Vogelschroten</label>
+                            <input type="number" class="form-control" id="vogelschroten">
                         </div>
                     </div>
                 </div>

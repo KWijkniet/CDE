@@ -22,13 +22,19 @@ export default class GeneratorTool {
     #buffer = null;
     #renderer = null;
     #tiles = null;
+    #totalWidth = 0;
+    #totalHeight = 0;
+    #dummyWidth = 0;
+    #dummyHeight = 0;
+    #tileWidth = 0;
+    #tileHeight = 0;
 
     index = 0;
 
     constructor(){
         this.#renderer = Renderer.instance;
         this.#buffer = createGraphics(Settings.mapSizeX, Settings.mapSizeY);
-        this.#tiles = {'tiles': 0, 'dummy': 0};
+        this.#tiles = { 'X-Roof': 0, 'Alucobond': 0};
     }
 
     update(){
@@ -320,13 +326,18 @@ export default class GeneratorTool {
             ];
 
             var hasEnoughSpace = this.#canBePlaced(insetPoints, outsets, points);
-
+            
             if (hasEnoughSpace) {
-                var tile = this.#getTile(x, y, points);
+                var tile = this.#getTile(x, y, points, false);
+                this.#totalWidth += tile.width;
+                this.#totalHeight += tile.height;
+                this.#tileWidth += tile.width;
+                this.#tileHeight += tile.height;
+
                 yWithTile = y;
-                self.#tiles['tiles']++;
+                self.#tiles['X-Roof']++;
                 return true;
-            } else {
+            } else if (yWithTile > 0) {
                 // if (width > 20 && height > 20) {
                     //Incase we need to slow down the calculation (if the browser freezes up)
                     // await this.#sleep(100);
@@ -434,53 +445,15 @@ export default class GeneratorTool {
                 // Place Tile
                 if(placeTile){
                     if (newPoints.length > 0){
-                        var width = 0;
-                        var height = 0;
-                        // let minX = Number.MAX_VALUE;
-                        // let minY = Number.MAX_VALUE;
-                        // let maxX = Number.MIN_VALUE;
-                        // let maxY = Number.MIN_VALUE;
+                        var tile = this.#getTile(x, y, newPoints, true);
+                        this.#totalWidth += tile.width;
+                        this.#totalHeight += tile.height;
+                        this.#dummyWidth += tile.width;
+                        this.#dummyHeight += tile.height;
 
-                        // for (let point of newPoints) {
-                        //     minX = Math.min(minX, point.x);
-                        //     minY = Math.min(minY, point.y);
-                        //     maxX = Math.max(maxX, point.x);
-                        //     maxY = Math.max(maxY, point.y);
-                        // }
-
-                        // const boundingBox = {
-                        //     x: minX,
-                        //     y: minY,
-                        //     width: maxX - minX,
-                        //     height: maxY - minY
-                        // };
-                        
-                        var vertices = newPoints;
-                        if(vertices.length <= 0){return;}
-                        for (let i = vertices.length - 1; i >= 0; i--) {
-                            const vc = vertices[i];
-                            if(isNaN(vc.x) || isNaN(vc.y)){
-                                vertices.splice(i, 1);
-                            }
-                        }
-                
-                        const xArr = vertices.map(a => a.x);
-                        const yArr = vertices.map(a => a.y);
-                        width = (Math.max(...xArr) - Math.min(...xArr));
-                        height = (Math.max(...yArr) - Math.min(...yArr));
-                        
-                        // print(width +"  :  "+height);
-                        // Check tile size
-                        // if(perimeter >= 80){
-                        if (width > 20 && height > 20) {
-                        // if (boundingBox.width >= 20 && boundingBox.height >= 20) {
-                            var tile = this.#getTile(x, y, newPoints);
-                            yWithTile = y;
-                            self.#tiles['dummy']++;
-                            return true;
-                        }else{
-                            print(boundingBox);
-                        }
+                        yWithTile = y;
+                        self.#tiles['Alucobond']++;
+                        return true;
                     }
                 }
             }
@@ -496,7 +469,7 @@ export default class GeneratorTool {
             x += tileWidth;
             if (x >= boundingBox.x + boundingBox.w) {
                 y += yWithTile < y ? 1 : tileHeight;
-                rowIndex++
+                rowIndex++;
                 if (this.rowOffsetMode) {
                     x = rowIndex % 2 != 0 ? boundingBox.x + (tileWidth / 2) : boundingBox.x;
                 }
@@ -584,8 +557,8 @@ export default class GeneratorTool {
         return false;
     }
 
-    #getTile(x,y, vertices){
-        return new Tile(vertices, this.#buffer);
+    #getTile(x,y, vertices, isDummy){
+        return new Tile(vertices, this.#buffer, isDummy);
     }
 
     #polygonLineWithCoordinates(vertices, vector1, vector2){
@@ -707,10 +680,16 @@ export default class GeneratorTool {
     }
 
     toJSON(){
-        return this.#tiles;
+        return { 'tiles': this.#tiles, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
     }
 
     fromJSON(json){
-        this.#tiles = json;
+        this.#tiles = json.tiles;
+        this.#totalWidth = json.width;
+        this.#totalHeight = json.height;
+        this.#dummyWidth += tile.width;
+        this.#dummyHeight += tile.height;
+        this.#tileWidth += tile.width;
+        this.#tileHeight += tile.height;
     }
 }

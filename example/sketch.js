@@ -34,7 +34,7 @@ function setup() {
     selectorTool = new SelectorTool();
     generatorTool = new GeneratorTool();
     lineSelectorTool = new LineSelectorTool();
-    lineSelectorTool.events.subscribe('selectLine', (e) => { $("#exampleModal").modal("show"); cursor.isDisabled = true; loadSettings(); });
+    lineSelectorTool.events.subscribe('selectLine', (e) => { $("#exampleModal").modal("show"); cursor.isDisabled = true; loadMargin(); });
 
     frameRate(60);
     Window.currentTool = null;
@@ -263,54 +263,65 @@ function updateToolMode(mode){
 }
 
 function updateSettings(){
-    // var elems = document.getElementsByName("marginType");
-    // for (let i = 0; i < elems.length; i++) {
-    //     const elem = elems[i];
-    //     if(elem.checked){
-    //         var value = elem.getAttribute("data-margin");
-    //         if(!value){
-    //             value = document.querySelector('[data-target="' + elem.id + '"]').value;
-    //         }
-    //         lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
-    //         break;
-    //     }
-    // }
+    generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
+    Settings.type = document.getElementById("tileType").value;
+}
 
-    // generatorTool.margin = document.getElementById("objectMargin").value;
+function updateMargin() {
+    var elems = document.getElementsByName("marginType");
+    for (let i = 0; i < elems.length; i++) {
+        const elem = elems[i];
+        if (elem.checked) {
+            var value = elem.getAttribute("data-margin");
+            if (!value) {
+                value = document.querySelector('[data-target="' + elem.id + '"]').value;
+            }
+            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
+            break;
+        }
+    }
+
+    generatorTool.margin = document.getElementById("objectMargin").value;
     generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
 }
 
-function loadSettings() {
-    // var data = (lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] + "").split("|");
-    // var elems = document.getElementsByName("marginType");
-    // for (let i = 0; i < elems.length; i++) {
-    //     const elem = elems[i];
-    //     if (elem.id == data[0]){
-    //         elem.checked = true;
+function loadMargin() {
+    var data = (lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] + "").split("|");
+    var elems = document.getElementsByName("marginType");
+    for (let i = 0; i < elems.length; i++) {
+        const elem = elems[i];
+        if (elem.id == data[0]){
+            elem.checked = true;
 
-    //         if (!elem.getAttribute("data-margin")){
-    //             document.querySelector('[data-target="' + elem.id + '"]').value = data[1];
-    //         }
-    //         break;
-    //     }
+            if (!elem.getAttribute("data-margin")){
+                document.querySelector('[data-target="' + elem.id + '"]').value = data[1];
+            }
+            break;
+        }
 
-    //     if (elem.checked){
-    //         elem.checked = false;
-    //     }
-    // }
+        if (elem.checked){
+            elem.checked = false;
+        }
+    }
 }
 
-function exportData(){
+function exportData() {
     var data = {
         "shapes": [],
+        "generator": [],
+        "useRowOffset": 0,
+        "tileType": "",
     };
 
     var shapes = renderer.getAll();
     for(var i = 0; i < shapes.length; i++){
         data["shapes"][i] = shapes[i].toJSON();
     }
-    data['generated'] = generatorTool.toJSON();
+    data['generator'] = generatorTool.toJSON();
     data['useRowOffset'] = document.getElementById("useRowOffset").checked;
+    data['tileType'] = document.getElementById("tileType").value;
+    data['dakvoetprofielen'] = document.getElementById("dakvoetprofielen").value;
+    data['vogelschroten'] = document.getElementById("vogelschroten").value;
 
     return JSON.stringify(data);
 }
@@ -325,6 +336,9 @@ function importData(json){
     }
     generatorTool.fromJSON(json['generated']);
     document.getElementById("useRowOffset").checked = json['useRowOffset'];
+    document.getElementById("tileType").value = json['tileType'];
+    document.getElementById("dakvoetprofielen").value = data['dakvoetprofielen'];
+    document.getElementById("vogelschroten").value = data['vogelschroten'];
 }
 
 function canvasAsImage(){

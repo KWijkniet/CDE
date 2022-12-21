@@ -16,6 +16,8 @@ export default class Color{
             this.value = value.replace("rgba(", "").replace("rgb(", "").replace(")", "").split(',');
         }
         
+        this.value[3] = parseFloat(this.value[3]) < 1 && parseFloat(this.value[3]) > 0 ? parseFloat(this.value[3]) * 100 : parseFloat(this.value[3]);
+
         return {r: parseFloat(this.value[0]), g: parseFloat(this.value[1]), b: parseFloat(this.value[2]), a: parseFloat(this.value[3])};
     }
     

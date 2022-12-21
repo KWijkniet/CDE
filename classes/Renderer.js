@@ -52,14 +52,14 @@ export default class Renderer {
 
 
 
-        var forbidden = new Shape([
-            new Vector2(750 + (50 * 1.3), 750 + (50 * 1.2)),
-            new Vector2(750 + (50 * 5), 750 + (50 * 1.2)),
-            new Vector2(750 + (50 * 5), 750 + (50 * 5)),
-            new Vector2(750 + (50 * 1.3), 750 + (50 * 5)),
-        ], new Color(null, 255, 0, 0, 50));
-        forbidden.isAllowed = false;
-        this.add(forbidden);
+        // var forbidden = new Shape([
+        //     new Vector2(750 + (50 * 1.3), 750 + (50 * 1.2)),
+        //     new Vector2(750 + (50 * 5), 750 + (50 * 1.2)),
+        //     new Vector2(750 + (50 * 5), 750 + (50 * 5)),
+        //     new Vector2(750 + (50 * 1.3), 750 + (50 * 5)),
+        // ], new Color(null, 255, 0, 0, 255));
+        // forbidden.isAllowed = false;
+        // this.add(forbidden);
     }
 
     update(){

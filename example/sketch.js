@@ -263,41 +263,41 @@ function updateToolMode(mode){
 }
 
 function updateSettings(){
-    var elems = document.getElementsByName("marginType");
-    for (let i = 0; i < elems.length; i++) {
-        const elem = elems[i];
-        if(elem.checked){
-            var value = elem.getAttribute("data-margin");
-            if(!value){
-                value = document.querySelector('[data-target="' + elem.id + '"]').value;
-            }
-            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
-            break;
-        }
-    }
+    // var elems = document.getElementsByName("marginType");
+    // for (let i = 0; i < elems.length; i++) {
+    //     const elem = elems[i];
+    //     if(elem.checked){
+    //         var value = elem.getAttribute("data-margin");
+    //         if(!value){
+    //             value = document.querySelector('[data-target="' + elem.id + '"]').value;
+    //         }
+    //         lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
+    //         break;
+    //     }
+    // }
 
-    generatorTool.margin = document.getElementById("objectMargin").value;
+    // generatorTool.margin = document.getElementById("objectMargin").value;
     generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
 }
 
 function loadSettings() {
-    var data = (lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] + "").split("|");
-    var elems = document.getElementsByName("marginType");
-    for (let i = 0; i < elems.length; i++) {
-        const elem = elems[i];
-        if (elem.id == data[0]){
-            elem.checked = true;
+    // var data = (lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] + "").split("|");
+    // var elems = document.getElementsByName("marginType");
+    // for (let i = 0; i < elems.length; i++) {
+    //     const elem = elems[i];
+    //     if (elem.id == data[0]){
+    //         elem.checked = true;
 
-            if (!elem.getAttribute("data-margin")){
-                document.querySelector('[data-target="' + elem.id + '"]').value = data[1];
-            }
-            break;
-        }
+    //         if (!elem.getAttribute("data-margin")){
+    //             document.querySelector('[data-target="' + elem.id + '"]').value = data[1];
+    //         }
+    //         break;
+    //     }
 
-        if (elem.checked){
-            elem.checked = false;
-        }
-    }
+    //     if (elem.checked){
+    //         elem.checked = false;
+    //     }
+    // }
 }
 
 function exportData(){
@@ -310,6 +310,7 @@ function exportData(){
         data["shapes"][i] = shapes[i].toJSON();
     }
     data['generated'] = generatorTool.toJSON();
+    data['useRowOffset'] = document.getElementById("useRowOffset").checked;
 
     return JSON.stringify(data);
 }
@@ -323,4 +324,9 @@ function importData(json){
         renderer.add(newShape);
     }
     generatorTool.fromJSON(json['generated']);
+    document.getElementById("useRowOffset").checked = json['useRowOffset'];
+}
+
+function canvasAsImage(){
+    return Settings.getCanvas().elt.toDataURL();
 }

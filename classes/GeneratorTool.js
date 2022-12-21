@@ -340,7 +340,7 @@ export default class GeneratorTool {
             } else if (yWithTile > 0) {
                 // if (width > 20 && height > 20) {
                     //Incase we need to slow down the calculation (if the browser freezes up)
-                    await this.#sleep(100);
+                    // await this.#sleep(100);
 
                     var placeTile = true; 
                     var count = 0;
@@ -355,22 +355,14 @@ export default class GeneratorTool {
 
                         // Check if the vector point is outside of the insetpoints
                         // if(!Collision.polygonPoint(insetPoints, vc.x, vc.y)){
-                        if(!this.#isInsidePoint(insetPoints, vc) ){
-                            // count++;
-                            // var newPointsFromFunction = this.#calculateNewVectorPosition(points, vc, vp, vn, insetPoints, previousStatus, nextStatus);
-                            // if(newPointsFromFunction.length > 0) {
-                            //     for(let k = 0; k < newPointsFromFunction.length; k++){
-                            //         newPoints.push(newPointsFromFunction[k]);
-                            //     }
-                            // }
-                            this.#buffer.fill(12, 72, 250); // Blue
-                                this.#buffer.circle(vc.x , vc.y ,10);
+                        if(!this.#isInsidePoint(insetPoints, vc) && !this.#isInsideForbiddenZone(outsets, vc)){
+                            // this.#buffer.fill(12, 72, 250); // Blue
+                            //     this.#buffer.circle(vc.x , vc.y ,10);
                             var intersectionPrevious, intersectionNext;
                             count++;
                             var previousCollision = false;
                             var nextCollision = false;
                             
-                            // Previous 1
                             if (Collision.polygonLine(insetPoints, vc.x, vc.y, vp.x, vp.y)){
                                 intersectionPrevious = this.#polygonLineWithCoordinates(insetPoints, vc, vp);
                                 if(intersectionPrevious != null){
@@ -380,7 +372,6 @@ export default class GeneratorTool {
                                 }
                             }
 
-                            // Next  3
                             if (Collision.polygonLine(insetPoints, vc.x, vc.y, vn.x, vn.y)){
                                 intersectionNext = this.#polygonLineWithCoordinates(insetPoints, vc, vn);
                                 if(intersectionNext != null){
@@ -391,13 +382,12 @@ export default class GeneratorTool {
                             }
 
                             if(previousCollision){
-                                this.#buffer.text('x', intersectionPrevious.x, intersectionPrevious.y);
+                                // this.#buffer.text('x', intersectionPrevious.x, intersectionPrevious.y);
                                 newPoints.push(intersectionPrevious);
                                 this.#buffer.fill(12, 72, 250); // Blue
                                 // this.#buffer.circle(intersectionPrevious.x , intersectionPrevious.y ,10);
                             }
 
-                            // 2
                             if (!previousStatus && !nextStatus) {
                                 for(let j = 0; j < insetPoints.length; j++){
                                     const current = insetPoints[j];
@@ -426,15 +416,15 @@ export default class GeneratorTool {
                             }
 
                             if(nextCollision){
-                                this.#buffer.text('x', intersectionNext.x, intersectionNext.y);
+                                // this.#buffer.text('x', intersectionNext.x, intersectionNext.y);
                                 newPoints.push(intersectionNext); 
                                 this.#buffer.fill(12, 72, 250); // Blue
                                 // this.#buffer.circle(intersectionNext.x , intersectionNext.y ,10);
                             }
                         }else {
                             if(this.#isInsideForbiddenZone(outsets, vc)){
-                                this.#buffer.fill(55, 12, 4);
-                                this.#buffer.circle(vc.x , vc.y ,10);
+                                // this.#buffer.fill(55, 12, 4);
+                                // this.#buffer.circle(vc.x , vc.y ,10);
                                 var newPointsFromFunction = this.#calculateNewVectorPosition(points, vc, vp, vn, outsets, previousStatus, nextStatus);
                                 if(newPointsFromFunction.length > 0) {
                                     for(let k = 0; k < newPointsFromFunction.length; k++){
@@ -442,25 +432,18 @@ export default class GeneratorTool {
                                     }
                                 }
                             } else {
-                                this.#buffer.fill(255, 127, 80); // orange
-                                this.#buffer.circle(vc.x , vc.y ,10);
+                                // this.#buffer.fill(255, 127, 80); // orange
+                                // this.#buffer.circle(vc.x , vc.y ,10);
                                 newPoints.push(points[i]);
                             }
                         }
 
-                        // if(!Collision.polygonPoint(insetPoints, vc.x, vc.y)){
-                        //     this.#buffer.fill(25, 22, 4);
-                        //     this.#buffer.circle(vc.x , vc.y ,10);
-                        // }
-
                         // Check if all the vector point is outside of the insetpoints 
-                        if(count == 4 ) placeTile = false
+                        if(count == 4 ) placeTile = false;
                     }
                 // }
-                // print(newPoints);
                 // Place Tile
                 if(placeTile){
-
                     if (newPoints.length > 0){
                         var tile = this.#getTile(x, y, newPoints, true);
                         this.#totalWidth += tile.width;
@@ -561,6 +544,14 @@ export default class GeneratorTool {
 
             if (Collision.polygonPoint(outsetPoints, point.x, point.y)) {
                 return true;
+            }
+            // if Point is on the line
+            for (let r = 0; r < outsetPoints.length; r++) {
+                const c = outsetPoints[r];
+                const n = outsetPoints[r + 1 <= outsetPoints.length - 1 ? r + 1 : 0];
+                if (Collision.linePoint(c.x, c.y, n.x, n.y, point.x, point.y)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -664,9 +655,10 @@ export default class GeneratorTool {
                         const current = outsetPoints[j];
                         const next = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
                         // this.#isInsideForbiddenZone(insetPoints, current) ||
-                        //Collision.linePoint(vc.x, vc.y, vn.x ,vn.y, current.x, current.y)|| 
+                        // if(Collision.linePoint(current.x, current.y, next.x ,next.y, vc.x, vc.y)){
+                        //     console.log('Line Collision met ' + current);
+                        // }
                         if(Collision.polygonPoint(points, current.x, current.y)){
-                            
                             this.#buffer.circle(current.x , current.y ,10);
                             _points.push(current);
                             previousStatus = true;

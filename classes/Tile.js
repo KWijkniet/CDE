@@ -32,7 +32,9 @@ export default class Tile {
         this.width = (Math.max(...xArr) - Math.min(...xArr));
         this.height = (Math.max(...yArr) - Math.min(...yArr));
 
-        this.#generate();
+        if(this.width >= 20 && this.height >= 20){
+            this.#generate();
+        }
     }
 
     getVertices(){

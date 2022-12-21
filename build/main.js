@@ -374,7 +374,7 @@ var __privateMethod = (obj, member, method) => {
       return false;
     }
   }
-  class Color {
+  class Color$1 {
     constructor(string = null, r = 0, g = 0, b = 0, a = 1) {
       __publicField(this, "string", "");
       __publicField(this, "value", []);
@@ -411,14 +411,14 @@ var __privateMethod = (obj, member, method) => {
   __publicField(Settings$1, "zoom", 1);
   __publicField(Settings$1, "cursorSize", 10);
   __publicField(Settings$1, "type", "Zwart");
-  __publicField(Settings$1, "gridBackground", new Color("--grid-background"));
-  __publicField(Settings$1, "gridLines", new Color("--grid-lines"));
-  __publicField(Settings$1, "shapeAllowed", new Color("--shape-allowed"));
-  __publicField(Settings$1, "shapeForbidden", new Color("--shape-forbidden"));
-  __publicField(Settings$1, "tileTerracottaBackground", new Color("--tile-background-terracotta"));
-  __publicField(Settings$1, "tileZwartBackground", new Color("--tile-background-zwart"));
-  __publicField(Settings$1, "dummyTerracottaBackground", new Color("--tile-background-terracotta-dummy"));
-  __publicField(Settings$1, "dummyZwartBackground", new Color("--tile-background-zwart-dummy"));
+  __publicField(Settings$1, "gridBackground", new Color$1("--grid-background"));
+  __publicField(Settings$1, "gridLines", new Color$1("--grid-lines"));
+  __publicField(Settings$1, "shapeAllowed", new Color$1("--shape-allowed"));
+  __publicField(Settings$1, "shapeForbidden", new Color$1("--shape-forbidden"));
+  __publicField(Settings$1, "tileTerracottaBackground", new Color$1("--tile-background-terracotta"));
+  __publicField(Settings$1, "tileZwartBackground", new Color$1("--tile-background-zwart"));
+  __publicField(Settings$1, "dummyTerracottaBackground", new Color$1("--tile-background-terracotta-dummy"));
+  __publicField(Settings$1, "dummyZwartBackground", new Color$1("--tile-background-zwart-dummy"));
   __privateAdd(Settings$1, _canvas, null);
   __publicField(Settings$1, "setCanvas", (c) => {
     __privateSet(_Settings$1, _canvas, c);
@@ -627,7 +627,7 @@ var __privateMethod = (obj, member, method) => {
   }
   _buffer = new WeakMap();
   const _Shape = class {
-    constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
+    constructor(vertices = [], color = new Color$1(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
       __publicField(this, "id", null);
       __publicField(this, "color", null);
       __publicField(this, "showData", false);
@@ -732,7 +732,7 @@ var __privateMethod = (obj, member, method) => {
     redraw() {
       __privateGet(this, _generate).call(this);
     }
-    reCalculate(vertices = [], color = new Color(null, 255, 255, 255)) {
+    reCalculate(vertices = [], color = new Color$1(null, 255, 255, 255)) {
       if (__privateGet(this, _shapebuffer) != null) {
         __privateGet(this, _shapebuffer).clear();
         __privateGet(this, _shapebuffer).elt.parentNode.removeChild(__privateGet(this, _shapebuffer).elt);
@@ -755,7 +755,7 @@ var __privateMethod = (obj, member, method) => {
     }
     fromJSON(json) {
       this.id = json.id;
-      this.color = new Color(null, json.color.r, json.color.g, json.color.b, json.color.a);
+      this.color = new Color$1(null, json.color.r, json.color.g, json.color.b, json.color.a);
       this.showData = json.showData;
       this.isAllowed = json.isAllowed;
       this.isGenerated = json.isGenerated;
@@ -781,6 +781,12 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _shapes, null);
       _Renderer$1.instance = this;
       __privateSet(this, _shapes, []);
+      this.add(new Shape([
+        new Vector2(750, 750),
+        new Vector2(750 + 50 * 15, 750),
+        new Vector2(750 + 50 * 15, 750 + 50 * 15),
+        new Vector2(750, 750 + 50 * 15)
+      ], new Color(null, 255, 255, 255, 255)));
     }
     update() {
       var keys = Object.keys(__privateGet(this, _shapes));
@@ -1836,7 +1842,7 @@ var __privateMethod = (obj, member, method) => {
         yWithTile = y;
         __privateGet(self2, _tiles)["X-Roof"]++;
         return true;
-      } else {
+      } else if (yWithTile > 0) {
         await __privateGet(this, _sleep).call(this, 100);
         var placeTile = true;
         var count = 0;
@@ -2331,7 +2337,7 @@ var __privateMethod = (obj, member, method) => {
   };
   exports2.Action = Action;
   exports2.Collision = Collision;
-  exports2.Color = Color;
+  exports2.Color = Color$1;
   exports2.ContextMenu = ContextMenu;
   exports2.ContextMenuOption = ContextMenuOption;
   exports2.Cursor = Cursor$1;

@@ -326,7 +326,7 @@ export default class GeneratorTool {
             ];
 
             var hasEnoughSpace = this.#canBePlaced(insetPoints, outsets, points);
-
+            
             if (hasEnoughSpace) {
                 var tile = this.#getTile(x, y, points, false);
                 this.#totalWidth += tile.width;
@@ -337,7 +337,7 @@ export default class GeneratorTool {
                 yWithTile = y;
                 self.#tiles['X-Roof']++;
                 return true;
-            } else {
+            } else if (yWithTile > 0) {
                 // if (width > 20 && height > 20) {
                     //Incase we need to slow down the calculation (if the browser freezes up)
                     await this.#sleep(100);

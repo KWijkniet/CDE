@@ -37,7 +37,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _color, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _totalWidth, _totalHeight, _dummyWidth, _dummyHeight, _tileWidth, _tileHeight, _createInset, createInset_fn, _createOutset, createOutset_fn, _getMargin, getMargin_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _isInsidePoint, isInsidePoint_fn, _isInsideForbiddenZone, isInsideForbiddenZone_fn, _getTile, getTile_fn, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn, _lineIntersection, lineIntersection_fn, _calculateNewVectorPosition, calculateNewVectorPosition_fn, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _color, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _totalWidth, _totalHeight, _dummyWidth, _dummyHeight, _tileWidth, _tileHeight, _createInset, createInset_fn, _createOutset, createOutset_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _isInsidePoint, isInsidePoint_fn, _isInsideForbiddenZone, isInsideForbiddenZone_fn, _getTile, getTile_fn, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn, _lineIntersection, lineIntersection_fn, _calculateNewVectorPosition, calculateNewVectorPosition_fn, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
   "use strict";
   const _Vector2 = class {
     constructor(x = 0, y = 0) {
@@ -787,6 +787,30 @@ var __privateMethod = (obj, member, method) => {
         new Vector2(750 + 50 * 15, 750 + 50 * 15),
         new Vector2(750, 750 + 50 * 15)
       ], new Color(null, 255, 255, 255, 255)));
+      this.add(new Shape([
+        new Vector2(2900, 990),
+        new Vector2(2900, 1600),
+        new Vector2(3300, 1600),
+        new Vector2(3300, 1890),
+        new Vector2(3750, 1890),
+        new Vector2(3750, 1370),
+        new Vector2(3510, 1370),
+        new Vector2(3510, 1160),
+        new Vector2(3740, 1160),
+        new Vector2(3740, 960),
+        new Vector2(3340, 960),
+        new Vector2(3340, 1110),
+        new Vector2(3060, 1110),
+        new Vector2(3060, 990)
+      ], new Color(null, 255, 255, 255, 255)));
+      var forbidden = new Shape([
+        new Vector2(820, 1200),
+        new Vector2(1e3, 1200),
+        new Vector2(1e3, 1010),
+        new Vector2(820, 1010)
+      ], new Color(null, 255, 0, 0, 255));
+      forbidden.isAllowed = false;
+      this.add(forbidden);
     }
     update() {
       var keys = Object.keys(__privateGet(this, _shapes));
@@ -1529,7 +1553,9 @@ var __privateMethod = (obj, member, method) => {
       const yArr = __privateGet(this, _vertices2).map((a) => a.y);
       this.width = Math.max(...xArr) - Math.min(...xArr);
       this.height = Math.max(...yArr) - Math.min(...yArr);
-      __privateMethod(this, _generate4, generate_fn3).call(this);
+      if (this.width >= 20 && this.height >= 20) {
+        __privateMethod(this, _generate4, generate_fn3).call(this);
+      }
     }
     getVertices() {
       return __privateGet(this, _vertices2);
@@ -1561,7 +1587,6 @@ var __privateMethod = (obj, member, method) => {
     constructor() {
       __privateAdd(this, _createInset);
       __privateAdd(this, _createOutset);
-      __privateAdd(this, _getMargin);
       __privateAdd(this, _generateTiles);
       __privateAdd(this, _canBePlaced);
       __privateAdd(this, _isColliding);
@@ -1790,31 +1815,6 @@ var __privateMethod = (obj, member, method) => {
     __privateGet(this, _buffer5).pop();
     return new Shape(outsets);
   };
-  _getMargin = new WeakSet();
-  getMargin_fn = function(dir) {
-    if (dir.equals(Vector2.up())) {
-      return this.marginU;
-    } else if (dir.equals(Vector2.right())) {
-      return this.marginLR;
-    } else if (dir.equals(Vector2.down())) {
-      return this.marginD;
-    } else if (dir.equals(Vector2.left())) {
-      return this.marginLR;
-    } else {
-      var margin = 0;
-      if (dir.x > 0) {
-        margin += dir.x * this.marginLR;
-      } else {
-        margin += Math.abs(dir.x) * this.marginLR;
-      }
-      if (dir.y > 0) {
-        margin += dir.y * this.marginU;
-      } else {
-        margin += Math.abs(dir.y) * this.marginD;
-      }
-      return margin;
-    }
-  };
   _sleep = new WeakMap();
   _generateTiles = new WeakSet();
   generateTiles_fn = function(inset, outsets) {
@@ -1825,6 +1825,7 @@ var __privateMethod = (obj, member, method) => {
     var insetPoints = inset.getVertices();
     var rowIndex = 0;
     var self2 = this;
+    var firstTile = true;
     var attemptPlaceTile = async (x, y, width2, height2) => {
       var points = [
         new Vector2(x, y),
@@ -1833,16 +1834,7 @@ var __privateMethod = (obj, member, method) => {
         new Vector2(x, y + height2)
       ];
       var hasEnoughSpace = __privateMethod(this, _canBePlaced, canBePlaced_fn).call(this, insetPoints, outsets, points);
-      if (hasEnoughSpace) {
-        var tile2 = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points, false);
-        __privateSet(this, _totalWidth, __privateGet(this, _totalWidth) + tile2.width);
-        __privateSet(this, _totalHeight, __privateGet(this, _totalHeight) + tile2.height);
-        __privateSet(this, _tileWidth, __privateGet(this, _tileWidth) + tile2.width);
-        __privateSet(this, _tileHeight, __privateGet(this, _tileHeight) + tile2.height);
-        yWithTile = y;
-        __privateGet(self2, _tiles)["X-Roof"]++;
-        return true;
-      } else if (yWithTile > 0) {
+      if (yWithTile >= 0 && (!hasEnoughSpace || firstTile) || yWithTile < 0 && hasEnoughSpace && firstTile) {
         await __privateGet(this, _sleep).call(this, 100);
         var placeTile = true;
         var count = 0;
@@ -1880,6 +1872,7 @@ var __privateMethod = (obj, member, method) => {
               __privateGet(this, _buffer5).text("x", intersectionPrevious.x, intersectionPrevious.y);
               newPoints.push(intersectionPrevious);
               __privateGet(this, _buffer5).fill(12, 72, 250);
+              __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
             }
             if (!previousStatus && !nextStatus) {
               for (let j = 0; j < insetPoints.length; j++) {
@@ -1910,6 +1903,7 @@ var __privateMethod = (obj, member, method) => {
               __privateGet(this, _buffer5).text("x", intersectionNext.x, intersectionNext.y);
               newPoints.push(intersectionNext);
               __privateGet(this, _buffer5).fill(12, 72, 250);
+              __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
             }
           } else {
             if (__privateMethod(this, _isInsideForbiddenZone, isInsideForbiddenZone_fn).call(this, outsets, vc)) {
@@ -1939,28 +1933,43 @@ var __privateMethod = (obj, member, method) => {
             __privateSet(this, _dummyHeight, __privateGet(this, _dummyHeight) + tile2.height);
             yWithTile = y;
             __privateGet(self2, _tiles)["Alucobond"]++;
-            return true;
+            return tile2;
           }
         }
       }
-      return false;
+      if (hasEnoughSpace && (!firstTile || yWithTile < 0)) {
+        var tile2 = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points, false);
+        __privateSet(this, _totalWidth, __privateGet(this, _totalWidth) + tile2.width);
+        __privateSet(this, _totalHeight, __privateGet(this, _totalHeight) + tile2.height);
+        __privateSet(this, _tileWidth, __privateGet(this, _tileWidth) + tile2.width);
+        __privateSet(this, _tileHeight, __privateGet(this, _tileHeight) + tile2.height);
+        yWithTile = y;
+        __privateGet(self2, _tiles)["X-Roof"]++;
+        return tile2;
+      }
+      return null;
     };
     var syncedFunc = async (x, y) => {
-      attemptPlaceTile(x, y, tileWidth, tileHeight);
       await __privateGet(this, _sleep).call(this, 20);
-      x += tileWidth;
-      if (x >= boundingBox.x + boundingBox.w) {
-        y += yWithTile < y ? 1 : tileHeight;
-        rowIndex++;
-        if (this.rowOffsetMode) {
-          x = rowIndex % 2 != 0 ? boundingBox.x + tileWidth / 2 : boundingBox.x;
-        } else {
-          x = boundingBox.x;
+      attemptPlaceTile(x, y, firstTile ? 30 : tileWidth, tileHeight).then((tilePlaced) => {
+        x += tilePlaced != null && firstTile ? tilePlaced.width : tileWidth;
+        if (tilePlaced != null) {
+          firstTile = false;
         }
-      }
-      if (y <= boundingBox.y + boundingBox.h) {
-        syncedFunc(x, y);
-      }
+        if (x >= boundingBox.x + boundingBox.w) {
+          y += yWithTile < y ? 1 : tileHeight;
+          firstTile = true;
+          rowIndex++;
+          if (this.rowOffsetMode) {
+            x = rowIndex % 2 != 0 ? boundingBox.x + tileWidth / 2 : boundingBox.x;
+          } else {
+            x = boundingBox.x;
+          }
+        }
+        if (y <= boundingBox.y + boundingBox.h) {
+          syncedFunc(x, y);
+        }
+      });
     };
     syncedFunc(boundingBox.x, boundingBox.y);
   };

@@ -23,33 +23,33 @@ export default class Renderer {
         //     new Vector2(1600, 1700),
         // ], new Color(null, 255, 255, 255, 255)));
 
-        // this.add(new Shape([
-        //     new Vector2(2900, 990),
-        //     new Vector2(2900, 1600),
-        //     new Vector2(3300, 1600),
-        //     new Vector2(3300, 1890),
-        //     new Vector2(3750, 1890),
-        //     new Vector2(3750, 1370),
-        //     new Vector2(3510, 1370),
-        //     new Vector2(3510, 1160),
-        //     new Vector2(3740, 1160),
-        //     new Vector2(3740, 960),
-        //     new Vector2(3340, 960),
-        //     new Vector2(3340, 1110),
-        //     new Vector2(3060, 1110),
-        //     new Vector2(3060, 990),
-        // ], new Color(null, 255, 255, 255, 255)));
+        this.add(new Shape([
+            new Vector2(2900, 990),
+            new Vector2(2900, 1600),
+            new Vector2(3300, 1600),
+            new Vector2(3300, 1890),
+            new Vector2(3750, 1890),
+            new Vector2(3750, 1370),
+            new Vector2(3510, 1370),
+            new Vector2(3510, 1160),
+            new Vector2(3740, 1160),
+            new Vector2(3740, 960),
+            new Vector2(3340, 960),
+            new Vector2(3340, 1110),
+            new Vector2(3060, 1110),
+            new Vector2(3060, 990),
+        ], new Color(null, 255, 255, 255, 255)));
 
 
 
-        // var forbidden = new Shape([
-        //     new Vector2(750 + (50 * 1.3), 750 + (50 * 1.2)),
-        //     new Vector2(750 + (50 * 5), 750 + (50 * 1.2)),
-        //     new Vector2(750 + (50 * 5), 750 + (50 * 5)),
-        //     new Vector2(750 + (50 * 1.3), 750 + (50 * 5)),
-        // ], new Color(null, 255, 0, 0, 255));
-        // forbidden.isAllowed = false;
-        // this.add(forbidden);
+        var forbidden = new Shape([
+            new Vector2(820, 1200),
+            new Vector2(1000, 1200),
+            new Vector2(1000, 1010),
+            new Vector2(820, 1010),
+        ], new Color(null, 255, 0, 0, 255));
+        forbidden.isAllowed = false;
+        this.add(forbidden);
     }
 
     update(){

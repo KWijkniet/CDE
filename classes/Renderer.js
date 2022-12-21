@@ -17,11 +17,12 @@ export default class Renderer {
             new Vector2(750, 750 + (50 * 15)),
         ], new Color(null, 255, 255, 255, 255)));
 
-        //     new Vector2(2300, 2000),
-        //     new Vector2(1900, 2000),
-        //     new Vector2(1900, 1700),
-        //     new Vector2(1600, 1700),
-        // ], new Color(null, 255, 255, 255, 255)));
+        this.add(new Shape([
+            new Vector2(1600, 750),
+            new Vector2(1600 + (50 * 10), 750),
+            new Vector2(1600 + (50 * 10), 750 + (50 * 10)),
+            new Vector2(1600, 750 + (50 * 10)),
+        ], new Color(null, 255, 255, 255, 255)));
 
         this.add(new Shape([
             new Vector2(2900, 990),

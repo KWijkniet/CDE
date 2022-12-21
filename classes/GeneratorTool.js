@@ -513,6 +513,14 @@ export default class GeneratorTool {
             if (Collision.polygonPoint(outsetPoints, point.x, point.y)) {
                 return true;
             }
+            // if Point is on the line
+            for (let r = 0; r < outsetPoints.length; r++) {
+                const c = outsetPoints[r];
+                const n = outsetPoints[r + 1 <= outsetPoints.length - 1 ? r + 1 : 0];
+                if (Collision.linePoint(c.x, c.y, n.x, n.y, point.x, point.y)) {
+                    return true;
+                }
+            }
         }
         return false;
     }

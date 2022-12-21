@@ -788,6 +788,12 @@ var __privateMethod = (obj, member, method) => {
         new Vector2(750, 750 + 50 * 15)
       ], new Color(null, 255, 255, 255, 255)));
       this.add(new Shape([
+        new Vector2(1600, 750),
+        new Vector2(1600 + 50 * 10, 750),
+        new Vector2(1600 + 50 * 10, 750 + 50 * 10),
+        new Vector2(1600, 750 + 50 * 10)
+      ], new Color(null, 255, 255, 255, 255)));
+      this.add(new Shape([
         new Vector2(2900, 990),
         new Vector2(2900, 1600),
         new Vector2(3300, 1600),
@@ -2025,6 +2031,13 @@ var __privateMethod = (obj, member, method) => {
       const outsetPoints = outset.getVertices();
       if (Collision.polygonPoint(outsetPoints, point2.x, point2.y)) {
         return true;
+      }
+      for (let r = 0; r < outsetPoints.length; r++) {
+        const c = outsetPoints[r];
+        const n = outsetPoints[r + 1 <= outsetPoints.length - 1 ? r + 1 : 0];
+        if (Collision.linePoint(c.x, c.y, n.x, n.y, point2.x, point2.y)) {
+          return true;
+        }
       }
     }
     return false;

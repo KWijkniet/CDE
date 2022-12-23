@@ -37,7 +37,7 @@ var __privateMethod = (obj, member, method) => {
 (function(global, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.CDE = {}));
 })(this, function(exports2) {
-  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _color, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _totalWidth, _totalHeight, _dummyWidth, _dummyHeight, _tileWidth, _tileHeight, _createInset, createInset_fn, _createOutset, createOutset_fn, _sleep, _generateTiles, generateTiles_fn, _canBePlaced, canBePlaced_fn, _isColliding, isColliding_fn, _isInside, isInside_fn, _isInsidePoint, isInsidePoint_fn, _isInsideForbiddenZone, isInsideForbiddenZone_fn, _getTile, getTile_fn, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn, _lineIntersection, lineIntersection_fn, _calculateNewVectorPosition, calculateNewVectorPosition_fn, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
+  var _canvas, _activeTool, _events, _mousedown, _mousemoved, _lastPos, _diff, _raycast, raycast_fn, _event, event_fn, _checkBounds, checkBounds_fn, _buffer, _vertices, _shapebuffer, _textBuffer, _pos, _generate, _generateUniqSerial, _shapes, _buffer2, _points, _selectedPointIndex, _dragOldPos, _originalShape, _onPlace, onPlace_fn, _onDrag, onDrag_fn, _generate2, generate_fn, _buffer3, _selectedPointIndex2, _dragOldPos2, _generate3, generate_fn2, _buffer4, _vertices2, _color, _generate4, generate_fn3, _buffer5, _renderer, _tiles, _totalWidth, _totalHeight, _dummyWidth, _dummyHeight, _tileWidth, _tileHeight, _createInset, createInset_fn, _createOutset, createOutset_fn, _sleep, _generateTiles, generateTiles_fn, _createTile, createTile_fn, _raycast2, raycast_fn2, _actions, _index, _options, _elem, _loadEvent, _renderer2, _buffer6, _detectLine, detectLine_fn;
   "use strict";
   const _Vector2 = class {
     constructor(x = 0, y = 0) {
@@ -62,6 +62,9 @@ var __privateMethod = (obj, member, method) => {
         this.x = this.x > v2.x ? v2.x : this.x;
         this.y = this.y > v2.y ? v2.y : this.y;
         return this;
+      });
+      __publicField(this, "abs", () => {
+        return new _Vector2(Math.abs(this.x), Math.abs(this.y));
       });
       __publicField(this, "add", (v) => {
         this.x += v.x;
@@ -156,6 +159,9 @@ var __privateMethod = (obj, member, method) => {
   });
   __publicField(Vector2, "dot", (v1, v2) => {
     return v1.x * v2.x + v1.y * v2.y;
+  });
+  __publicField(Vector2, "abs", (v) => {
+    return new _Vector2(Math.abs(v.x), Math.abs(v.y));
   });
   __publicField(Vector2, "toJSON", (v) => {
     return { x: v.x, y: v.y };
@@ -373,6 +379,16 @@ var __privateMethod = (obj, member, method) => {
       }
       return false;
     }
+    static lineLineCollision(x1, y1, x2, y2, x3, y3, x4, y4) {
+      var uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+      var uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+      if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+        var x = x1 + uA * (x2 - x1);
+        var y = y1 + uA * (y2 - y1);
+        return new Vector2(x, y);
+      }
+      return null;
+    }
   }
   class Color {
     constructor(string = null, r = 0, g = 0, b = 0, a = 1) {
@@ -463,6 +479,7 @@ var __privateMethod = (obj, member, method) => {
   _events = new WeakMap();
   const _Cursor$1 = class {
     constructor() {
+      __privateAdd(this, _raycast);
       __privateAdd(this, _event);
       __privateAdd(this, _checkBounds);
       __publicField(this, "events", null);
@@ -549,6 +566,39 @@ var __privateMethod = (obj, member, method) => {
   _mousemoved = new WeakMap();
   _lastPos = new WeakMap();
   _diff = new WeakMap();
+  _raycast = new WeakSet();
+  raycast_fn = function(shapes, from, dir, dist) {
+    var collisionClosest = null;
+    var collisionDist = 99999999999;
+    var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
+    line(from.x, from.y, end.x, end.y);
+    for (let i = 0; i < shapes.length; i++) {
+      const shape = shapes[i];
+      const vertices = shape.getVertices();
+      for (let r = 0; r < vertices.length; r++) {
+        const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
+        const vc = vertices[r];
+        if (Collision.pointCircle(vc.x, vc.y, end.x, end.y, 10)) {
+          circle(vc.x, vc.y, 10);
+          circle(vn.x, vn.y, 10);
+        }
+        if (Collision.lineLine(vc.x, vc.y, vn.x, vn.y, from.x, from.y, end.x, end.y)) {
+          strokeWeight(5);
+          stroke(255, 255, 0);
+          line(vn.x, vn.y, vc.x, vc.y);
+        }
+        var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
+        if (collision != null) {
+          var dist = Vector2.distance(from, collision);
+          if (collisionClosest == null || dist < collisionDist) {
+            collisionClosest = collision;
+            collisionDist = dist;
+          }
+        }
+      }
+    }
+    return collisionClosest;
+  };
   _event = new WeakSet();
   event_fn = function(e, type) {
     if (this.isDisabled) {
@@ -782,14 +832,10 @@ var __privateMethod = (obj, member, method) => {
       _Renderer$1.instance = this;
       __privateSet(this, _shapes, []);
       this.add(new Shape([
-        new Vector2(900, 100),
-        new Vector2(1100, 100),
-        new Vector2(1300, 300),
-        new Vector2(1300, 500),
-        new Vector2(1100, 700),
-        new Vector2(900, 700),
-        new Vector2(700, 500),
-        new Vector2(700, 300)
+        new Vector2(750, 750),
+        new Vector2(750 + 50 * 15, 750),
+        new Vector2(750 + 50 * 15, 750 + 50 * 15),
+        new Vector2(750, 750 + 50 * 15)
       ], new Color(null, 255, 255, 255, 255)));
     }
     update() {
@@ -1568,15 +1614,8 @@ var __privateMethod = (obj, member, method) => {
       __privateAdd(this, _createInset);
       __privateAdd(this, _createOutset);
       __privateAdd(this, _generateTiles);
-      __privateAdd(this, _canBePlaced);
-      __privateAdd(this, _isColliding);
-      __privateAdd(this, _isInside);
-      __privateAdd(this, _isInsidePoint);
-      __privateAdd(this, _isInsideForbiddenZone);
-      __privateAdd(this, _getTile);
-      __privateAdd(this, _polygonLineWithCoordinates);
-      __privateAdd(this, _lineIntersection);
-      __privateAdd(this, _calculateNewVectorPosition);
+      __privateAdd(this, _createTile);
+      __privateAdd(this, _raycast2);
       __publicField(this, "isEnabled", false);
       __publicField(this, "canAdd", true);
       __publicField(this, "canDelete", true);
@@ -1798,316 +1837,83 @@ var __privateMethod = (obj, member, method) => {
   _sleep = new WeakMap();
   _generateTiles = new WeakSet();
   generateTiles_fn = function(inset, outsets) {
-    var boundingBox = inset.getBoundingBox();
-    var tileWidth = 820 / 10;
-    var tileHeight = 600 / 10;
-    var yWithTile = -1;
-    var insetPoints = inset.getVertices();
-    var rowIndex = 0;
     var self2 = this;
-    var firstTile = true;
-    var attemptPlaceTile = async (x, y, width2, height2) => {
-      var points = [
-        new Vector2(x, y),
-        new Vector2(x + width2, y),
-        new Vector2(x + width2, y + height2),
-        new Vector2(x, y + height2)
-      ];
-      var hasEnoughSpace = __privateMethod(this, _canBePlaced, canBePlaced_fn).call(this, insetPoints, outsets, points);
-      if (yWithTile >= 0 && (!hasEnoughSpace || firstTile) || yWithTile < 0 && hasEnoughSpace && firstTile) {
-        await __privateGet(this, _sleep).call(this, 100);
-        var placeTile = true;
-        var count = 0;
-        var newPoints = [];
-        for (let i = 0; i < points.length; i++) {
-          const vc = points[i];
-          const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
-          const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
-          var previousStatus;
-          var nextStatus;
-          if (!__privateMethod(this, _isInsidePoint, isInsidePoint_fn).call(this, insetPoints, vc)) {
-            __privateGet(this, _buffer5).fill(12, 72, 250);
-            __privateGet(this, _buffer5).circle(vc.x, vc.y, 10);
-            var intersectionPrevious, intersectionNext;
-            count++;
-            var previousCollision = false;
-            var nextCollision = false;
-            if (Collision.polygonLine(insetPoints, vc.x, vc.y, vp.x, vp.y)) {
-              intersectionPrevious = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, insetPoints, vc, vp);
-              if (intersectionPrevious != null) {
-                previousCollision = true;
+    new Vector2(820 / 10, 600 / 10);
+    new Vector2(410 / 10, 600 / 10);
+    var boundingBox = inset.getBoundingBox();
+    var syncedLoop = async (x, y) => {
+      var _a;
+      if (y >= boundingBox.y + boundingBox.h || x >= boundingBox.x + boundingBox.w) {
+        return null;
+      }
+      var pos = new Vector2(x, y);
+      await __privateGet(_a = self2, _sleep).call(_a, 100);
+      if (!Collision.polygonPoint(inset, x, y)) {
+        __privateGet(this, _buffer5).line(pos.x, pos.y);
+        var horizontal = __privateMethod(this, _raycast2, raycast_fn2).call(this, [inset], pos, Vector2.left(), boundingBox.w);
+        if (horizontal != null) {
+          console.log("horizontal:", horizontal);
+          __privateGet(this, _buffer5).text("x", horizontal.x, horizontal.y);
+          if (!Collision.polygonPoint(inset, horizontal.x, horizontal.y)) {
+            var vertical = __privateMethod(this, _raycast2, raycast_fn2).call(this, [inset], horizontal, Vector2.down(), boundingBox.h);
+            if (vertical != null) {
+              console.log("vertical:", vertical);
+              __privateGet(this, _buffer5).text("x", vertical.x, vertical.y);
+              if (!Collision.polygonPoint(inset, vertical.x, vertical.y)) {
+                console.log("Outside shape");
+                syncedLoop(x, y + 1);
               } else {
-                previousStatus = false;
+                console.log("Inside shape");
               }
             }
-            if (Collision.polygonLine(insetPoints, vc.x, vc.y, vn.x, vn.y)) {
-              intersectionNext = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, insetPoints, vc, vn);
-              if (intersectionNext != null) {
-                nextCollision = true;
-              } else {
-                nextStatus = false;
-              }
-            }
-            if (previousCollision) {
-              __privateGet(this, _buffer5).text("x", intersectionPrevious.x, intersectionPrevious.y);
-              newPoints.push(intersectionPrevious);
-              __privateGet(this, _buffer5).fill(12, 72, 250);
-              __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
-            }
-            if (!previousStatus && !nextStatus) {
-              for (let j = 0; j < insetPoints.length; j++) {
-                const current = insetPoints[j];
-                insetPoints[j - 1 >= 0 ? j - 1 : insetPoints.length - 1];
-                insetPoints[j + 1 <= insetPoints.length - 1 ? j + 1 : 0];
-                if (Collision.polygonPoint(points, current.x, current.y)) {
-                  __privateGet(this, _buffer5).circle(current.x, current.y, 10);
-                  newPoints.push(current);
-                  previousStatus = true;
-                  nextStatus = true;
-                } else {
-                  for (let i2 = 0; i2 < points.length; i2++) {
-                    const vCurrent = points[i2];
-                    const vNext = points[i2 + 1 <= points.length - 1 ? i2 + 1 : 0];
-                    if (Collision.linePoint(vCurrent.x, vCurrent.y, vNext.x, vNext.y, current.x, current.y)) {
-                      __privateGet(this, _buffer5).circle(current.x, current.y, 10);
-                      newPoints.push(current);
-                      previousStatus = true;
-                      nextStatus = true;
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-            if (nextCollision) {
-              __privateGet(this, _buffer5).text("x", intersectionNext.x, intersectionNext.y);
-              newPoints.push(intersectionNext);
-              __privateGet(this, _buffer5).fill(12, 72, 250);
-              __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
-            }
           } else {
-            if (__privateMethod(this, _isInsideForbiddenZone, isInsideForbiddenZone_fn).call(this, outsets, vc)) {
-              __privateGet(this, _buffer5).fill(55, 12, 4);
-              __privateGet(this, _buffer5).circle(vc.x, vc.y, 10);
-              var newPointsFromFunction = __privateMethod(this, _calculateNewVectorPosition, calculateNewVectorPosition_fn).call(this, points, vc, vp, vn, outsets, previousStatus, nextStatus);
-              if (newPointsFromFunction.length > 0) {
-                for (let k = 0; k < newPointsFromFunction.length; k++) {
-                  newPoints.push(newPointsFromFunction[k]);
-                }
-              }
-            } else {
-              __privateGet(this, _buffer5).fill(255, 127, 80);
-              __privateGet(this, _buffer5).circle(vc.x, vc.y, 10);
-              newPoints.push(points[i]);
-            }
+            syncedLoop(x, y + 1);
           }
-          if (count == 4)
-            placeTile = false;
-        }
-        if (placeTile) {
-          if (newPoints.length > 0) {
-            var tile2 = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, newPoints, true);
-            __privateSet(this, _totalWidth, __privateGet(this, _totalWidth) + tile2.width);
-            __privateSet(this, _totalHeight, __privateGet(this, _totalHeight) + tile2.height);
-            __privateSet(this, _dummyWidth, __privateGet(this, _dummyWidth) + tile2.width);
-            __privateSet(this, _dummyHeight, __privateGet(this, _dummyHeight) + tile2.height);
-            yWithTile = y;
-            __privateGet(self2, _tiles)["Alucobond"]++;
-            return tile2;
-          }
-        }
-      }
-      if (hasEnoughSpace && (!firstTile || yWithTile < 0)) {
-        var tile2 = __privateMethod(this, _getTile, getTile_fn).call(this, x, y, points, false);
-        __privateSet(this, _totalWidth, __privateGet(this, _totalWidth) + tile2.width);
-        __privateSet(this, _totalHeight, __privateGet(this, _totalHeight) + tile2.height);
-        __privateSet(this, _tileWidth, __privateGet(this, _tileWidth) + tile2.width);
-        __privateSet(this, _tileHeight, __privateGet(this, _tileHeight) + tile2.height);
-        yWithTile = y;
-        __privateGet(self2, _tiles)["X-Roof"]++;
-        return tile2;
-      }
-      return null;
-    };
-    var syncedFunc = async (x, y) => {
-      await __privateGet(this, _sleep).call(this, 20);
-      attemptPlaceTile(x, y, firstTile ? 30 : tileWidth, tileHeight).then((tilePlaced) => {
-        x += tilePlaced != null && firstTile ? tilePlaced.width : tileWidth;
-        if (tilePlaced != null) {
-          firstTile = false;
-        }
-        if (x >= boundingBox.x + boundingBox.w) {
-          y += yWithTile < y ? 1 : tileHeight;
-          firstTile = true;
-          rowIndex++;
-          if (this.rowOffsetMode) {
-            x = rowIndex % 2 != 0 ? boundingBox.x + tileWidth / 2 : boundingBox.x;
-          } else {
-            x = boundingBox.x;
-          }
-        }
-        if (y <= boundingBox.y + boundingBox.h) {
-          syncedFunc(x, y);
-        }
-      });
-    };
-    syncedFunc(boundingBox.x, boundingBox.y);
-  };
-  _canBePlaced = new WeakSet();
-  canBePlaced_fn = function(insetPoints, outsets, points) {
-    var hasEnoughSpace = true;
-    if (__privateMethod(this, _isInside, isInside_fn).call(this, insetPoints, points)) {
-      for (let i = 0; i < outsets.length; i++) {
-        const outset = outsets[i];
-        const outsetPoints = outset.getVertices();
-        if (__privateMethod(this, _isColliding, isColliding_fn).call(this, outsetPoints, points)) {
-          hasEnoughSpace = false;
-          break;
-        }
-      }
-    } else {
-      hasEnoughSpace = false;
-    }
-    return hasEnoughSpace;
-  };
-  _isColliding = new WeakSet();
-  isColliding_fn = function(zonePoints, points) {
-    if (Collision.polygonPolygon(zonePoints, points) || Collision.polygonPoint(zonePoints, points[0].x, points[0].y) || Collision.polygonPoint(zonePoints, points[1].x, points[1].y) || Collision.polygonPoint(zonePoints, points[2].x, points[2].y) || Collision.polygonPoint(zonePoints, points[3].x, points[3].y)) {
-      return true;
-    }
-    return false;
-  };
-  _isInside = new WeakSet();
-  isInside_fn = function(zonePoints, points) {
-    if (Collision.polygonPoint(zonePoints, points[0].x, points[0].y) && Collision.polygonPoint(zonePoints, points[1].x, points[1].y) && Collision.polygonPoint(zonePoints, points[2].x, points[2].y) && Collision.polygonPoint(zonePoints, points[3].x, points[3].y)) {
-      return true;
-    }
-    return false;
-  };
-  _isInsidePoint = new WeakSet();
-  isInsidePoint_fn = function(zonePoints, point2) {
-    if (Collision.polygonPoint(zonePoints, point2.x, point2.y)) {
-      return true;
-    }
-    for (let r = 0; r < zonePoints.length; r++) {
-      const c = zonePoints[r];
-      const n = zonePoints[r + 1 <= zonePoints.length - 1 ? r + 1 : 0];
-      if (Collision.linePoint(c.x, c.y, n.x, n.y, point2.x, point2.y)) {
-        return true;
-      }
-    }
-    return false;
-  };
-  _isInsideForbiddenZone = new WeakSet();
-  isInsideForbiddenZone_fn = function(zonePoints, point2) {
-    for (let i = 0; i < zonePoints.length; i++) {
-      const outset = zonePoints[i];
-      const outsetPoints = outset.getVertices();
-      if (Collision.polygonPoint(outsetPoints, point2.x, point2.y)) {
-        return true;
-      }
-      for (let r = 0; r < outsetPoints.length; r++) {
-        const c = outsetPoints[r];
-        const n = outsetPoints[r + 1 <= outsetPoints.length - 1 ? r + 1 : 0];
-        if (Collision.linePoint(c.x, c.y, n.x, n.y, point2.x, point2.y)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
-  _getTile = new WeakSet();
-  getTile_fn = function(x, y, vertices, isDummy) {
-    return new Tile(vertices, __privateGet(this, _buffer5), isDummy);
-  };
-  _polygonLineWithCoordinates = new WeakSet();
-  polygonLineWithCoordinates_fn = function(vertices, vector1, vector2) {
-    var next = 0;
-    for (let current = 0; current < vertices.length; current++) {
-      next = current + 1;
-      if (next == vertices.length) {
-        next = 0;
-      }
-      var hit = __privateMethod(this, _lineIntersection, lineIntersection_fn).call(this, vector1, vector2, vertices[current], vertices[next]);
-      if (hit != null) {
-        return hit;
-      }
-    }
-    return null;
-  };
-  _lineIntersection = new WeakSet();
-  lineIntersection_fn = function(pointA, pointB, pointC, pointD) {
-    var z1 = pointA.x - pointB.x;
-    var z2 = pointC.x - pointD.x;
-    var z3 = pointA.y - pointB.y;
-    var z4 = pointC.y - pointD.y;
-    var dist = z1 * z4 - z3 * z2;
-    var tempA = pointA.x * pointB.y - pointA.y * pointB.x;
-    var tempB = pointC.x * pointD.y - pointC.y * pointD.x;
-    var xCoor = (tempA * z2 - z1 * tempB) / dist;
-    var yCoor = (tempA * z4 - z3 * tempB) / dist;
-    if (xCoor < Math.min(pointA.x, pointB.x) || xCoor > Math.max(pointA.x, pointB.x) || xCoor < Math.min(pointC.x, pointD.x) || xCoor > Math.max(pointC.x, pointD.x)) {
-      return null;
-    }
-    if (yCoor < Math.min(pointA.y, pointB.y) || yCoor > Math.max(pointA.y, pointB.y) || yCoor < Math.min(pointC.y, pointD.y) || yCoor > Math.max(pointC.y, pointD.y)) {
-      return null;
-    }
-    return new Vector2(xCoor, yCoor);
-  };
-  _calculateNewVectorPosition = new WeakSet();
-  calculateNewVectorPosition_fn = function(points, vc, vp, vn, insetPoints, previousStatus, nextStatus) {
-    var _points2 = [];
-    var intersectionPrevious, intersectionNext;
-    var previousCollision = false;
-    var nextCollision = false;
-    for (let i = 0; i < insetPoints.length; i++) {
-      const outset = insetPoints[i];
-      const nextOutset = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
-      const outsetPoints = outset.getVertices();
-      if (!Collision.linePoint(outset.x, outset.y, nextOutset.x, nextOutset.y, vc.x, vc.y)) {
-        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vp.x, vp.y)) {
-          intersectionPrevious = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vp);
-          if (intersectionPrevious != null) {
-            previousCollision = true;
-          } else {
-            previousStatus = false;
-          }
-        }
-        if (Collision.polygonLine(outsetPoints, vc.x, vc.y, vn.x, vn.y)) {
-          intersectionNext = __privateMethod(this, _polygonLineWithCoordinates, polygonLineWithCoordinates_fn).call(this, outsetPoints, vc, vn);
-          if (intersectionNext != null) {
-            nextCollision = true;
-          } else {
-            nextStatus = false;
-          }
-        }
-        if (previousCollision) {
-          _points2.push(intersectionPrevious);
-          __privateGet(this, _buffer5).fill(173, 255, 47);
-          __privateGet(this, _buffer5).circle(intersectionPrevious.x, intersectionPrevious.y, 10);
-        }
-        if (!previousStatus && !nextStatus) {
-          for (let j = 0; j < outsetPoints.length; j++) {
-            const current = outsetPoints[j];
-            insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
-            if (Collision.polygonPoint(points, current.x, current.y)) {
-              __privateGet(this, _buffer5).circle(current.x, current.y, 10);
-              _points2.push(current);
-              previousStatus = true;
-              nextStatus = true;
-            }
-          }
-        }
-        if (nextCollision) {
-          _points2.push(intersectionNext);
-          __privateGet(this, _buffer5).fill(173, 255, 47);
-          __privateGet(this, _buffer5).circle(intersectionNext.x, intersectionNext.y, 10);
+        } else {
+          syncedLoop(x, y + 1);
         }
       } else {
-        _points2.push(nextOutset);
+        console.log("Inside shape");
+        __privateGet(this, _buffer5).text("x", x, y);
+      }
+    };
+    syncedLoop(boundingBox.x, boundingBox.y);
+  };
+  _createTile = new WeakSet();
+  createTile_fn = function(vertices, isDummy) {
+    return new Tile(vertices, null, isDummy);
+  };
+  _raycast2 = new WeakSet();
+  raycast_fn2 = function(shapes, from, dir, dist) {
+    var collisionClosest = null;
+    var collisionDist = 99999999999;
+    var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
+    for (let i = 0; i < shapes.length; i++) {
+      const shape = shapes[i];
+      const vertices = shape.getVertices();
+      for (let r = 0; r < vertices.length; r++) {
+        const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
+        const vc = vertices[r];
+        if (Collision.pointCircle(vc.x, vc.y, end.x, end.y, 10)) {
+          circle(vc.x, vc.y, 10);
+          circle(vn.x, vn.y, 10);
+        }
+        if (Collision.lineLine(vc.x, vc.y, vn.x, vn.y, from.x, from.y, end.x, end.y)) {
+          strokeWeight(5);
+          stroke(255, 255, 0);
+          line(vn.x, vn.y, vc.x, vc.y);
+        }
+        var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
+        if (collision != null) {
+          var dist = Vector2.distance(from, collision);
+          if (collisionClosest == null || dist < collisionDist) {
+            collisionClosest = collision;
+            collisionDist = dist;
+          }
+        }
       }
     }
-    return _points2;
+    return collisionClosest;
   };
   const _HistoryTool$1 = class {
     static instance() {

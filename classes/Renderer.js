@@ -9,24 +9,25 @@ export default class Renderer {
     constructor() {
         Renderer.instance = this;
         this.#shapes = [];
-        this.add(new Shape([
-            new Vector2(900, 100),
-            new Vector2(1100, 100),
-            new Vector2(1300, 300),
-            new Vector2(1300, 500),
-            new Vector2(1100, 700),
-            new Vector2(900, 700),
-            new Vector2(700, 500),
-            new Vector2(700, 300)
-        ], new Color(null, 255, 255, 255, 255)));
         // this.add(new Shape([
-        //     new Vector2(750, 750),
-        //     new Vector2(750 + (50 * 15), 750),
-        //     // new Vector2(750 + (50 * 10), 750 + (50 * 10)),
-        //     // new Vector2(750 + (50 * 15), 750 + (50 * 12)),
-        //     new Vector2(750 + (50 * 15), 750 + (50 * 15)),
-        //     new Vector2(750, 750 + (50 * 15)),
+        //     new Vector2(900, 100),
+        //     new Vector2(1100, 100),
+        //     new Vector2(1300, 300),
+        //     new Vector2(1300, 500),
+        //     new Vector2(1100, 700),
+        //     new Vector2(900, 700),
+        //     new Vector2(700, 500),
+        //     new Vector2(700, 300)
         // ], new Color(null, 255, 255, 255, 255)));
+
+        this.add(new Shape([
+            new Vector2(750, 750),
+            new Vector2(750 + (50 * 15), 750),
+            // new Vector2(750 + (50 * 10), 750 + (50 * 10)),
+            // new Vector2(750 + (50 * 15), 750 + (50 * 12)),
+            new Vector2(750 + (50 * 15), 750 + (50 * 15)),
+            new Vector2(750, 750 + (50 * 15)),
+        ], new Color(null, 255, 255, 255, 255)));
 
         // this.add(new Shape([
         //     new Vector2(1600, 750),

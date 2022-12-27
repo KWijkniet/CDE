@@ -1,3 +1,5 @@
+import Vector2 from "./Vector2";
+
 /*
     Autor: Kelvin wijkniet
     url: https://github.com/kwijkniet
@@ -147,7 +149,7 @@ export default class Collision{
         var lineLength = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
 
         //since floats are so minutely accurate, add a little buffer zone that will give collision
-        var buffer = 1;    // higher # = less accurate
+        var buffer = .01;    // higher # = less accurate
 
         //if the two distances are equal to the line's length, the point is on the line!
         //note we use the buffer here to give a range
@@ -446,5 +448,29 @@ export default class Collision{
             return true;
         }
         return false;
+    }
+
+    // Line to Line detection (Returns point of collision)
+    // Detect if a line is colliding with a line but returns a point of collision instead of a boolean
+    // x1 = line X of the starting point of line 1
+    // y1 = line Y of the starting point of line 1
+    // x2 = line X of the ending point of line 1
+    // y2 = line Y of the ending point of line 1
+    // x3 = line X of the starting point of line 2
+    // y3 = line Y of the starting point of line 2
+    // x4 = line X of the ending point of line 2
+    // y4 = line Y of the ending point of line 2
+    static lineLineCollision(x1, y1, x2, y2, x3, y3, x4, y4) {
+        //calculate the distance to intersection point
+        var uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+        var uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+
+        //if uA and uB are between 0-1, lines are colliding
+        if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+            var x = x1 + uA * (x2 - x1);
+            var y = y1 + uA * (y2 - y1);
+            return new Vector2(x, y);
+        }
+        return null;
     }
 }

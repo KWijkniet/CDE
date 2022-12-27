@@ -3,7 +3,10 @@
     --grid-lines: rgba(0, 0, 0, 100);
     --shape-allowed: rgba(255, 255, 255, 128);
     --shape-forbidden: rgba(255, 0, 0, 128);
-    --tile-background: rgba(100, 100, 100, 255);
+    --tile-background-terracotta: rgba(179, 86, 66, 150);
+    --tile-background-zwart: rgba(100, 100, 100, 50);
+    --tile-background-terracotta-dummy: rgba(179, 86, 66, 200);
+    --tile-background-zwart-dummy: rgba(0, 0, 0, 200);
 }
 
 * {
@@ -203,9 +206,9 @@ main{
 }
 
 .sub-menu{
-    position: absolute;
-    left: 75px;
-    top: 0px;
+    position: relative;
+    left: 67px;
+    top: -52px;
     width: 62px;
     /* height: 124px; */
     background-color: #fff;
@@ -238,4 +241,5 @@ main{
 
 .sub-menu .text{
     font-size: 7px;
+    display: block;
 }

@@ -7,6 +7,7 @@ export default class Shape {
     showData = false;
     isAllowed = true;
     isGenerated = false;
+    lineMargins = null;
 
     #vertices = null;
     #shapebuffer = null;
@@ -14,6 +15,7 @@ export default class Shape {
     #pos = null;
 
     constructor(vertices = [], color = new Color(null, 255, 255, 255), id = null, isGenerated = false, buffer = null) {
+        if(vertices.length <= 0 && id == null){return;}
         this.id = id;
         this.color = color;
         this.showData = true;
@@ -21,11 +23,16 @@ export default class Shape {
         this.isGenerated = isGenerated;
         this.#shapebuffer = buffer;
         this.#textBuffer = buffer;
-
+        
         if(this.id == null){
             this.id = this.#generateUniqSerial();
         }
         this.#vertices = vertices;
+        this.lineMargins = [];
+        for (let i = 0; i < vertices.length; i++) {
+            this.lineMargins.push("default|5");
+        }
+        
         this.#generate();
     }
 
@@ -71,6 +78,33 @@ export default class Shape {
 
         this.#vertices = vertices;
         this.color = color;
+        this.#generate();
+    }
+
+    toJSON(){
+        var vertices = [];
+        for (let i = 0; i < this.#vertices.length; i++) {
+            const vertice = this.#vertices[i];
+            vertices.push(vertice.toJSON());
+        }
+
+        return { "id": this.id, "color": this.color.rgba(), "showData": this.showData, "isAllowed": this.isAllowed, "isGenerated": this.isGenerated, "vertices": vertices, "lineMargins": this.lineMargins, "pos": this.#pos.toJSON() };
+    }
+
+    fromJSON(json) {
+        this.id = json.id;
+        this.color = new Color(null, json.color.r, json.color.g, json.color.b, json.color.a);
+        this.showData = json.showData;
+        this.isAllowed = json.isAllowed;
+        this.isGenerated = json.isGenerated;
+        this.lineMargins = json.lineMargins;
+        this.#pos = json.pos;
+
+        this.#vertices = [];
+        for (let i = 0; i < json.vertices.length; i++) {
+            const vertice = json.vertices[i];
+            this.#vertices.push(new Vector2(0, 0).fromJSON(vertice));
+        }
         this.#generate();
     }
 

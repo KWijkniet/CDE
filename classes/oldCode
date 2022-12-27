@@ -1,0 +1,96 @@
+var collisionFound = false;
+var collisionLines = [];
+var newWidth, newHeight;
+if (Collision.polygonRectangle(insetPoints, x, y, width, height)){
+    // Make forloop to check for collision with inset
+    for (let i = 0; i < insetPoints.length; i++) {
+        // Check collision 
+        if(i == insetPoints.length - 1){
+            if(Collision.lineRectangle(insetPoints[i].x, insetPoints[i].y,insetPoints[0].x, insetPoints[0].y, x,y,width,height)){
+                // Add line to array
+                var line = [ 
+                    new Vector2(insetPoints[i].x, insetPoints[i].y),
+                    new Vector2(insetPoints[0].x, insetPoints[0].y)
+                ];
+                collisionLines.push(line);
+            }
+        }else {
+            if(Collision.lineRectangle(insetPoints[i].x, insetPoints[i].y,insetPoints[i+1].x, insetPoints[i+1].y, x,y,width,height)){
+                // Add line to array
+                var line = [ 
+                    new Vector2(insetPoints[i].x, insetPoints[i].y),
+                    new Vector2(insetPoints[i+1].x, insetPoints[i+1].y)
+                ];
+                collisionLines.push(line);
+            }
+        }
+
+        if(collisionLines.length > 0) collisionFound = true;
+    }
+    // if true, Calculate collision point
+    if (collisionFound) {
+        for (let l = 0; l < collisionLines.length; l++) {
+            // Width check
+            if(Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y,collisionLines[l][1].x, collisionLines[l][1].y, points[0].x, points[0].y, points[1].x, points[1].x)){
+                var intersectionForWidth = this.#lineIntersection(collisionLines[l][0], collisionLines[l][1], points[0], points[1]);
+                if (intersectionForWidth == null) {
+                    continue;
+                }
+                // Debug - visual collision point
+                this.#buffer.circle(intersectionForWidth.x , intersectionForWidth.y ,10);
+                // Get distance between points 
+                newWidth = Vector2.distance(points[0], intersectionForWidth);
+            }   
+            // Height check
+            // if(Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y,collisionLines[l][1].x, collisionLines[l][1].y, points[0].x, points[0].y, points[3].x, points[3].x )){
+            //     var intersectionForHeight = this.#lineIntersection(collisionLines[l][0], collisionLines[l][1], points[0], points[3]);
+            //     if(intersectionForHeight == null){
+            //         continue;
+            //     }
+            //     // Debug - visual collision point
+            //     this.#buffer.circle(intersectionForHeight.x , intersectionForHeight.y ,10);
+            //     // Get distance between points 
+            //     // newHeight = Vector2.distance(points[0], intersectionForHeight);
+            // }
+            if(Collision.lineLine(collisionLines[l][0].x, collisionLines[l][0].y,collisionLines[l][1].x, collisionLines[l][1].y, points[3].x, points[3].y, points[0].x, points[0].x )){
+                var intersectionForHeight = this.#lineIntersection(collisionLines[l][0], collisionLines[l][1], points[3], points[0]);
+                if(intersectionForHeight == null){
+                    print('HEIGHT');
+                    continue;
+                }
+                // Debug - visual collision point
+                this.#buffer.circle(intersectionForHeight.x , intersectionForHeight.y ,30);
+                // Get distance between points 
+                newHeight = Vector2.distance(points[0], intersectionForHeight);
+            }
+        }
+    }
+    // Overwrite width/ height with new data
+    if(newWidth > 0 ) width = newWidth;
+    if(newHeight > 0 ) height = newHeight;
+    // Overwrite points
+    // var points = [
+    //     new Vector2(x, y),
+    //     new Vector2(x + width, y),
+    //     new Vector2(x + width, y + height),
+    //     new Vector2(x, y + height),
+    // ];
+    // // Add tile with the new width and height
+    // var tile = this.#getTile(x, y, points);
+    // yWithTile = y;
+    // this.#tiles.push(tile);
+    // return true;
+}          
+                    
+                    
+
+
+#getIntersectionPoint(p1, p2, r1, r2, r3, r4)
+{
+    var intersection;
+    intersection = this.#lineIntersection(p1,p2,r1,r2);
+    if(intersection == null) intersection = this.#lineIntersection(p1,p2,r2,r3);
+    if(intersection == null) intersection = this.#lineIntersection(p1,p2,r3,r4);
+    if(intersection == null) intersection = this.#lineIntersection(p1,p2,r4,r1);
+    return intersection;
+}

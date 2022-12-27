@@ -2,6 +2,7 @@ var Collision = window.CDE.Collision;
 var Settings = window.CDE.Settings;
 var EventSystem = window.CDE.EventSystem;
 var Cursor = window.CDE.Cursor;
+var Shape = window.CDE.Shape;
 var Color = window.CDE.Color;
 var Grid = window.CDE.Grid;
 var Renderer = window.CDE.Renderer;
@@ -11,11 +12,12 @@ var GeneratorTool = window.CDE.GeneratorTool;
 var HistoryTool = window.CDE.HistoryTool;
 var ContextMenu = window.CDE.ContextMenu;
 var ContextMenuOption = window.CDE.ContextMenuOption;
+var LineSelectorTool = window.CDE.LineSelectorTool;
 
 //Core
-var cursor, grid, renderer, drawingTool, selectorTool;
+var cursor, grid, renderer, drawingTool, selectorTool, lineSelectorTool;
 //Visuals
-var drawingToolElem, selectorToolElem, selectorToolMenu, generatorElem, generatorMenu;
+var drawingToolElem, selectorToolElem, selectorToolMenu, generatorElem, lineSelectorElem/*, generatorMenu*/;
 //Other
 var hasSelectedShape;
 
@@ -31,6 +33,8 @@ function setup() {
     drawingTool = new DrawingTool();
     selectorTool = new SelectorTool();
     generatorTool = new GeneratorTool();
+    lineSelectorTool = new LineSelectorTool();
+    lineSelectorTool.events.subscribe('selectLine', (e) => { $("#exampleModal").modal("show"); cursor.isDisabled = true; loadMargin(); });
 
     frameRate(60);
     Window.currentTool = null;
@@ -40,6 +44,7 @@ function setup() {
     drawingToolElem = document.getElementById("drawingTool");
     selectorToolElem = document.getElementById("selectorTool");
     generatorElem = document.getElementById("generatorTool");
+    lineSelectorElem = document.getElementById("lineTool");
 
     selectorToolMenu = new ContextMenu('selectorToolMenu', [
         new ContextMenuOption('Allowed', 'checkbox', null, null, (e) => { e.querySelector('input').checked = selectorTool.shape != null ? selectorTool.shape.isAllowed : false; }, null, (e) => {
@@ -50,16 +55,7 @@ function setup() {
         new ContextMenuOption('Delete', 'radio', null, 'toolMode', null, null, (e) => { updateToolMode('delete'); }),
         new ContextMenuOption('Confirm', null, 'fa-solid fa-check', null, null, (e) => { confirmSelected(); }),
         new ContextMenuOption('Delete Shape', null, 'fa-solid fa-trash', null, null, (e) => { deleteSelected(); }),
-    ]);
-
-    generatorMenu = new ContextMenu('generatorMenu', [
-        new ContextMenuOption('Generate', null, 'fa-solid fa-check', null, null, (e) => { generatorTool.generate(); }),
-        // new ContextMenuOption('Randafwerking (bove)', 'dropdown', null, null, null, null, null, ["None", "Alucobond", "Pannen", "Nokvorst"]),
-    ]);
-
-    //load generation settings
-    updateSettings();
-    generatorTool.generate();
+    ], "selectorTool");
 }
 
 function draw() {
@@ -73,10 +69,11 @@ function draw() {
     drawingTool.update();
     selectorTool.update();
     generatorTool.update();
+    lineSelectorTool.update();
+    cursor.update();
     pop();
 
-    cursor.update();
-    showFPS();
+    // showFPS();
     // showHistory();
     updateVisuals();
 
@@ -161,12 +158,20 @@ function updateVisuals(){
         selectorToolMenu.hide();
     }
 
-    //Selector menu
-    if (!generatorMenu.isShown() && Window.currentTool == generatorTool) {
-        generatorMenu.show();
-    } else if (Window.currentTool != generatorTool) {
-        generatorMenu.hide();
+    //LineSelector tool
+    if (lineSelectorTool.isEnabled && !lineSelectorElem.classList.contains("active")) {
+        lineSelectorElem.classList.add("active");
     }
+    else if (!lineSelectorTool.isEnabled && lineSelectorElem.classList.contains("active")) {
+        lineSelectorElem.classList.remove("active");
+    }
+
+    // //Selector menu
+    // if (!generatorMenu.isShown() && Window.currentTool == generatorTool) {
+    //     generatorMenu.show();
+    // } else if (Window.currentTool != generatorTool) {
+    //     generatorMenu.hide();
+    // }
 }
 
 function toggleDrawingTool() {
@@ -194,14 +199,27 @@ function toggleSelectorTool() {
 }
 
 function toggleGeneratorTool() {
-    if (Window.currentTool != null && Window.currentTool != generatorTool) { Window.currentTool.disable(); }
-    Window.currentTool = generatorTool;
-    if (generatorTool.isEnabled) {
-        generatorTool.disable();
+    generatorTool.generate();
+    // if (Window.currentTool != null && Window.currentTool != generatorTool) { Window.currentTool.disable(); }
+    // Window.currentTool = generatorTool;
+    // if (generatorTool.isEnabled) {
+    //     generatorTool.disable();
+    //     Window.currentTool = null;
+    // }
+    // else {
+    //     generatorTool.enable();
+    // }
+}
+
+function toggleLineTool() {
+    if (Window.currentTool != null && Window.currentTool != lineSelectorTool) { Window.currentTool.disable(); }
+    Window.currentTool = lineSelectorTool;
+    if (lineSelectorTool.isEnabled) {
+        lineSelectorTool.disable();
         Window.currentTool = null;
     }
     else {
-        generatorTool.enable();
+        lineSelectorTool.enable();
     }
 }
 
@@ -245,37 +263,84 @@ function updateToolMode(mode){
 }
 
 function updateSettings(){
-    var elems = document.getElementsByName("daknok");
-    var daknok = 0;
+    generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
+    Settings.type = document.getElementById("tileType").value;
+}
+
+function updateMargin() {
+    var elems = document.getElementsByName("marginType");
     for (let i = 0; i < elems.length; i++) {
         const elem = elems[i];
-        if(elem.checked){
-            daknok = parseFloat(elem.getAttribute("data-margin"));
+        if (elem.checked) {
+            var value = elem.getAttribute("data-margin");
+            if (!value) {
+                value = document.querySelector('[data-target="' + elem.id + '"]').value;
+            }
+            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
             break;
         }
     }
 
-    elems = document.getElementsByName("dakrand");
-    var dakrand = 0;
-    for (let i = 0; i < elems.length; i++) {
-        const elem = elems[i];
-        if(elem.checked){
-            dakrand = parseFloat(elem.getAttribute("data-margin"));
-            break;
-        }
-    }
+    generatorTool.margin = document.getElementById("objectMargin").value;
+    generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
+}
 
-    elems = document.getElementsByName("gootdetail");
-    var gootdetail = 0;
+function loadMargin() {
+    var data = (lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] + "").split("|");
+    var elems = document.getElementsByName("marginType");
     for (let i = 0; i < elems.length; i++) {
         const elem = elems[i];
-        if(elem.checked){
-            gootdetail = parseFloat(elem.getAttribute("data-margin"));
+        if (elem.id == data[0]){
+            elem.checked = true;
+
+            if (!elem.getAttribute("data-margin")){
+                document.querySelector('[data-target="' + elem.id + '"]').value = data[1];
+            }
             break;
         }
+
+        if (elem.checked){
+            elem.checked = false;
+        }
     }
-    
-    generatorTool.marginU = daknok;
-    generatorTool.marginLR = dakrand;
-    generatorTool.marginD = gootdetail;
+}
+
+function exportData() {
+    var data = {
+        "shapes": [],
+        "generator": [],
+        "useRowOffset": 0,
+        "tileType": "",
+    };
+
+    var shapes = renderer.getAll();
+    for(var i = 0; i < shapes.length; i++){
+        data["shapes"][i] = shapes[i].toJSON();
+    }
+    data['generator'] = generatorTool.toJSON();
+    data['useRowOffset'] = document.getElementById("useRowOffset").checked;
+    data['tileType'] = document.getElementById("tileType").value;
+    data['dakvoetprofielen'] = document.getElementById("dakvoetprofielen").value;
+    data['vogelschroten'] = document.getElementById("vogelschroten").value;
+
+    return JSON.stringify(data);
+}
+
+function importData(json){
+    for (let i = 0; i < json.shapes.length; i++) {
+        const shape = json.shapes[i];
+        
+        var newShape = new Shape();
+        newShape.fromJSON(shape);
+        renderer.add(newShape);
+    }
+    generatorTool.fromJSON(json['generated']);
+    document.getElementById("useRowOffset").checked = json['useRowOffset'];
+    document.getElementById("tileType").value = json['tileType'];
+    document.getElementById("dakvoetprofielen").value = data['dakvoetprofielen'];
+    document.getElementById("vogelschroten").value = data['vogelschroten'];
+}
+
+function canvasAsImage(){
+    return Settings.getCanvas().elt.toDataURL();
 }

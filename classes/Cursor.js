@@ -1,5 +1,6 @@
 import Vector2 from "./Vector2";
 import EventSystem from "./EventSystem";
+import Collision from "./Collision";
 
 export default class Cursor{
     static disableOffset = false;
@@ -38,19 +39,19 @@ export default class Cursor{
         this.resetOffset();
 
         //Track mouse position
-        document.addEventListener('mousemove', (e) => { this.position = new Vector2(e.clientX, e.clientY); });
+        Settings.getCanvas().elt.addEventListener('mousemove', (e) => { this.position = new Vector2(e.clientX, e.clientY); });
         
         //Mouse based
-        document.addEventListener('mousemove', (event) => { this.#event(event, 'mousemove'); });
-        document.addEventListener('mousedown', (event) => { this.#event(event, 'mousedown'); });
-        document.addEventListener('mouseup', (event) => { this.#event(event, 'mouseup'); });
+        Settings.getCanvas().elt.addEventListener('mousemove', (event) => { this.#event(event, 'mousemove'); });
+        Settings.getCanvas().elt.addEventListener('mousedown', (event) => { this.#event(event, 'mousedown'); });
+        Settings.getCanvas().elt.addEventListener('mouseup', (event) => { this.#event(event, 'mouseup'); });
 
         //Touch based
-        document.addEventListener('touchmove', (event) => { this.#event(event, 'mousemove') });
-        document.addEventListener('touchstart', (event) => { this.#event(event, 'mousedown') });
-        document.addEventListener('touchend', (event) => { this.#event(event, 'mouseup') });
+        Settings.getCanvas().elt.addEventListener('touchmove', (event) => { this.#event(event, 'mousemove') });
+        Settings.getCanvas().elt.addEventListener('touchstart', (event) => { this.#event(event, 'mousedown') });
+        Settings.getCanvas().elt.addEventListener('touchend', (event) => { this.#event(event, 'mouseup') });
 
-        document.addEventListener('wheel', (event) => { this.events.invoke('scroll', event); });
+        Settings.getCanvas().elt.addEventListener('wheel', (event) => { this.events.invoke('scroll', event); });
         this.events.subscribe('scroll', (e) => {
             if (this.isDisabled) { this.#checkBounds(); return; }
             const {x, y, deltaY} = e.detail;
@@ -72,7 +73,58 @@ export default class Cursor{
         });
     }
 
-    update() {}
+    update() {
+        // var pos = cursor.local().remove(cursor.offset);
+        // pos.x /= Settings.zoom;
+        // pos.y /= Settings.zoom;
+        
+        // var point = this.#raycast(Renderer.instance.getAll(), Vector2.zero(), Vector2.zero().remove(pos).normalized(), Vector2.distance(Vector2.zero(), pos));
+        
+        // if(point){
+        //     textSize(25);
+        //     text('x', point.x, point.y);
+        // }
+    }
+
+    #raycast(shapes, from, dir, dist) {
+        var collisionClosest = null;
+        var collisionDist = 99999999999;
+
+        var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
+        line(from.x, from.y, end.x, end.y);
+        
+        for (let i = 0; i < shapes.length; i++) {
+            const shape = shapes[i];
+            const vertices = shape.getVertices();
+
+            for (let r = 0; r < vertices.length; r++) {
+                const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
+                const vc = vertices[r];
+
+                if(Collision.pointCircle(vc.x, vc.y, end.x, end.y, 10)){
+                    circle(vc.x, vc.y, 10);
+                    circle(vn.x, vn.y, 10);
+                }
+
+                if (Collision.lineLine(vc.x, vc.y, vn.x, vn.y, from.x, from.y, end.x, end.y)){
+                    strokeWeight(5);
+                    stroke(255, 255, 0);
+                    line(vn.x, vn.y, vc.x, vc.y);
+                }
+
+                var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
+                if (collision != null) {
+                    var dist = Vector2.distance(from, collision);
+                    if (collisionClosest == null || dist < collisionDist) {
+                        collisionClosest = collision;
+                        collisionDist = dist;
+                    }
+                }
+            }
+        }
+
+        return collisionClosest;
+    }
 
     resetOffset(){
         this.offset = new Vector2(-Settings.mapSizeX / 8, -Settings.mapSizeY / 8);

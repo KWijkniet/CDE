@@ -4,10 +4,12 @@ import Vector2 from "./Vector2";
 export default class Tile {
     width = 0;
     height = 0;
+    pos = null;
+    isDummy = false;
+    
     #buffer = null;
     #vertices = [];
     #color = null;
-    pos = null;
 
     constructor(vertices = [], buffer = null, isDummy = false) {
         this.#buffer = buffer;
@@ -15,6 +17,7 @@ export default class Tile {
         this.width = 0;
         this.height = 0;
         this.pos = this.#vertices[0];
+        this.isDummy = isDummy;
 
         if(this.#vertices.length <= 0){return;}
         for (let i = this.#vertices.length - 1; i >= 0; i--) {
@@ -69,11 +72,16 @@ export default class Tile {
         this.#buffer.endShape();
     }
 
-    getWidth() {
-        return this.#vertices[1].x - this.#vertices[0].x;
-    }
-
-    getHeight() {
-        return this.#vertices[2].y - this.#vertices[1].y;
+    getBoundingBox() {
+        const xArr = this.#vertices.map(a => a.x);
+        const yArr = this.#vertices.map(a => a.y);
+        const width = (Math.max(...xArr) - Math.min(...xArr));
+        const height = (Math.max(...yArr) - Math.min(...yArr));
+        return {
+            "x": this.pos,
+            "y": this.pos,
+            "w": width,
+            "h": height
+        };
     }
 }

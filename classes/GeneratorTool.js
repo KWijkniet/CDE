@@ -209,7 +209,7 @@ export default class GeneratorTool {
         var outsets = [];
         this.#buffer.beginShape();
         var points = shape.getVertices();
-        var hideVisuals = false;
+        var hideVisuals = true;
         this.#buffer.push();
 
         for (let i = 0; i < points.length; i++) {
@@ -273,17 +273,16 @@ export default class GeneratorTool {
         var self = this;
         var tileSize = new Vector2(820 / 10, 600 / 10);
         var firstTileSize = new Vector2(410 / 10, 600 / 10);
+        var insetPoints = inset.getVertices();
 
         var isFirstTile = true;
 
         var boundingBox = inset.getBoundingBox();
         //Metsel patroon
 
-        var syncedPlaceTile = async (x, y) =>  new Promise((resolve) => {
-            console.log('Placing tile...');
+        var syncedPlaceTile = async (x, y, targetPoints) => new Promise((resolve) => {
             var pos = new Vector2(x, y);
             var delay = 1;
-            var insetPoints = inset.getVertices();
             var isDummy = false;
 
             // setTimeout(() => {
@@ -324,7 +323,7 @@ export default class GeneratorTool {
             //             self.#buffer.line(verticalRight.x, verticalRight.y, horizontalBottom.x, horizontalBottom.y);
 
             //             setTimeout(() => {
-            //                 var verticalLeft = self.#raycast([inset], verticalRight, Vector2.right(), tileSize.x);
+            //                 var verticalLeft = self.#raycast([inset], verticalRight, Vector2.up(), tileSize.x);
             //                 if (!verticalLeft) {
             //                     verticalLeft = new Vector2(horizontalBottom.x, horizontalBottom.y);
             //                     if (!self.IsInside(insetPoints, verticalLeft.x, verticalLeft.y)) {
@@ -343,70 +342,133 @@ export default class GeneratorTool {
             //     }, delay);
             // }, delay);
 
-
             setTimeout(() => {
-                var horizontalTop = self.#raycast([inset], pos, Vector2.left(), isFirstTile ? firstTileSize.x : tileSize.x);
-                if (!horizontalTop) {
-                    horizontalTop = new Vector2(pos.x + (isFirstTile ? firstTileSize.x : tileSize.x), pos.y);
-                    if (!self.IsInside(insetPoints, horizontalTop.x, horizontalTop.y)){
-                        return resolve(null);
-                    }
-                }
-                else{
-                    isDummy = true;
-                }
-                self.#buffer.line(pos.x, pos.y, horizontalTop.x, horizontalTop.y);
+                self.#buffer.stroke(0, 0, 255);
+                var result = [];
 
-                setTimeout(() => {
-                    var verticalRight = self.#raycast([inset], horizontalTop, Vector2.down(), tileSize.y);
-                    if (!verticalRight) {
-                        verticalRight = new Vector2(horizontalTop.x, horizontalTop.y + tileSize.y);
-                        if (!self.IsInside(insetPoints, verticalRight.x, verticalRight.y)) {
-                            return resolve(null);
-                        }
-                    } else {
+                for (let i = 0; i < targetPoints.length; i++) {
+                    const vp = targetPoints[i - 1 >= 0 ? i - 1 : targetPoints.length - 1];
+                    const vc = targetPoints[i];
+                    const vn = targetPoints[i + 1 <= targetPoints.length - 1 ? i + 1 : 0];
+
+                    self.#buffer.circle(vc.x, vc.y, 2);
+                    
+                    //Point outside of shape
+                    if (!self.IsInside(insetPoints, vc.x, vc.y) || self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) {
                         isDummy = true;
-                    }
-                    self.#buffer.line(horizontalTop.x, horizontalTop.y, verticalRight.x, verticalRight.y);
+                        //Find a collision between current vertice and the previous vertice
+                        var dirP = vp.getCopy().remove(vc).normalized();
+                        var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
 
-                    setTimeout(() => {
-                        var maxDist = (isFirstTile ? tileSize.x : Vector2.distance(pos, horizontalTop));
-                        var horizontalBottom = self.#raycast([inset], verticalRight, Vector2.right(), maxDist);
-                        if (!horizontalBottom) {
-                            horizontalBottom = new Vector2(verticalRight.x - maxDist, verticalRight.y);
-                            if (!self.IsInside(insetPoints, horizontalBottom.x, horizontalBottom.y)) {
-                                return resolve(null);
-                            }
-                        } else {
-                            isDummy = true;
+                        //Find a collision between current vertice and the next vertice
+                        var dirN = vn.getCopy().remove(vc).normalized();
+                        var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
+
+                        //Push collision point into the result array
+                        if (toPrev != null) {
+                            self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
+                            result.push(toPrev);
                         }
-                        self.#buffer.line(verticalRight.x, verticalRight.y, horizontalBottom.x, horizontalBottom.y);
 
-                        setTimeout(() => {
-                            var verticalLeft = self.#raycast([inset], verticalRight, Vector2.right(), tileSize.x);
-                            if (!verticalLeft) {
-                                verticalLeft = new Vector2(horizontalBottom.x, horizontalBottom.y);
-                                if (!self.IsInside(insetPoints, verticalLeft.x, verticalLeft.y)) {
-                                    return resolve(null);
-                                }
-                            } else {
-                                isDummy = true;
-                                //Exception Case Found:
-                                //One of the inset vertices is inside this tile. 
+                        //Include all inset points that are inside the tile
+                        for (let r = 0; r < insetPoints.length; r++) {
+                            const inset = insetPoints[r];
+
+                            if (self.IsInside(targetPoints, inset.x, inset.y)) {
+                                result.push(inset);
                             }
-                            self.#buffer.line(verticalLeft.x, verticalLeft.y, pos.x, pos.y);
+                        }
 
-                            resolve(self.#createTile([pos, horizontalTop, verticalRight, horizontalBottom, verticalLeft], isDummy));
-                        }, delay);
-                    }, delay);
-                }, delay);
+                        //Include all outside points that are inside the tile
+                        for (let r = 0; r < outsets.length; r++) {
+                            const outset = outsets[r];
+                            const outsetPoints = outset.getVertices();
+
+                            for (let r = 0; r < outsetPoints.length; r++) {
+                                const outsetPoint = outsetPoints[r];
+
+                                if (self.IsInside(targetPoints, outsetPoint.x, outsetPoint.y)) {
+                                    result.push(outsetPoint);
+                                }
+                            }
+                        }
+                        
+                        //Push collision point into the result array
+                        if (toNext != null) {
+                            self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
+                            result.push(toNext);
+                        }
+                    }
+                    else{
+                        result.push(vc);
+                    }
+                }
+
+                // var hitTop = self.#raycast([inset], points[0], Vector2.left(), isFirstTile ? firstTileSize.x : tileSize.x);
+                // if (hitTop) {
+                //     isDummy = true;
+                //     self.#buffer.text('x', hitTop.x + 1, hitTop.y + 3);
+                //     if (this.IsInside(insetPoints, points[0].x, points[0].y)) {
+                //         points[1] = hitTop;
+                //     }
+                //     else{
+                //         points[0] = hitTop;
+                //     }
+                // }
+
+                // var hitRight = self.#raycast([inset], points[1], Vector2.down(), tileSize.y);
+                // if (hitRight) {
+                //     isDummy = true;
+                //     self.#buffer.text('x', hitRight.x + 1, hitRight.y + 3);
+                //     if (self.IsInside(insetPoints, points[1].x, points[1].y)) {
+                //         points[2] = hitRight;
+                //     } else {
+                //         points[1] = hitRight;
+                //     }
+                // }
+
+                // var hitBottom = self.#raycast([inset], points[2], Vector2.right(), isFirstTile ? firstTileSize.x : tileSize.x);
+                // if (hitBottom) {
+                //     isDummy = true;
+                //     self.#buffer.text('x', hitBottom.x + 1, hitBottom.y + 3);
+                //     if (self.IsInside(insetPoints, points[2].x, points[2].y)) {
+                //         points[3] = hitBottom;
+                //     } else {
+                //         points[2] = hitBottom;
+                //     }
+                // }
+
+                // var hitLeft = self.#raycast([inset], points[3], Vector2.up(), tileSize.y);
+                // if (hitLeft) {
+                //     isDummy = true;
+                //     self.#buffer.text('x', hitLeft.x + 1, hitLeft.y + 3);
+                //     if (self.IsInside(insetPoints, points[3].x, points[3].y)) {
+                //         points[0] = hitLeft;
+                //     } else {
+                //         points[3] = hitLeft;
+                //     }
+                // }
+
+                // for (let i = 0; i < points.length; i++) {
+                //     const vc = points[i];
+                //     if(!self.IsInside(insetPoints, vc.x, vc.y)){
+                //         resolve(null);
+                //         return;
+                //     }
+                // }
+
+                var tile = self.#createTile(result, isFirstTile ? true : isDummy);
+                var bb = tile.getBoundingBox();
+                if (bb.h <= 0 || bb.w <= 0) {
+                    resolve(null);
+                    return;
+                }
+                resolve(tile);
             }, delay);
         });
 
-        var syncedLoop = async (x, y) => {
-            console.log('Searching for next tile location...', x, y);
-            var resultPos = null;
-            var insetPoints = inset.getVertices();
+        var findStartingPos = (x, y, targetPoints) => {
+            
             if (!this.IsInside(insetPoints, x, y)) {
                 var pos = new Vector2(x, y).add(Vector2.left().multiply(new Vector2(10, 10)));
                 var horizontal = self.#raycast([inset], pos, Vector2.left(), boundingBox.w);
@@ -417,8 +479,8 @@ export default class GeneratorTool {
                     // horizontal.add(Vector2.right());
                     // self.#buffer.fill(255, 0, 0);
                     // self.#buffer.circle(horizontal.x, horizontal.y, 5);
-                    if (!this.IsInside(insetPoints, horizontal.x, horizontal.y)){
-                        
+                    if (!this.IsInside(insetPoints, horizontal.x, horizontal.y)) {
+
                         pos = horizontal.getCopy().add(Vector2.down().multiply(new Vector2(10, 10)));
                         var vertical = self.#raycast([inset], pos, Vector2.down(), boundingBox.h);
 
@@ -429,57 +491,120 @@ export default class GeneratorTool {
                             // self.#buffer.fill(255, 0, 0);
                             // self.#buffer.circle(vertical.x, vertical.y, 5);
                             // console.log("Is inside shape (Vertical)");
-                            resultPos = vertical.getCopy();
+                            return vertical.getCopy();
                         } else {
-                            // console.log("Could not collide");
+                            // console.log("Could not collide (Vertical)");
                         }
-                    }
-                    else {
-                        resultPos = horizontal.getCopy();
+                    } else {
                         // console.log("Is inside shape (Horizontal)");
+                        return horizontal.getCopy();
                     }
                 } else {
-                    // console.log("Could not collide");
+                    // console.log("Could not collide (Horizontal)");
                 }
+            } else {
+                // console.log("Is inside shape!");
+                return new Vector2(x, y);
             }
-            else{
-                // console.log("Is inside shape");
-                resultPos = new Vector2(x, y);
-            }
-            
-            if(resultPos){
-                //attempt place tile
-                var tmp = null;
-                await syncedPlaceTile(resultPos.x, resultPos.y).then((tile) => {
-                    tmp = tile;
-                });
 
-                if (tmp != null) {
-                    await self.#sleep(500);
+            return null;
+        }
 
-                    isFirstTile = false;
-                    if (x < boundingBox.x + boundingBox.w) {
-                        syncedLoop(tmp.pos.x + tmp.getWidth(), tmp.pos.y);
-                    } else {
-                        if (y < boundingBox.y + boundingBox.h) {
-                            isFirstTile = true;
-                            // syncedLoop(boundingBox.x, tmp.pos.y + tmp.getHeight());
+        var validateLocation = (x, y, targetPoints) => {
+            var isValid = false;
+            for (let i = 0; i < targetPoints.length; i++) {
+                const vc = targetPoints[i];
+
+                if (self.IsInside(insetPoints, vc.x, vc.y)) {
+                    // isValid = true;
+                    if(outsets.length <= 0){
+                        isValid = true;
+                    }
+                    else{
+                        for (let r = 0; r < outsets.length; r++) {
+                            const outset = outsets[r];
+                            const outsetPoints = outset.getVertices();
+    
+                            if (!self.IsInside(outsetPoints, vc.x, vc.y)) {
+                                isValid = true;
+                            }
                         }
                     }
                 }
-                else {
-                    console.warn("WARNING: A tile went out of bounds without detecting a collision at", resultPos.x, resultPos.y);
-                    if (y < boundingBox.y + boundingBox.h) {
-                        isFirstTile = true;
-                        // syncedLoop(boundingBox.x, resultPos.y + tileSize.y);
-                    }
-                }
             }
 
-            else if (y < boundingBox.y + boundingBox.h) {
-                await self.#sleep(100);
-                syncedLoop(x, y + 1);
+            if (isValid) {
+                return new Vector2(x, y);
             }
+            return null;
+        }
+
+        var syncedLoop = async (x, y) => {
+            var targetPoints = [
+                new Vector2(x, y),
+                new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y),
+                new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y + tileSize.y),
+                new Vector2(x - (isFirstTile ? tileSize.x - firstTileSize.x : 0), y + tileSize.y),
+            ];
+            x += (isFirstTile ? firstTileSize.x : tileSize.x);
+            // x += tileSize.x;
+
+            var delay = 100;
+            var resultPos = validateLocation(x, y, targetPoints);
+            if(resultPos){
+                var tmp = null;
+                await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
+                    tmp = tile;
+                    isFirstTile = false;
+                });
+                await this.#sleep(delay);
+            }
+
+            if (x < boundingBox.x + boundingBox.w) {
+                syncedLoop(x, y);
+            } else if (y + tileSize.y < boundingBox.y + boundingBox.h) {
+                isFirstTile = true;
+                syncedLoop(boundingBox.x, y + tileSize.y);
+            }
+
+            // if(resultPos){
+            //     console.log(resultPos.toJSON());
+            //     //attempt place tile
+            //     var tmp = null;
+            //     await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
+            //         tmp = tile;
+            //     });
+
+            //     if (tmp != null) {
+            //         await self.#sleep(delay);
+            //         placedATile = true;
+            //         isFirstTile = false;
+                    
+            //         var bb = tmp.getBoundingBox();
+            //         if (x < boundingBox.x + boundingBox.w) {
+            //             console.log("Same row");
+            //             syncedLoop(tmp.pos.x + bb.w, tmp.pos.y);
+            //         } else {
+            //             console.log("Next row");
+            //             if (y < boundingBox.y + boundingBox.h) {
+            //                 isFirstTile = true;
+            //                 syncedLoop(boundingBox.x, tmp.pos.y + bb.h);
+            //             }
+            //         }
+            //     }
+            //     else {
+            //         console.warn("WARNING: A tile went out of bounds without detecting a collision at", resultPos.x, resultPos.y);
+            //         if (y < boundingBox.y + boundingBox.h) {
+            //             isFirstTile = true;
+            //             syncedLoop(boundingBox.x, resultPos.y + tileSize.y);
+            //         }
+            //     }
+            // }
+            // else if (y < boundingBox.y + boundingBox.h) {
+            //     await self.#sleep(delay);
+            //     console.log("Searching...");
+            //     syncedLoop(x, y + 1);
+            // }
         };
 
         syncedLoop(boundingBox.x, boundingBox.y);
@@ -494,6 +619,7 @@ export default class GeneratorTool {
         var collisionDist = 99999999999;
 
         var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
+        // this.#buffer.stroke(255, 0, 0);
         // this.#buffer.line(from.x, from.y, end.x, end.y);
 
         for (let i = 0; i < shapes.length; i++) {
@@ -563,5 +689,18 @@ export default class GeneratorTool {
         }
 
         return false;
+    }
+
+    IsInsideForbiddenShapes(forbiddenShapes, x, y){
+        var isInside = false;
+        for (let i = 0; i < forbiddenShapes.length; i++) {
+            const shape = forbiddenShapes[i];
+            const shapePoints = shape.getVertices();
+            if (this.IsInside(shapePoints, x, y)) {
+                isInside = true;
+            }
+        }
+
+        return isInside;
     }
 }

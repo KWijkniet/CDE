@@ -319,7 +319,7 @@ export default class GeneratorTool {
                             }
                         }
 
-                        //Include all outside points that are inside the tile
+                        //Include all outset points that are inside the tile
                         for (let r = 0; r < outsets.length; r++) {
                             const outset = outsets[r];
                             const outsetPoints = outset.getVertices();
@@ -345,29 +345,44 @@ export default class GeneratorTool {
                     }
                 }
 
-                //validate result positions (raycast between them)
-                for (let i = 0; i < result.length; i++) {
-                    const vp = result[i - 1 >= 0 ? i - 1 : result.length - 1];
-                    const vc = result[i];
-                    const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
+                //Some shapes have inset/outset lines/points going through them. These are not detected since all target points are inside the inset.
+                //To fix this we need to check all collisions on lines and add these newly found collisions to the result array.
 
-                    var dirP = vp.getCopy().remove(vc).normalized();
-                    var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
+                //loop over all points
+                //check vc -> vn & vn -> vc and add both collision points if found. Also add the outset point if it falls inside the shape.
 
-                    //Find a collision between current vertice and the next vertice
-                    var dirN = vn.getCopy().remove(vc).normalized();
-                    var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
+                // var tmp = [];
+                // //validate result positions (raycast between them)
+                // for (let i = 0; i < result.length; i++) {
+                //     const vp = result[i - 1 >= 0 ? i - 1 : result.length - 1];
+                //     const vc = result[i];
+                //     const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
 
-                    //Push collision point into the result array
-                    if (toPrev != null) {
-                        self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
-                    }
+                //     var dirP = vp.getCopy().remove(vc).normalized();
+                //     var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
 
-                    //Push collision point into the result array
-                    if (toNext != null) {
-                        self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
-                    }
-                }
+                //     //Find a collision between current vertice and the next vertice
+                //     var dirN = vn.getCopy().remove(vc).normalized();
+                //     var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
+                    
+                //     //Push collision point into the tmp array
+                //     if (toPrev != null) {
+                //         self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
+                //         isDummy = true;
+                //         tmp.push(toPrev);
+                //     }
+                    
+                //     //Push original point into the tmp array
+                //     tmp.push(vc);
+                    
+                //     //Push collision point into the tmp array
+                //     if (toNext != null) {
+                //         self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
+                //         isDummy = true;
+                //         tmp.push(toNext);
+                //     }
+                // }
+                // result = tmp;
 
                 //create tile
                 var tile = self.#createTile(result, isFirstTile ? true : isDummy);
@@ -448,6 +463,11 @@ export default class GeneratorTool {
             if (isValid) {
                 return new Vector2(x, y);
             }
+
+            // var horizontal = self.#raycast([inset], new Vector2(x, y), Vector2.left(), Vector2.distance(targetPoints[0], targetPoints[1]));
+            // if(horizontal != null){
+            //     return horizontal;
+            // }
             return null;
         }
 

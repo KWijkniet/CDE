@@ -343,15 +343,7 @@ export default class GeneratorTool {
                     }
                 }
 
-                //Some shapes have inset/outset lines/points going through them. These are not detected since all target points are inside the inset.
-                //To fix this we need to check all collisions on lines and add these newly found collisions to the result array.
-
-                //The outset doesn't ignore its own line when raycasting
-                //Add raycast all that sorts the points on distance
-                //If a raycast has more then 1 point then you need to seperate the 2 parts into different tiles
-
-                //loop over all points
-                //check vc -> vn & vn -> vc and add both collision points if found. Also add the outset point if it falls inside the shape.
+                //TODO: If a raycast has more then 1 point then you need to seperate the 2 parts into different tiles
                 var tmp = [];
                 for (let i = 0; i < result.length; i++) {
                     const vc = result[i];
@@ -403,78 +395,8 @@ export default class GeneratorTool {
                         isDummy = true;
                         tmp.push(toCurr);
                     }
-
-                    // if(toNext != null){
-                    //     isDummy = true;
-                    //     tmp.push(toNext);
-                    // }
-                    
-                    // if(toNext != null && toCurr != null){
-                    //     //Include all inset points that are inside the tile
-                    //     for (let r = 0; r < insetPoints.length; r++) {
-                    //         const inset = insetPoints[r];
-
-                    //         if (self.IsInside(result, inset.x, inset.y)) {
-                    //             tmp.push(inset);
-                    //         }
-                    //     }
-
-                    //     //Include all outset points that are inside the tile
-                    //     for (let r = 0; r < outsets.length; r++) {
-                    //         const outset = outsets[r];
-                    //         const outsetPoints = outset.getVertices();
-
-                    //         for (let b = 0; b < outsetPoints.length; b++) {
-                    //             const outsetPoint = outsetPoints[b];
-
-                    //             if (self.IsInside(result, outsetPoint.x, outsetPoint.y)) {
-                    //                 console.log('test2');
-                    //                 self.#buffer.circle(outsetPoint.x, outsetPoint.y, 20);
-                    //                 tmp.push(outsetPoint);
-                    //             }
-                    //         }
-                    //     }
-                    // }
-
-                    // if(toCurr != null){
-                    //     isDummy = true;
-                    //     tmp.push(toCurr);
-                    // }
                 }
                 result = tmp;
-
-                // var tmp = [];
-                // //validate result positions (raycast between them)
-                // for (let i = 0; i < result.length; i++) {
-                //     const vp = result[i - 1 >= 0 ? i - 1 : result.length - 1];
-                //     const vc = result[i];
-                //     const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
-
-                //     var dirP = vp.getCopy().remove(vc).normalized();
-                //     var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
-
-                //     //Find a collision between current vertice and the next vertice
-                //     var dirN = vn.getCopy().remove(vc).normalized();
-                //     var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
-                    
-                //     //Push collision point into the tmp array
-                //     if (toPrev != null) {
-                //         self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
-                //         isDummy = true;
-                //         tmp.push(toPrev);
-                //     }
-                    
-                //     //Push original point into the tmp array
-                //     tmp.push(vc);
-                    
-                //     //Push collision point into the tmp array
-                //     if (toNext != null) {
-                //         self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
-                //         isDummy = true;
-                //         tmp.push(toNext);
-                //     }
-                // }
-                // result = tmp;
 
                 //create tile
                 var tile = self.#createTile(result, isFirstTile ? true : isDummy);

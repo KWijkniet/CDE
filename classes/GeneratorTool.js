@@ -278,7 +278,7 @@ export default class GeneratorTool {
         var isFirstTile = true;
 
         var syncedPlaceTile = async (x, y, targetPoints) => new Promise((resolve) => {
-            var delay = 1;
+            var delay = 10;
             var isDummy = false;
 
             setTimeout(() => {
@@ -296,6 +296,7 @@ export default class GeneratorTool {
                     //Point outside of shape
                     if (!self.IsInside(insetPoints, vc.x, vc.y) || self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) {
                         isDummy = true;
+
                         //Find a collision between current vertice and the previous vertice
                         var dirP = vp.getCopy().remove(vc).normalized();
                         var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
@@ -319,13 +320,13 @@ export default class GeneratorTool {
                             }
                         }
 
-                        //Include all outside points that are inside the tile
+                        //Include all outset points that are inside the tile
                         for (let r = 0; r < outsets.length; r++) {
                             const outset = outsets[r];
                             const outsetPoints = outset.getVertices();
 
-                            for (let r = 0; r < outsetPoints.length; r++) {
-                                const outsetPoint = outsetPoints[r];
+                            for (let b = 0; b < outsetPoints.length; b++) {
+                                const outsetPoint = outsetPoints[b];
 
                                 if (self.IsInside(targetPoints, outsetPoint.x, outsetPoint.y)) {
                                     result.push(outsetPoint);
@@ -345,29 +346,139 @@ export default class GeneratorTool {
                     }
                 }
 
-                //validate result positions (raycast between them)
+                //Some shapes have inset/outset lines/points going through them. These are not detected since all target points are inside the inset.
+                //To fix this we need to check all collisions on lines and add these newly found collisions to the result array.
+
+                //The outset doesn't ignore its own line when raycasting
+                //Add raycast all that sorts the points on distance
+                //If a raycast has more then 1 point then you need to seperate the 2 parts into different tiles
+
+                //loop over all points
+                //check vc -> vn & vn -> vc and add both collision points if found. Also add the outset point if it falls inside the shape.
+                var tmp = [];
                 for (let i = 0; i < result.length; i++) {
-                    const vp = result[i - 1 >= 0 ? i - 1 : result.length - 1];
                     const vc = result[i];
                     const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
-
-                    var dirP = vp.getCopy().remove(vc).normalized();
-                    var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
 
                     //Find a collision between current vertice and the next vertice
                     var dirN = vn.getCopy().remove(vc).normalized();
                     var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
-
-                    //Push collision point into the result array
-                    if (toPrev != null) {
-                        self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
+                    // var dirC = dirN.getCopy().multiply(new Vector2(-1, -1));
+                    var toCurr = self.#raycast([inset].concat(outsets), vn, new Vector2(dirN.x, dirN.y), Vector2.distance(vn, vc));
+                   
+                    tmp.push(vc);
+                    
+                    //Validate found collisions
+                    if ((toNext != null && (Vector2.distance(toNext, vc) <= 2 || Vector2.distance(toNext, vn) <= 2)) || (toCurr != null && (Vector2.distance(toCurr, vn) <= 2 || Vector2.distance(toCurr, vc) <= 2))) {
+                        continue;
                     }
 
-                    //Push collision point into the result array
                     if (toNext != null) {
-                        self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
+                        isDummy = true;
+                        tmp.push(toNext);
                     }
+
+                    if(toNext != null && toCurr != null){
+                        //Include all inset points that are inside the tile
+                        for (let r = 0; r < insetPoints.length; r++) {
+                            const inset = insetPoints[r];
+
+                            if (self.IsInside(result, inset.x, inset.y)) {
+                                tmp.push(inset);
+                            }
+                        }
+
+                        //Include all outset points that are inside the tile
+                        for (let r = 0; r < outsets.length; r++) {
+                            const outset = outsets[r];
+                            const outsetPoints = outset.getVertices();
+
+                            for (let b = 0; b < outsetPoints.length; b++) {
+                                const outsetPoint = outsetPoints[b];
+
+                                if (self.IsInside(result, outsetPoint.x, outsetPoint.y)) {
+                                    tmp.push(outsetPoint);
+                                }
+                            }
+                        }
+                    }
+
+                    if (toCurr != null) {
+                        isDummy = true;
+                        tmp.push(toCurr);
+                    }
+
+                    // if(toNext != null){
+                    //     isDummy = true;
+                    //     tmp.push(toNext);
+                    // }
+                    
+                    // if(toNext != null && toCurr != null){
+                    //     //Include all inset points that are inside the tile
+                    //     for (let r = 0; r < insetPoints.length; r++) {
+                    //         const inset = insetPoints[r];
+
+                    //         if (self.IsInside(result, inset.x, inset.y)) {
+                    //             tmp.push(inset);
+                    //         }
+                    //     }
+
+                    //     //Include all outset points that are inside the tile
+                    //     for (let r = 0; r < outsets.length; r++) {
+                    //         const outset = outsets[r];
+                    //         const outsetPoints = outset.getVertices();
+
+                    //         for (let b = 0; b < outsetPoints.length; b++) {
+                    //             const outsetPoint = outsetPoints[b];
+
+                    //             if (self.IsInside(result, outsetPoint.x, outsetPoint.y)) {
+                    //                 console.log('test2');
+                    //                 self.#buffer.circle(outsetPoint.x, outsetPoint.y, 20);
+                    //                 tmp.push(outsetPoint);
+                    //             }
+                    //         }
+                    //     }
+                    // }
+
+                    // if(toCurr != null){
+                    //     isDummy = true;
+                    //     tmp.push(toCurr);
+                    // }
                 }
+                result = tmp;
+
+                // var tmp = [];
+                // //validate result positions (raycast between them)
+                // for (let i = 0; i < result.length; i++) {
+                //     const vp = result[i - 1 >= 0 ? i - 1 : result.length - 1];
+                //     const vc = result[i];
+                //     const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
+
+                //     var dirP = vp.getCopy().remove(vc).normalized();
+                //     var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
+
+                //     //Find a collision between current vertice and the next vertice
+                //     var dirN = vn.getCopy().remove(vc).normalized();
+                //     var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
+                    
+                //     //Push collision point into the tmp array
+                //     if (toPrev != null) {
+                //         self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
+                //         isDummy = true;
+                //         tmp.push(toPrev);
+                //     }
+                    
+                //     //Push original point into the tmp array
+                //     tmp.push(vc);
+                    
+                //     //Push collision point into the tmp array
+                //     if (toNext != null) {
+                //         self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
+                //         isDummy = true;
+                //         tmp.push(toNext);
+                //     }
+                // }
+                // result = tmp;
 
                 //create tile
                 var tile = self.#createTile(result, isFirstTile ? true : isDummy);
@@ -448,6 +559,11 @@ export default class GeneratorTool {
             if (isValid) {
                 return new Vector2(x, y);
             }
+
+            // var horizontal = self.#raycast([inset], new Vector2(x, y), Vector2.left(), Vector2.distance(targetPoints[0], targetPoints[1]));
+            // if(horizontal != null){
+            //     return horizontal;
+            // }
             return null;
         }
 
@@ -487,7 +603,7 @@ export default class GeneratorTool {
     #createTile(vertices, isDummy){
         return new Tile(vertices, this.#buffer, isDummy);
     }
-
+    
     #raycast(shapes, from, dir, dist, ignoreSelf = true) {
         var collisionClosest = null;
         var collisionDist = 99999999999;
@@ -495,6 +611,7 @@ export default class GeneratorTool {
         var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
         // this.#buffer.stroke(255, 0, 0);
         // this.#buffer.line(from.x, from.y, end.x, end.y);
+
 
         for (let i = 0; i < shapes.length; i++) {
             const shape = shapes[i];
@@ -518,7 +635,6 @@ export default class GeneratorTool {
                 if (Collision.linePoint(vn.x, vn.y, vc.x, vc.y, from.x, from.y) && ignoreSelf) {
                     continue;
                 }
-
 
                 var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
                 if (collision != null) {

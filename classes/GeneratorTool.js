@@ -282,7 +282,6 @@ export default class GeneratorTool {
             var isDummy = false;
 
             setTimeout(() => {
-                // self.#buffer.stroke(0, 0, 255);
                 var result = [];
 
                 //validate target points
@@ -291,20 +290,18 @@ export default class GeneratorTool {
                     const vc = targetPoints[i];
                     const vn = targetPoints[i + 1 <= targetPoints.length - 1 ? i + 1 : 0];
 
-                    // self.#buffer.circle(vc.x, vc.y, 2);
-                    
                     //Point outside of shape
                     if (!self.IsInside(insetPoints, vc.x, vc.y) || self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) {
                         isDummy = true;
 
                         //Find a collision between current vertice and the previous vertice
                         var dirP = vp.getCopy().remove(vc).normalized();
-                        var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
-
+                        var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc), false);
+                        
                         //Find a collision between current vertice and the next vertice
                         var dirN = vn.getCopy().remove(vc).normalized();
-                        var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
-
+                        var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), false);
+                        
                         //Push collision point into the result array
                         if (toPrev != null) {
                             self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
@@ -340,7 +337,7 @@ export default class GeneratorTool {
                             result.push(toNext);
                         }
                     }
-                    else{
+                    else {
                         //xroof (normal) tile
                         result.push(vc);
                     }
@@ -362,10 +359,9 @@ export default class GeneratorTool {
 
                     //Find a collision between current vertice and the next vertice
                     var dirN = vn.getCopy().remove(vc).normalized();
-                    var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
-                    // var dirC = dirN.getCopy().multiply(new Vector2(-1, -1));
-                    var toCurr = self.#raycast([inset].concat(outsets), vn, new Vector2(dirN.x, dirN.y), Vector2.distance(vn, vc));
-                   
+                    var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), true);
+                    var toCurr = self.#raycast([inset].concat(outsets), vn, new Vector2(dirN.x, dirN.y), Vector2.distance(vn, vc), true);
+                    
                     tmp.push(vc);
                     
                     //Validate found collisions
@@ -559,7 +555,7 @@ export default class GeneratorTool {
             if (isValid) {
                 return new Vector2(x, y);
             }
-
+            
             // var horizontal = self.#raycast([inset], new Vector2(x, y), Vector2.left(), Vector2.distance(targetPoints[0], targetPoints[1]));
             // if(horizontal != null){
             //     return horizontal;
@@ -605,13 +601,59 @@ export default class GeneratorTool {
     }
     
     #raycast(shapes, from, dir, dist, ignoreSelf = true) {
-        var collisionClosest = null;
-        var collisionDist = 99999999999;
+        var collisions = this.#raycastAll(shapes, from, dir, dist, ignoreSelf);
+        if(collisions.length > 0){
+            return collisions[0];
+        }
+        return null;
+        // var collisionClosest = null;
+        // var collisionDist = 99999999999;
 
+        // var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
+        // // this.#buffer.stroke(255, 0, 0);
+        // // this.#buffer.line(from.x, from.y, end.x, end.y);
+
+
+        // for (let i = 0; i < shapes.length; i++) {
+        //     const shape = shapes[i];
+        //     const vertices = shape.getVertices();
+
+        //     for (let r = 0; r < vertices.length; r++) {
+        //         const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
+        //         const vc = vertices[r];
+
+        //         // if (Collision.pointCircle(vc.x, vc.y, end.x, end.y, 10)) {
+        //         //     circle(vc.x, vc.y, 10);
+        //         //     circle(vn.x, vn.y, 10);
+        //         // }
+
+        //         // if (Collision.lineLine(vc.x, vc.y, vn.x, vn.y, from.x, from.y, end.x, end.y)) {
+        //         //     strokeWeight(5);
+        //         //     stroke(255, 255, 0);
+        //         //     line(vn.x, vn.y, vc.x, vc.y);
+        //         // }
+
+        //         if (Collision.linePoint(vn.x, vn.y, vc.x, vc.y, from.x, from.y) && ignoreSelf) {
+        //             continue;
+        //         }
+
+        //         var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
+        //         if (collision != null) {
+        //             var dist = Vector2.distance(from, collision);
+        //             if (collisionClosest == null || dist < collisionDist) {
+        //                 collisionClosest = collision;
+        //                 collisionDist = dist;
+        //             }
+        //         }
+        //     }
+        // }
+
+        // return collisionClosest;
+    }
+
+    #raycastAll(shapes, from, dir, dist, ignoreSelf = true){
+        var collisions = [];
         var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
-        // this.#buffer.stroke(255, 0, 0);
-        // this.#buffer.line(from.x, from.y, end.x, end.y);
-
 
         for (let i = 0; i < shapes.length; i++) {
             const shape = shapes[i];
@@ -621,33 +663,20 @@ export default class GeneratorTool {
                 const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
                 const vc = vertices[r];
 
-                // if (Collision.pointCircle(vc.x, vc.y, end.x, end.y, 10)) {
-                //     circle(vc.x, vc.y, 10);
-                //     circle(vn.x, vn.y, 10);
-                // }
-
-                // if (Collision.lineLine(vc.x, vc.y, vn.x, vn.y, from.x, from.y, end.x, end.y)) {
-                //     strokeWeight(5);
-                //     stroke(255, 255, 0);
-                //     line(vn.x, vn.y, vc.x, vc.y);
-                // }
-
                 if (Collision.linePoint(vn.x, vn.y, vc.x, vc.y, from.x, from.y) && ignoreSelf) {
+
                     continue;
                 }
 
                 var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
                 if (collision != null) {
-                    var dist = Vector2.distance(from, collision);
-                    if (collisionClosest == null || dist < collisionDist) {
-                        collisionClosest = collision;
-                        collisionDist = dist;
-                    }
+                    collisions.push(collision);
                 }
             }
         }
 
-        return collisionClosest;
+        collisions.sort((a, b) => Vector2.distance(from, a) > Vector2.distance(from, b) ? 1 : -1);
+        return collisions;
     }
 
     toJSON() {

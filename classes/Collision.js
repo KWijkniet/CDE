@@ -149,7 +149,7 @@ export default class Collision{
         var lineLength = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
 
         //since floats are so minutely accurate, add a little buffer zone that will give collision
-        var buffer = .01;    // higher # = less accurate
+        var buffer = 0;    // higher # = less accurate
 
         //if the two distances are equal to the line's length, the point is on the line!
         //note we use the buffer here to give a range

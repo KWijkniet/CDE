@@ -1,7 +1,6 @@
 import Shape from "./Shape";
 import Vector2 from "./Vector2";
 import Collision from "./Collision";
-import Color from "./Color";
 import Tile from "./Tile";
 
 export default class GeneratorTool {
@@ -28,8 +27,7 @@ export default class GeneratorTool {
     #dummyHeight = 0;
     #tileWidth = 0;
     #tileHeight = 0;
-
-    index = 0;
+    #sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
     constructor() {
         this.#renderer = Renderer.instance;
@@ -268,7 +266,6 @@ export default class GeneratorTool {
         return new Shape(outsets);
     }
 
-    #sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
     #generateTiles(inset, outsets) {
         var self = this;
         var tileSize = new Vector2(820 / 10, 600 / 10);
@@ -276,6 +273,7 @@ export default class GeneratorTool {
         var insetPoints = inset.getVertices();
         var boundingBox = inset.getBoundingBox();
         var isFirstTile = true;
+        var rowIndex = 0;
 
         var syncedPlaceTile = async (x, y, targetPoints) => new Promise((resolve) => {
             var delay = 10;
@@ -301,7 +299,7 @@ export default class GeneratorTool {
                         //Find a collision between current vertice and the next vertice
                         var dirN = vn.getCopy().remove(vc).normalized();
                         var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), false);
-                        
+
                         //Push collision point into the result array
                         if (toPrev != null) {
                             self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
@@ -344,6 +342,7 @@ export default class GeneratorTool {
                 }
 
                 //TODO: If a raycast has more then 1 point then you need to seperate the 2 parts into different tiles
+                // TODO: raycast up a tiny bit to detect if this is the first tile on the Y axis. (wont work)
                 var tmp = [];
                 for (let i = 0; i < result.length; i++) {
                     const vc = result[i];
@@ -489,8 +488,8 @@ export default class GeneratorTool {
             var targetPoints = [
                 new Vector2(x, y),
                 new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y),
-                new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y + tileSize.y),
-                new Vector2(x - (isFirstTile ? tileSize.x - firstTileSize.x : 0), y + tileSize.y),
+                new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y + (rowIndex <= 0 ? tileSize.y : tileSize.y - 10)),
+                new Vector2(x - (isFirstTile ? tileSize.x - firstTileSize.x : 0), y + (rowIndex <= 0 ? tileSize.y : tileSize.y - 10)),
             ];
             x += (isFirstTile ? firstTileSize.x : tileSize.x);
 
@@ -510,8 +509,9 @@ export default class GeneratorTool {
                 syncedLoop(x, y);
             } else if (y + tileSize.y < boundingBox.y + boundingBox.h) {
                 //New row
+                rowIndex++;
                 isFirstTile = true;
-                syncedLoop(boundingBox.x, y + tileSize.y);
+                syncedLoop(boundingBox.x, y + (rowIndex <= 1 ? tileSize.y : tileSize.y - 10));
             }
         };
 
@@ -624,7 +624,10 @@ export default class GeneratorTool {
             const vc = vertices[i];
             const vn = vertices[i + 1 < vertices.length - 1 ? i + 1 : 0];
 
-            if(Collision.linePoint(vc.x, vc.y, vn.x, vn.y, x, y)){
+            if (Collision.linePoint(vc.x, vc.y, vn.x, vn.y, x, y)) {
+                if (y == 406.91537822811176 && x == 1907.2847231827582) {
+                    console.log("Inside");
+                }
                 return true;
             }
         }

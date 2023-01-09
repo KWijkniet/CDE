@@ -4,6 +4,9 @@ import Vector2 from "./Vector2";
 export default class Tile {
     width = 0;
     height = 0;
+    pos = null;
+    isDummy = false;
+    
     #buffer = null;
     #vertices = [];
     #color = null;
@@ -13,6 +16,9 @@ export default class Tile {
         this.#vertices = vertices;
         this.width = 0;
         this.height = 0;
+        this.pos = this.#vertices[0];
+        this.isDummy = isDummy;
+
         if(this.#vertices.length <= 0){return;}
         for (let i = this.#vertices.length - 1; i >= 0; i--) {
             const vc = this.#vertices[i];
@@ -31,8 +37,12 @@ export default class Tile {
         const yArr = this.#vertices.map(a => a.y);
         this.width = (Math.max(...xArr) - Math.min(...xArr));
         this.height = (Math.max(...yArr) - Math.min(...yArr));
+        
+        if (this.width >= 20 && this.height >= 20) {
+            if (buffer == null) {
+                this.#buffer = createGraphics(this.width, this.height);
+            }
 
-        if(this.width >= 20 && this.height >= 20){
             this.#generate();
         }
     }
@@ -60,5 +70,18 @@ export default class Tile {
         var rgba = this.#color.rgba();
         this.#buffer.fill(rgba.r, rgba.g, rgba.b, rgba.a);
         this.#buffer.endShape();
+    }
+
+    getBoundingBox() {
+        const xArr = this.#vertices.map(a => a.x);
+        const yArr = this.#vertices.map(a => a.y);
+        const width = (Math.max(...xArr) - Math.min(...xArr));
+        const height = (Math.max(...yArr) - Math.min(...yArr));
+        return {
+            "x": this.pos,
+            "y": this.pos,
+            "w": width,
+            "h": height
+        };
     }
 }

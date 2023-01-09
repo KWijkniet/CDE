@@ -22,6 +22,7 @@ export default class Vector2{
     static equals = (v1, v2) => { return v1.x == v2.x && v1.y == v2.y; };
     static copyAll = (arr) => { var tmp = []; for (let i = 0; i < arr.length; i++) { tmp.push(new Vector2(arr[i].x, arr[i].y));} return tmp; };
     static dot = (v1, v2) => { return v1.x * v2.x + v1.y * v2.y; };
+    static abs = (v) => { return new Vector2(Math.abs(v.x), Math.abs(v.y)); };
 
     static toJSON = (v) => { return { x: v.x, y: v.y }; };
     static fromJSON = (json) => { return new Vector2(json.x, json.y); };
@@ -37,6 +38,7 @@ export default class Vector2{
         this.y = this.y > v2.y ? v2.y : this.y;
         return this;
     };
+    abs = () => { return new Vector2(Math.abs(this.x), Math.abs(this.y)); };
     
     add = (v) => { this.x += v.x; this.y += v.y; return this; };
     remove = (v) => { this.x -= v.x; this.y -= v.y; return this; };

@@ -70,9 +70,9 @@ function draw() {
     selectorTool.update();
     generatorTool.update();
     lineSelectorTool.update();
+    cursor.update();
     pop();
 
-    cursor.update();
     // showFPS();
     // showHistory();
     updateVisuals();

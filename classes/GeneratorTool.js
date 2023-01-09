@@ -32,7 +32,7 @@ export default class GeneratorTool {
     constructor() {
         this.#renderer = Renderer.instance;
         this.#buffer = createGraphics(Settings.mapSizeX, Settings.mapSizeY);
-        this.#tiles = { 'X-Roof': 0, 'Alucobond': 0 };
+        this.#tiles = [];
     }
 
     update() {
@@ -59,6 +59,7 @@ export default class GeneratorTool {
             const shape = shapes[i];
             if (shape.isAllowed && !shape.isGenerated) {
                 var inset = this.#createInset(shape);
+                inset.lineMargins = shape.lineMargins;
                 var points = inset.getVertices();
                 insets.push(inset);
 
@@ -275,7 +276,8 @@ export default class GeneratorTool {
         var isFirstTile = true;
         var rowIndex = 0;
 
-        this.#tiles = { 'X-Roof': 0, 'Alucobond': 0 };
+        // this.#tiles = { 'X-Roof': [], 'Alucobond': [] };
+        this.#tiles = [];
         this.#totalWidth = 0;
         this.#totalHeight = 0;
         this.#dummyWidth = 0;
@@ -284,7 +286,7 @@ export default class GeneratorTool {
         this.#tileHeight = 0;
 
         var syncedPlaceTile = async (x, y, targetPoints) => new Promise((resolve) => {
-            var delay = 10;
+            var delay = 1;
             var isDummy = false;
 
             setTimeout(() => {
@@ -493,6 +495,15 @@ export default class GeneratorTool {
         }
 
         var syncedLoop = async (x, y) => {
+            // for (let i = 0; i < insetPoints.length; i++) {
+            //     const vc = insetPoints[i];
+            //     const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
+            //     const lineType = inset.lineMargins[i];
+            //     if (lineType.split("|")[0] == "daknok1" || lineType.split("|")[0] == "dakrand1" || lineType.split("|")[0] == "dakrand1"){
+            //         //place tiles along line
+
+            //     }
+            // }
             var targetPoints = [
                 new Vector2(x, y),
                 new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y),
@@ -504,26 +515,10 @@ export default class GeneratorTool {
             var delay = 10;
             var resultPos = validateLocation(x, y, targetPoints);
             if(resultPos){
-                var tmp = null;
                 await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
-                    tmp = tile;
-                    isFirstTile = false;
-
-                    if(tile != null){
-                        if(tile.isDummy){
-                            self.#tiles['Alucobond']++;
-                            self.#totalWidth += tile.width;
-                            self.#totalHeight += tile.height;
-                            self.#dummyWidth += tile.width;
-                            self.#dummyHeight += tile.height;
-                        }
-                        else{
-                            self.#tiles['X-Roof']++;
-                            self.#totalWidth += tile.width;
-                            self.#totalHeight += tile.height;
-                            self.#tileWidth += tile.width;
-                            self.#tileHeight += tile.height;
-                        }
+                    if (tile != null) {
+                        isFirstTile = false;
+                        self.#tiles.push(tile);
                     }
                 });
                 await this.#sleep(delay);
@@ -627,17 +622,98 @@ export default class GeneratorTool {
     }
 
     toJSON() {
-        return { 'tiles': this.#tiles, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
+        var t = { 'Alucobond': [], 'X-Roof': [], 'Ventilatiekap': [] };
+
+        for (let i = 0; i < this.#tiles.length; i++) {
+            const tile = this.#tiles[i];
+            
+            if (tile.isDummy) {
+                t['Alucobond'].push(tile.toJSON());
+                this.#totalWidth += tile.width;
+                this.#totalHeight += tile.height;
+                this.#dummyWidth += tile.width;
+                this.#dummyHeight += tile.height;
+            }
+            else if(tile.isVent) {
+                t['Ventilatiekap'].push(tile.toJSON());
+            }
+            else {
+                t['X-Roof'].push(tile.toJSON());
+                this.#totalWidth += tile.width;
+                this.#totalHeight += tile.height;
+                this.#tileWidth += tile.width;
+                this.#tileHeight += tile.height;
+            }
+        }
+
+
+        // for (let i = 0; i < this.#tiles['Alucobond'].length; i++) {
+        //     const tile = this.#tiles['Alucobond'][i];
+        //     t['Alucobond'].push(tile.toJSON());
+        // }
+
+        // for (let i = 0; i < this.#tiles['X-Roof'].length; i++) {
+        //     const tile = this.#tiles['X-Roof'][i];
+        //     t['X-Roof'].push(tile.toJSON());
+        // }
+
+        return { 'tiles': t, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
     }
 
     fromJSON(json) {
-        this.#tiles = json.tiles;
-        this.#totalWidth = json.width;
-        this.#totalHeight = json.height;
-        this.#dummyWidth += tile.width;
-        this.#dummyHeight += tile.height;
-        this.#tileWidth += tile.width;
-        this.#tileHeight += tile.height;
+        if(!json){ return; }
+
+        if (json.tiles) {
+            this.#buffer.clear();
+
+            if (json.tiles['Alucobond']){
+                for (let i = 0; i < json.tiles['Alucobond'].length; i++) {
+                    const tile = json.tiles['Alucobond'][i];
+
+                    var vertices = [];
+                    for (let i = 0; i < tile.vertices.length; i++) {
+                        const vertice = tile.vertices[i];
+                        vertices.push(Vector2.fromJSON(vertice));
+                    }
+                    this.#tiles.push(new Tile(vertices, this.#buffer, tile.isDummy, tile.isVent));
+                }
+            }
+
+            if (json.tiles['X-Roof']){
+                for (let i = 0; i < json.tiles['X-Roof'].length; i++) {
+                    const tile = json.tiles['X-Roof'][i];
+
+                    var vertices = [];
+                    for (let i = 0; i < tile.vertices.length; i++) {
+                        const vertice = tile.vertices[i];
+                        vertices.push(Vector2.fromJSON(vertice));
+                    }
+                    this.#tiles.push(new Tile(vertices, this.#buffer, tile.isDummy, tile.isVent));
+                }
+            }
+
+            if (json.tiles['Ventilatiekap']){
+                for (let i = 0; i < json.tiles['Ventilatiekap'].length; i++) {
+                    const tile = json.tiles['Ventilatiekap'][i];
+
+                    var vertices = [];
+                    for (let i = 0; i < tile.vertices.length; i++) {
+                        const vertice = tile.vertices[i];
+                        vertices.push(Vector2.fromJSON(vertice));
+                    }
+                    this.#tiles.push(new Tile(vertices, this.#buffer, tile.isDummy, tile.isVent));
+                }
+            }
+        }
+
+        if (json.width) { this.#totalWidth = json.width; }
+        if (json.height) { this.#totalHeight = json.height; }
+
+        if (json.dummy_width) { this.#dummyWidth = json.dummy_width; }
+        if (json.dummy_height) { this.#dummyHeight = json.dummy_height; }
+
+        if (json.tile_width) { this.#tileWidth = json.tile_width; }
+        if (json.tile_height) { this.#tileHeight = json.tile_height; }
     }
 
     IsInside(vertices, x, y){
@@ -671,5 +747,9 @@ export default class GeneratorTool {
         }
 
         return isInside;
+    }
+
+    getTiles(){
+        return this.#tiles;
     }
 }

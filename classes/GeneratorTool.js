@@ -275,6 +275,14 @@ export default class GeneratorTool {
         var isFirstTile = true;
         var rowIndex = 0;
 
+        this.#tiles = { 'X-Roof': 0, 'Alucobond': 0 };
+        this.#totalWidth = 0;
+        this.#totalHeight = 0;
+        this.#dummyWidth = 0;
+        this.#dummyHeight = 0;
+        this.#tileWidth = 0;
+        this.#tileHeight = 0;
+
         var syncedPlaceTile = async (x, y, targetPoints) => new Promise((resolve) => {
             var delay = 10;
             var isDummy = false;
@@ -302,7 +310,7 @@ export default class GeneratorTool {
 
                         //Push collision point into the result array
                         if (toPrev != null) {
-                            self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
+                            // self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
                             result.push(toPrev);
                         }
 
@@ -331,7 +339,7 @@ export default class GeneratorTool {
                         
                         //Push collision point into the result array
                         if (toNext != null) {
-                            self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
+                            // self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
                             result.push(toNext);
                         }
                     }
@@ -493,13 +501,30 @@ export default class GeneratorTool {
             ];
             x += (isFirstTile ? firstTileSize.x : tileSize.x);
 
-            var delay = 100;
+            var delay = 10;
             var resultPos = validateLocation(x, y, targetPoints);
             if(resultPos){
                 var tmp = null;
                 await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
                     tmp = tile;
                     isFirstTile = false;
+
+                    if(tile != null){
+                        if(tile.isDummy){
+                            self.#tiles['Alucobond']++;
+                            self.#totalWidth += tile.width;
+                            self.#totalHeight += tile.height;
+                            self.#dummyWidth += tile.width;
+                            self.#dummyHeight += tile.height;
+                        }
+                        else{
+                            self.#tiles['X-Roof']++;
+                            self.#totalWidth += tile.width;
+                            self.#totalHeight += tile.height;
+                            self.#tileWidth += tile.width;
+                            self.#tileHeight += tile.height;
+                        }
+                    }
                 });
                 await this.#sleep(delay);
             }

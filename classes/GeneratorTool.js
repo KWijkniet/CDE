@@ -125,6 +125,8 @@ export default class GeneratorTool {
     }
 
     #createInset(shape) {
+        return new Shape(shape.getVertices());
+
         //calculate inset
         var insets = [];
         this.#buffer.beginShape();
@@ -497,109 +499,150 @@ export default class GeneratorTool {
         var syncedLoop = async (x, y) => {
             var startX = null;
             var startY = null;
+            //place tiles along line
             for (let i = 0; i < insetPoints.length; i++) {
                 const vc = insetPoints[i];
                 const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
                 const lineType = inset.lineMargins[i];
-                if (lineType.split("|")[0] == "daknok1" || lineType.split("|")[0] == "dakrand1" || lineType.split("|")[0] == "gootdetail3" || i == 3) {
-                    //place tiles along line
-                    this.#buffer.fill(255);
-                    this.#buffer.circle(vc.x, vc.y, 5);
-                    this.#buffer.circle(vn.x, vn.y, 5);
 
-                    if(startX == null || startY == null){
+                //Only apply when specific line options have been choosen
+                if (lineType.split("|")[0] != "daknok1" && lineType.split("|")[0] != "dakrand1" && lineType.split("|")[0] != "gootdetail3") { continue; }
+
+                //get dir of line.
+                var dir = vn.getCopy().remove(vc).normalized();
+
+                //This follows a grid since you only move it tilesize.x or tilesize.y
+                var killCounter = 0;
+                while (true) {
+                    //apply dir x.
+                    if (startX == null || startY == null) {
                         startX = vc.x
                         startY = vc.y;
                     }
+                    else{
+                        startX += tileSize.x * dir.x;
+                        startY += tileSize.y * dir.y;
+                    }
 
-                    //TODO:
-                    //get dir of line.
-                    //apply dir x.
+                    var targetPoints = [
+                        new Vector2(startX - tileSize.x / 2, startY - tileSize.y / 2),
+                        new Vector2(startX + tileSize.x / 2, startY - tileSize.y / 2),
+                        new Vector2(startX + tileSize.x / 2, startY + tileSize.y / 2),
+                        new Vector2(startX - tileSize.x / 2, startY + tileSize.y / 2),
+                    ];
+
+                    //is on line
+                    if(Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y)){
+                        var canPlace = true;
+                        for (let x = 0; x < this.#tiles.length - 1; x++) {
+                            const existingTile = this.#tiles[x];
+                            
+                            if(Collision.polygonPolygon(targetPoints, existingTile.getVertices())){
+                                canPlace = false;
+                                break;
+                            }
+                        }
+
+                        if(canPlace){
+                            this.#tiles.push(this.#createTile(targetPoints, true));
+                            this.#buffer.fill(255, 0, 0);
+                            this.#buffer.text(killCounter, startX, startY);
+                        }
+                    }
                     //if shape is not ON the line then add Y.
-                    //This follows a grid since you only move it tilesize.x or tilesize.y
-                    //update start x and y to the latest placed tile
-                    //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                    else {
+                        startX -= tileSize.x * dir.x;
+                        startY -= tileSize.y * dir.y;
+                        break;
+                    }
 
-
-                    // var stepsX = Math.floor((vn.x - vc.x) / tileSize.x);
-                    // var stepsY = Math.floor((vn.y - vc.y) / tileSize.y);
-                    // var negativeX = stepsX < 0;
-                    // var negativeY = stepsY < 0;
-                    
-                    // stepsX = Math.abs(stepsX);
-                    // stepsY = Math.abs(stepsY);
-                    // console.log(stepsX, stepsY);
-
-                    // for (let y = 0; y <= stepsY; y++) {
-                    //     // console.log("Y:", y);
-                    //     for (let x = 0; x <= stepsX; x++) {
-                    //         // console.log("X:", x);
-                    //         var newX = negativeX ? vc.x + x * -tileSize.x : vc.x + x * tileSize.x;
-                    //         var newY = negativeY ? vc.y + y * -tileSize.y : vc.y + y * tileSize.y;
-                    //         this.#buffer.circle(newX, newY, 10);
-                    //     }
-                    // }
-
-
-                    // // Calculate the number of x and y steps required to cover the line
-                    // var numXSteps = Math.floor((vn.x - vc.x) / tileSize.x);
-                    // var numYSteps = Math.floor((vn.y - vc.y) / tileSize.y);
-                    // numXSteps = isNaN(numXSteps) || !Number.isFinite(numXSteps) ? 0 : numXSteps;
-                    // numYSteps = isNaN(numYSteps) || !Number.isFinite(numYSteps) ? 0 : numYSteps;
-                    // console.log("numXSteps:", numXSteps, "=", (vn.x - vc.x), "/", tileSize.x);
-                    // console.log("numYSteps:", numYSteps, "=", (vn.y - vc.y), "/", tileSize.y);
-
-                    // // Calculate the x and y increments for each step
-                    // var dx = (vn.x - vc.x) / numXSteps;
-                    // var dy = (vn.y - vc.y) / numYSteps;
-                    // dx = isNaN(dx) || !Number.isFinite(dx) ? 0 : dx;
-                    // dy = isNaN(dy) || !Number.isFinite(dy) ? 0 : dy;
-                    // console.log("DX:", dx, "=", (vn.x - vc.x), "/", numXSteps, !Number.isFinite(dx));
-                    // console.log("DY:", dy, "=", (vn.y - vc.y), "/", numYSteps, !Number.isFinite(dy));
-
-                    // for (let i = 0; numXSteps > 0 ? i <= numXSteps : i >= numXSteps; numXSteps > 0 ? i++ : i--) {
-                    //     console.log(i);
-                    //     for (let j = 0; numYSteps > 0 ? j <= numYSteps : j >= numYSteps; numYSteps > 0 ? j++ : j--) {
-                    //         console.log(j);
-                    //         var x = vc.x + dx * i;
-                    //         var y = vc.y + dy * j;
-                    //         // console.log(x, y);
-
-                    //         this.#buffer.fill(255, 0, 0);
-                    //         this.#buffer.circle(x, y, 10);
-
-                    //         // this.#buffer.circle(x + tileSize.x, y, 2);
-                    //         // this.#buffer.circle(x + tileSize.x, y + tileSize.y, 2);
-                    //         // this.#buffer.circle(x, y + tileSize.y, 2);
-                    //         // steps.push({ x: vc.x + dx * i, y: vc.y + dy * j });
-                    //     }
-                    // }
-
-                    // await this.#sleep(1000);
-
-
-                    // // Calculate the change in x and y between the two points
-                    // const deltaX = vn.x - vc.x;
-                    // const deltaY = vn.y - vc.y;
-
-                    // // Calculate the slope of the line
-                    // const slope = deltaY / deltaX;
-
-                    // // Generate a list of the steps
-                    // const steps = [];
-                    // let x = vc.x;
-                    // while (x <= vn.x) {
-                    //     const y = slope * (x - vc.x) + vc.y;
-                    //     steps.push({ x: x, y: y });
-                    //     x += tileSize.x;
-                    // }
-
-                    // for (let r = 0; r < steps.length; r++) {
-                    //     this.#buffer.circle(steps[r].x, steps[r].y, 10);
-                    // }
-
+                    //Emergency break :D
+                    killCounter++;
+                    if(killCounter > 100){
+                        break;
+                    }
+                    await this.#sleep(100);
                 }
+
+                // var stepsX = Math.floor((vn.x - vc.x) / tileSize.x);
+                // var stepsY = Math.floor((vn.y - vc.y) / tileSize.y);
+                // var negativeX = stepsX < 0;
+                // var negativeY = stepsY < 0;
+                
+                // stepsX = Math.abs(stepsX);
+                // stepsY = Math.abs(stepsY);
+                // console.log(stepsX, stepsY);
+
+                // for (let y = 0; y <= stepsY; y++) {
+                //     // console.log("Y:", y);
+                //     for (let x = 0; x <= stepsX; x++) {
+                //         // console.log("X:", x);
+                //         var newX = negativeX ? vc.x + x * -tileSize.x : vc.x + x * tileSize.x;
+                //         var newY = negativeY ? vc.y + y * -tileSize.y : vc.y + y * tileSize.y;
+                //         this.#buffer.circle(newX, newY, 10);
+                //     }
+                // }
+
+
+                // // Calculate the number of x and y steps required to cover the line
+                // var numXSteps = Math.floor((vn.x - vc.x) / tileSize.x);
+                // var numYSteps = Math.floor((vn.y - vc.y) / tileSize.y);
+                // numXSteps = isNaN(numXSteps) || !Number.isFinite(numXSteps) ? 0 : numXSteps;
+                // numYSteps = isNaN(numYSteps) || !Number.isFinite(numYSteps) ? 0 : numYSteps;
+                // console.log("numXSteps:", numXSteps, "=", (vn.x - vc.x), "/", tileSize.x);
+                // console.log("numYSteps:", numYSteps, "=", (vn.y - vc.y), "/", tileSize.y);
+
+                // // Calculate the x and y increments for each step
+                // var dx = (vn.x - vc.x) / numXSteps;
+                // var dy = (vn.y - vc.y) / numYSteps;
+                // dx = isNaN(dx) || !Number.isFinite(dx) ? 0 : dx;
+                // dy = isNaN(dy) || !Number.isFinite(dy) ? 0 : dy;
+                // console.log("DX:", dx, "=", (vn.x - vc.x), "/", numXSteps, !Number.isFinite(dx));
+                // console.log("DY:", dy, "=", (vn.y - vc.y), "/", numYSteps, !Number.isFinite(dy));
+
+                // for (let i = 0; numXSteps > 0 ? i <= numXSteps : i >= numXSteps; numXSteps > 0 ? i++ : i--) {
+                //     console.log(i);
+                //     for (let j = 0; numYSteps > 0 ? j <= numYSteps : j >= numYSteps; numYSteps > 0 ? j++ : j--) {
+                //         console.log(j);
+                //         var x = vc.x + dx * i;
+                //         var y = vc.y + dy * j;
+                //         // console.log(x, y);
+
+                //         this.#buffer.fill(255, 0, 0);
+                //         this.#buffer.circle(x, y, 10);
+
+                //         // this.#buffer.circle(x + tileSize.x, y, 2);
+                //         // this.#buffer.circle(x + tileSize.x, y + tileSize.y, 2);
+                //         // this.#buffer.circle(x, y + tileSize.y, 2);
+                //         // steps.push({ x: vc.x + dx * i, y: vc.y + dy * j });
+                //     }
+                // }
+
+                // await this.#sleep(1000);
+
+
+                // // Calculate the change in x and y between the two points
+                // const deltaX = vn.x - vc.x;
+                // const deltaY = vn.y - vc.y;
+
+                // // Calculate the slope of the line
+                // const slope = deltaY / deltaX;
+
+                // // Generate a list of the steps
+                // const steps = [];
+                // let x = vc.x;
+                // while (x <= vn.x) {
+                //     const y = slope * (x - vc.x) + vc.y;
+                //     steps.push({ x: x, y: y });
+                //     x += tileSize.x;
+                // }
+
+                // for (let r = 0; r < steps.length; r++) {
+                //     this.#buffer.circle(steps[r].x, steps[r].y, 10);
+                // }
             }
+
+            console.log(this.#tiles.length);
 
 
             // var targetPoints = [

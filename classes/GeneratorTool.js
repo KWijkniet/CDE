@@ -51,7 +51,7 @@ export default class GeneratorTool {
         console.log('Generating...');
         var insets = [];
         var outsets = [];
-        var hideVisuals = true;
+        var hideVisuals = false;
 
         this.#buffer.clear();
         var shapes = this.#renderer.getAll();
@@ -125,8 +125,6 @@ export default class GeneratorTool {
     }
 
     #createInset(shape) {
-        return new Shape(shape.getVertices());
-
         //calculate inset
         var insets = [];
         this.#buffer.beginShape();
@@ -275,8 +273,9 @@ export default class GeneratorTool {
         var firstTileSize = new Vector2(410 / 10, 600 / 10);
         var insetPoints = inset.getVertices();
         var boundingBox = inset.getBoundingBox();
-        var isFirstTile = true;
+        var isFirstTile = false;
         var rowIndex = 0;
+        var maxTiles = Math.floor((boundingBox.x + boundingBox.w) / tileSize.x) * Math.floor((boundingBox.y + boundingBox.h) / tileSize.y);
 
         // this.#tiles = { 'X-Roof': [], 'Alucobond': [] };
         this.#tiles = [];
@@ -472,11 +471,11 @@ export default class GeneratorTool {
                     if(outsets.length <= 0){
                         isValid = true;
                     }
-                    else{
+                    else {
                         for (let r = 0; r < outsets.length; r++) {
                             const outset = outsets[r];
                             const outsetPoints = outset.getVertices();
-    
+
                             if (!self.IsInside(outsetPoints, vc.x, vc.y)) {
                                 isValid = true;
                             }
@@ -484,7 +483,7 @@ export default class GeneratorTool {
                     }
                 }
             }
-
+            
             if (isValid) {
                 return new Vector2(x, y);
             }
@@ -499,6 +498,8 @@ export default class GeneratorTool {
         var syncedLoop = async (x, y) => {
             var startX = null;
             var startY = null;
+            var delay = 100;
+
             //place tiles along line
             for (let i = 0; i < insetPoints.length; i++) {
                 const vc = insetPoints[i];
@@ -533,21 +534,9 @@ export default class GeneratorTool {
 
                     //is on line
                     if(Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y)){
-                        var canPlace = true;
-                        for (let x = 0; x < this.#tiles.length - 1; x++) {
-                            const existingTile = this.#tiles[x];
-                            
-                            if(Collision.polygonPolygon(targetPoints, existingTile.getVertices())){
-                                canPlace = false;
-                                break;
-                            }
-                        }
-
-                        if(canPlace){
-                            this.#tiles.push(this.#createTile(targetPoints, true));
-                            this.#buffer.fill(255, 0, 0);
-                            this.#buffer.text(killCounter, startX, startY);
-                        }
+                        this.#tiles.push(this.#createTile(targetPoints, true));
+                        this.#buffer.fill(255, 0, 0);
+                        this.#buffer.text(killCounter, startX, startY);
                     }
                     //if shape is not ON the line then add Y.
                     else {
@@ -558,91 +547,81 @@ export default class GeneratorTool {
 
                     //Emergency break :D
                     killCounter++;
-                    if(killCounter > 100){
+                    if (killCounter > maxTiles){
                         break;
                     }
-                    await this.#sleep(100);
+                    await this.#sleep(delay);
                 }
-
-                // var stepsX = Math.floor((vn.x - vc.x) / tileSize.x);
-                // var stepsY = Math.floor((vn.y - vc.y) / tileSize.y);
-                // var negativeX = stepsX < 0;
-                // var negativeY = stepsY < 0;
-                
-                // stepsX = Math.abs(stepsX);
-                // stepsY = Math.abs(stepsY);
-                // console.log(stepsX, stepsY);
-
-                // for (let y = 0; y <= stepsY; y++) {
-                //     // console.log("Y:", y);
-                //     for (let x = 0; x <= stepsX; x++) {
-                //         // console.log("X:", x);
-                //         var newX = negativeX ? vc.x + x * -tileSize.x : vc.x + x * tileSize.x;
-                //         var newY = negativeY ? vc.y + y * -tileSize.y : vc.y + y * tileSize.y;
-                //         this.#buffer.circle(newX, newY, 10);
-                //     }
-                // }
-
-
-                // // Calculate the number of x and y steps required to cover the line
-                // var numXSteps = Math.floor((vn.x - vc.x) / tileSize.x);
-                // var numYSteps = Math.floor((vn.y - vc.y) / tileSize.y);
-                // numXSteps = isNaN(numXSteps) || !Number.isFinite(numXSteps) ? 0 : numXSteps;
-                // numYSteps = isNaN(numYSteps) || !Number.isFinite(numYSteps) ? 0 : numYSteps;
-                // console.log("numXSteps:", numXSteps, "=", (vn.x - vc.x), "/", tileSize.x);
-                // console.log("numYSteps:", numYSteps, "=", (vn.y - vc.y), "/", tileSize.y);
-
-                // // Calculate the x and y increments for each step
-                // var dx = (vn.x - vc.x) / numXSteps;
-                // var dy = (vn.y - vc.y) / numYSteps;
-                // dx = isNaN(dx) || !Number.isFinite(dx) ? 0 : dx;
-                // dy = isNaN(dy) || !Number.isFinite(dy) ? 0 : dy;
-                // console.log("DX:", dx, "=", (vn.x - vc.x), "/", numXSteps, !Number.isFinite(dx));
-                // console.log("DY:", dy, "=", (vn.y - vc.y), "/", numYSteps, !Number.isFinite(dy));
-
-                // for (let i = 0; numXSteps > 0 ? i <= numXSteps : i >= numXSteps; numXSteps > 0 ? i++ : i--) {
-                //     console.log(i);
-                //     for (let j = 0; numYSteps > 0 ? j <= numYSteps : j >= numYSteps; numYSteps > 0 ? j++ : j--) {
-                //         console.log(j);
-                //         var x = vc.x + dx * i;
-                //         var y = vc.y + dy * j;
-                //         // console.log(x, y);
-
-                //         this.#buffer.fill(255, 0, 0);
-                //         this.#buffer.circle(x, y, 10);
-
-                //         // this.#buffer.circle(x + tileSize.x, y, 2);
-                //         // this.#buffer.circle(x + tileSize.x, y + tileSize.y, 2);
-                //         // this.#buffer.circle(x, y + tileSize.y, 2);
-                //         // steps.push({ x: vc.x + dx * i, y: vc.y + dy * j });
-                //     }
-                // }
-
-                // await this.#sleep(1000);
-
-
-                // // Calculate the change in x and y between the two points
-                // const deltaX = vn.x - vc.x;
-                // const deltaY = vn.y - vc.y;
-
-                // // Calculate the slope of the line
-                // const slope = deltaY / deltaX;
-
-                // // Generate a list of the steps
-                // const steps = [];
-                // let x = vc.x;
-                // while (x <= vn.x) {
-                //     const y = slope * (x - vc.x) + vc.y;
-                //     steps.push({ x: x, y: y });
-                //     x += tileSize.x;
-                // }
-
-                // for (let r = 0; r < steps.length; r++) {
-                //     this.#buffer.circle(steps[r].x, steps[r].y, 10);
-                // }
             }
 
-            console.log(this.#tiles.length);
+            //Calculate top left corner
+            var topLeftTile = null;
+            var topLeftTilePoints = [];
+            for (let i = 0; i < this.#tiles.length; i++) {
+                const tile = this.#tiles[i];
+                const tilePoints = tile != null ? tile.getVertices() : [];
+                if (tile == null || tilePoints.length <= 0){ continue; }
+
+                if(topLeftTilePoints.length <= 0 || (tilePoints[0].x <= topLeftTilePoints[0].x && tilePoints[0].y <= topLeftTilePoints[0].y)){
+                    topLeftTile = tile;
+                    topLeftTilePoints = tilePoints;
+                }
+            }
+
+            //Starting position of where to place the first inner tile
+            startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
+            startY = topLeftTile == null ? y : topLeftTilePoints[2].y;
+            
+            //Place tiles in the remaining area
+            var killCounter = 0;
+            var yIndex = 0;
+            var xIndex = 0;
+            var yMax = Math.ceil(boundingBox.h / tileSize.y);
+            var xMax = Math.ceil(boundingBox.w / tileSize.x);
+            while (true){
+                var targetPoints = [
+                    new Vector2(startX, startY),
+                    new Vector2(startX + tileSize.x, startY),
+                    new Vector2(startX + tileSize.x, startY + tileSize.y),
+                    new Vector2(startX, startY + tileSize.y),
+                ];
+                
+                var resultPos = validateLocation(startX, startY, targetPoints);
+                if(resultPos){
+                    await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
+                        if (tile != null) {
+                            isFirstTile = false;
+                            self.#tiles.push(tile);
+
+                            // var points = tile.getVertices();
+                            // for (let r = 0; r < points.length; r++) {
+                            //     this.#buffer.circle(points[r].x, points[r].y, 10);
+                            // }
+                        }
+                    });
+                }
+                await this.#sleep(delay);
+
+                if(xIndex < xMax - 1){
+                    startX += tileSize.x;
+                    xIndex++;
+                }
+                else if (yIndex < yMax - 1) {
+                    startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
+                    startY += tileSize.y;
+                    xIndex = 0;
+                    yIndex++;
+                }
+                else{
+                    break;
+                }
+
+                killCounter++;
+                if (killCounter > maxTiles){
+                    break;
+                }
+            }
+
 
 
             // var targetPoints = [

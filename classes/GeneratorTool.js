@@ -568,6 +568,10 @@ export default class GeneratorTool {
                 }
             }
 
+            //Update the inset to include the "omvouw" tiles
+            
+
+
             //Starting position of where to place the first inner tile
             startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
             startY = topLeftTile == null ? y : topLeftTilePoints[2].y;

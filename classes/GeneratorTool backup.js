@@ -54,6 +54,14 @@ export default class GeneratorTool {
         var outsets = [];
         var hideVisuals = false;
 
+        this.#tiles = { 'X-Roof': 0, 'Alucobond': 0 };
+        this.#totalWidth = 0;
+        this.#totalHeight = 0;
+        this.#dummyWidth = 0;
+        this.#dummyHeight = 0;
+        this.#tileWidth = 0;
+        this.#tileHeight = 0;
+
         this.#buffer.clear();
         var shapes = this.#renderer.getAll();
         for (let i = 0; i < shapes.length; i++) {

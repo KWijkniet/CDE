@@ -1,7 +1,6 @@
 import Shape from "./Shape";
 import Vector2 from "./Vector2";
 import Collision from "./Collision";
-import Color from "./Color";
 import Tile from "./Tile";
 
 export default class GeneratorTool {
@@ -28,13 +27,12 @@ export default class GeneratorTool {
     #dummyHeight = 0;
     #tileWidth = 0;
     #tileHeight = 0;
-
-    index = 0;
+    #sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
     constructor() {
         this.#renderer = Renderer.instance;
         this.#buffer = createGraphics(Settings.mapSizeX, Settings.mapSizeY);
-        this.#tiles = { 'X-Roof': 0, 'Alucobond': 0 };
+        this.#tiles = [];
     }
 
     update() {
@@ -53,7 +51,7 @@ export default class GeneratorTool {
         console.log('Generating...');
         var insets = [];
         var outsets = [];
-        var hideVisuals = true;
+        var hideVisuals = false;
 
         this.#buffer.clear();
         var shapes = this.#renderer.getAll();
@@ -61,6 +59,7 @@ export default class GeneratorTool {
             const shape = shapes[i];
             if (shape.isAllowed && !shape.isGenerated) {
                 var inset = this.#createInset(shape);
+                inset.lineMargins = shape.lineMargins;
                 var points = inset.getVertices();
                 insets.push(inset);
 
@@ -268,21 +267,30 @@ export default class GeneratorTool {
         return new Shape(outsets);
     }
 
-    #sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
     #generateTiles(inset, outsets) {
         var self = this;
         var tileSize = new Vector2(820 / 10, 600 / 10);
         var firstTileSize = new Vector2(410 / 10, 600 / 10);
         var insetPoints = inset.getVertices();
         var boundingBox = inset.getBoundingBox();
-        var isFirstTile = true;
+        var isFirstTile = false;
+        var rowIndex = 0;
+        var maxTiles = Math.floor((boundingBox.x + boundingBox.w) / tileSize.x) * Math.floor((boundingBox.y + boundingBox.h) / tileSize.y);
+
+        // this.#tiles = { 'X-Roof': [], 'Alucobond': [] };
+        this.#tiles = [];
+        this.#totalWidth = 0;
+        this.#totalHeight = 0;
+        this.#dummyWidth = 0;
+        this.#dummyHeight = 0;
+        this.#tileWidth = 0;
+        this.#tileHeight = 0;
 
         var syncedPlaceTile = async (x, y, targetPoints) => new Promise((resolve) => {
-            var delay = 10;
+            var delay = 1;
             var isDummy = false;
 
             setTimeout(() => {
-                // self.#buffer.stroke(0, 0, 255);
                 var result = [];
 
                 //validate target points
@@ -291,23 +299,21 @@ export default class GeneratorTool {
                     const vc = targetPoints[i];
                     const vn = targetPoints[i + 1 <= targetPoints.length - 1 ? i + 1 : 0];
 
-                    // self.#buffer.circle(vc.x, vc.y, 2);
-                    
                     //Point outside of shape
                     if (!self.IsInside(insetPoints, vc.x, vc.y) || self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) {
                         isDummy = true;
 
                         //Find a collision between current vertice and the previous vertice
                         var dirP = vp.getCopy().remove(vc).normalized();
-                        var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
-
+                        var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc), false);
+                        
                         //Find a collision between current vertice and the next vertice
                         var dirN = vn.getCopy().remove(vc).normalized();
-                        var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
+                        var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), false);
 
                         //Push collision point into the result array
                         if (toPrev != null) {
-                            self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
+                            // self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
                             result.push(toPrev);
                         }
 
@@ -336,25 +342,18 @@ export default class GeneratorTool {
                         
                         //Push collision point into the result array
                         if (toNext != null) {
-                            self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
+                            // self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
                             result.push(toNext);
                         }
                     }
-                    else{
+                    else {
                         //xroof (normal) tile
                         result.push(vc);
                     }
                 }
 
-                //Some shapes have inset/outset lines/points going through them. These are not detected since all target points are inside the inset.
-                //To fix this we need to check all collisions on lines and add these newly found collisions to the result array.
-
-                //The outset doesn't ignore its own line when raycasting
-                //Add raycast all that sorts the points on distance
-                //If a raycast has more then 1 point then you need to seperate the 2 parts into different tiles
-
-                //loop over all points
-                //check vc -> vn & vn -> vc and add both collision points if found. Also add the outset point if it falls inside the shape.
+                //TODO: If a raycast has more then 1 point then you need to seperate the 2 parts into different tiles
+                // TODO: raycast up a tiny bit to detect if this is the first tile on the Y axis. (wont work)
                 var tmp = [];
                 for (let i = 0; i < result.length; i++) {
                     const vc = result[i];
@@ -362,10 +361,9 @@ export default class GeneratorTool {
 
                     //Find a collision between current vertice and the next vertice
                     var dirN = vn.getCopy().remove(vc).normalized();
-                    var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
-                    // var dirC = dirN.getCopy().multiply(new Vector2(-1, -1));
-                    var toCurr = self.#raycast([inset].concat(outsets), vn, new Vector2(dirN.x, dirN.y), Vector2.distance(vn, vc));
-                   
+                    var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), true);
+                    var toCurr = self.#raycast([inset].concat(outsets), vn, new Vector2(dirN.x, dirN.y), Vector2.distance(vn, vc), true);
+                    
                     tmp.push(vc);
                     
                     //Validate found collisions
@@ -407,78 +405,8 @@ export default class GeneratorTool {
                         isDummy = true;
                         tmp.push(toCurr);
                     }
-
-                    // if(toNext != null){
-                    //     isDummy = true;
-                    //     tmp.push(toNext);
-                    // }
-                    
-                    // if(toNext != null && toCurr != null){
-                    //     //Include all inset points that are inside the tile
-                    //     for (let r = 0; r < insetPoints.length; r++) {
-                    //         const inset = insetPoints[r];
-
-                    //         if (self.IsInside(result, inset.x, inset.y)) {
-                    //             tmp.push(inset);
-                    //         }
-                    //     }
-
-                    //     //Include all outset points that are inside the tile
-                    //     for (let r = 0; r < outsets.length; r++) {
-                    //         const outset = outsets[r];
-                    //         const outsetPoints = outset.getVertices();
-
-                    //         for (let b = 0; b < outsetPoints.length; b++) {
-                    //             const outsetPoint = outsetPoints[b];
-
-                    //             if (self.IsInside(result, outsetPoint.x, outsetPoint.y)) {
-                    //                 console.log('test2');
-                    //                 self.#buffer.circle(outsetPoint.x, outsetPoint.y, 20);
-                    //                 tmp.push(outsetPoint);
-                    //             }
-                    //         }
-                    //     }
-                    // }
-
-                    // if(toCurr != null){
-                    //     isDummy = true;
-                    //     tmp.push(toCurr);
-                    // }
                 }
                 result = tmp;
-
-                // var tmp = [];
-                // //validate result positions (raycast between them)
-                // for (let i = 0; i < result.length; i++) {
-                //     const vp = result[i - 1 >= 0 ? i - 1 : result.length - 1];
-                //     const vc = result[i];
-                //     const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
-
-                //     var dirP = vp.getCopy().remove(vc).normalized();
-                //     var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc));
-
-                //     //Find a collision between current vertice and the next vertice
-                //     var dirN = vn.getCopy().remove(vc).normalized();
-                //     var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc));
-                    
-                //     //Push collision point into the tmp array
-                //     if (toPrev != null) {
-                //         self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
-                //         isDummy = true;
-                //         tmp.push(toPrev);
-                //     }
-                    
-                //     //Push original point into the tmp array
-                //     tmp.push(vc);
-                    
-                //     //Push collision point into the tmp array
-                //     if (toNext != null) {
-                //         self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
-                //         isDummy = true;
-                //         tmp.push(toNext);
-                //     }
-                // }
-                // result = tmp;
 
                 //create tile
                 var tile = self.#createTile(result, isFirstTile ? true : isDummy);
@@ -543,11 +471,11 @@ export default class GeneratorTool {
                     if(outsets.length <= 0){
                         isValid = true;
                     }
-                    else{
+                    else {
                         for (let r = 0; r < outsets.length; r++) {
                             const outset = outsets[r];
                             const outsetPoints = outset.getVertices();
-    
+
                             if (!self.IsInside(outsetPoints, vc.x, vc.y)) {
                                 isValid = true;
                             }
@@ -555,11 +483,11 @@ export default class GeneratorTool {
                     }
                 }
             }
-
+            
             if (isValid) {
                 return new Vector2(x, y);
             }
-
+            
             // var horizontal = self.#raycast([inset], new Vector2(x, y), Vector2.left(), Vector2.distance(targetPoints[0], targetPoints[1]));
             // if(horizontal != null){
             //     return horizontal;
@@ -568,33 +496,167 @@ export default class GeneratorTool {
         }
 
         var syncedLoop = async (x, y) => {
-            var targetPoints = [
-                new Vector2(x, y),
-                new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y),
-                new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y + tileSize.y),
-                new Vector2(x - (isFirstTile ? tileSize.x - firstTileSize.x : 0), y + tileSize.y),
-            ];
-            x += (isFirstTile ? firstTileSize.x : tileSize.x);
-
+            var startX = null;
+            var startY = null;
             var delay = 100;
-            var resultPos = validateLocation(x, y, targetPoints);
-            if(resultPos){
-                var tmp = null;
-                await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
-                    tmp = tile;
-                    isFirstTile = false;
-                });
-                await this.#sleep(delay);
+
+            //place tiles along line
+            for (let i = 0; i < insetPoints.length; i++) {
+                const vc = insetPoints[i];
+                const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
+                const lineType = inset.lineMargins[i];
+
+                //Only apply when specific line options have been choosen
+                if (lineType.split("|")[0] != "daknok1" && lineType.split("|")[0] != "dakrand1" && lineType.split("|")[0] != "gootdetail3") { continue; }
+
+                //get dir of line.
+                var dir = vn.getCopy().remove(vc).normalized();
+
+                //This follows a grid since you only move it tilesize.x or tilesize.y
+                var killCounter = 0;
+                while (true) {
+                    //apply dir x.
+                    if (startX == null || startY == null) {
+                        startX = vc.x
+                        startY = vc.y;
+                    }
+                    else{
+                        startX += tileSize.x * dir.x;
+                        startY += tileSize.y * dir.y;
+                    }
+
+                    var targetPoints = [
+                        new Vector2(startX - tileSize.x / 2, startY - tileSize.y / 2),
+                        new Vector2(startX + tileSize.x / 2, startY - tileSize.y / 2),
+                        new Vector2(startX + tileSize.x / 2, startY + tileSize.y / 2),
+                        new Vector2(startX - tileSize.x / 2, startY + tileSize.y / 2),
+                    ];
+
+                    //is on line
+                    if(Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y)){
+                        this.#tiles.push(this.#createTile(targetPoints, true));
+                        this.#buffer.fill(255, 0, 0);
+                        this.#buffer.text(killCounter, startX, startY);
+                    }
+                    //if shape is not ON the line then add Y.
+                    else {
+                        startX -= tileSize.x * dir.x;
+                        startY -= tileSize.y * dir.y;
+                        break;
+                    }
+
+                    //Emergency break :D
+                    killCounter++;
+                    if (killCounter > maxTiles){
+                        break;
+                    }
+                    await this.#sleep(delay);
+                }
             }
 
-            if (x < boundingBox.x + boundingBox.w) {
-                //Same row
-                syncedLoop(x, y);
-            } else if (y + tileSize.y < boundingBox.y + boundingBox.h) {
-                //New row
-                isFirstTile = true;
-                syncedLoop(boundingBox.x, y + tileSize.y);
+            //Calculate top left corner
+            var topLeftTile = null;
+            var topLeftTilePoints = [];
+            for (let i = 0; i < this.#tiles.length; i++) {
+                const tile = this.#tiles[i];
+                const tilePoints = tile != null ? tile.getVertices() : [];
+                if (tile == null || tilePoints.length <= 0){ continue; }
+
+                if(topLeftTilePoints.length <= 0 || (tilePoints[0].x <= topLeftTilePoints[0].x && tilePoints[0].y <= topLeftTilePoints[0].y)){
+                    topLeftTile = tile;
+                    topLeftTilePoints = tilePoints;
+                }
             }
+
+            //Update the inset to include the "omvouw" tiles
+            
+
+
+            //Starting position of where to place the first inner tile
+            startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
+            startY = topLeftTile == null ? y : topLeftTilePoints[2].y;
+            
+            //Place tiles in the remaining area
+            var killCounter = 0;
+            var yIndex = 0;
+            var xIndex = 0;
+            var yMax = Math.ceil(boundingBox.h / tileSize.y);
+            var xMax = Math.ceil(boundingBox.w / tileSize.x);
+            while (true){
+                var targetPoints = [
+                    new Vector2(startX, startY),
+                    new Vector2(startX + tileSize.x, startY),
+                    new Vector2(startX + tileSize.x, startY + tileSize.y),
+                    new Vector2(startX, startY + tileSize.y),
+                ];
+                
+                var resultPos = validateLocation(startX, startY, targetPoints);
+                if(resultPos){
+                    await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
+                        if (tile != null) {
+                            isFirstTile = false;
+                            self.#tiles.push(tile);
+
+                            // var points = tile.getVertices();
+                            // for (let r = 0; r < points.length; r++) {
+                            //     this.#buffer.circle(points[r].x, points[r].y, 10);
+                            // }
+                        }
+                    });
+                }
+                await this.#sleep(delay);
+
+                if(xIndex < xMax - 1){
+                    startX += tileSize.x;
+                    xIndex++;
+                }
+                else if (yIndex < yMax - 1) {
+                    startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
+                    startY += tileSize.y;
+                    xIndex = 0;
+                    yIndex++;
+                }
+                else{
+                    break;
+                }
+
+                killCounter++;
+                if (killCounter > maxTiles){
+                    break;
+                }
+            }
+
+
+
+            // var targetPoints = [
+            //     new Vector2(x, y),
+            //     new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y),
+            //     new Vector2(x + (isFirstTile ? firstTileSize.x : tileSize.x), y + (rowIndex <= 0 ? tileSize.y : tileSize.y - 10)),
+            //     new Vector2(x - (isFirstTile ? tileSize.x - firstTileSize.x : 0), y + (rowIndex <= 0 ? tileSize.y : tileSize.y - 10)),
+            // ];
+            // x += (isFirstTile ? firstTileSize.x : tileSize.x);
+
+            // var delay = 10;
+            // var resultPos = validateLocation(x, y, targetPoints);
+            // if(resultPos){
+            //     await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
+            //         if (tile != null) {
+            //             isFirstTile = false;
+            //             self.#tiles.push(tile);
+            //         }
+            //     });
+            //     await this.#sleep(delay);
+            // }
+
+            // if (x < boundingBox.x + boundingBox.w) {
+            //     //Same row
+            //     syncedLoop(x, y);
+            // } else if (y + tileSize.y < boundingBox.y + boundingBox.h) {
+            //     //New row
+            //     rowIndex++;
+            //     isFirstTile = true;
+            //     syncedLoop(boundingBox.x, y + (rowIndex <= 1 ? tileSize.y : tileSize.y - 10));
+            // }
         };
 
         syncedLoop(boundingBox.x, boundingBox.y);
@@ -605,13 +667,59 @@ export default class GeneratorTool {
     }
     
     #raycast(shapes, from, dir, dist, ignoreSelf = true) {
-        var collisionClosest = null;
-        var collisionDist = 99999999999;
+        var collisions = this.#raycastAll(shapes, from, dir, dist, ignoreSelf);
+        if(collisions.length > 0){
+            return collisions[0];
+        }
+        return null;
+        // var collisionClosest = null;
+        // var collisionDist = 99999999999;
 
+        // var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
+        // // this.#buffer.stroke(255, 0, 0);
+        // // this.#buffer.line(from.x, from.y, end.x, end.y);
+
+
+        // for (let i = 0; i < shapes.length; i++) {
+        //     const shape = shapes[i];
+        //     const vertices = shape.getVertices();
+
+        //     for (let r = 0; r < vertices.length; r++) {
+        //         const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
+        //         const vc = vertices[r];
+
+        //         // if (Collision.pointCircle(vc.x, vc.y, end.x, end.y, 10)) {
+        //         //     circle(vc.x, vc.y, 10);
+        //         //     circle(vn.x, vn.y, 10);
+        //         // }
+
+        //         // if (Collision.lineLine(vc.x, vc.y, vn.x, vn.y, from.x, from.y, end.x, end.y)) {
+        //         //     strokeWeight(5);
+        //         //     stroke(255, 255, 0);
+        //         //     line(vn.x, vn.y, vc.x, vc.y);
+        //         // }
+
+        //         if (Collision.linePoint(vn.x, vn.y, vc.x, vc.y, from.x, from.y) && ignoreSelf) {
+        //             continue;
+        //         }
+
+        //         var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
+        //         if (collision != null) {
+        //             var dist = Vector2.distance(from, collision);
+        //             if (collisionClosest == null || dist < collisionDist) {
+        //                 collisionClosest = collision;
+        //                 collisionDist = dist;
+        //             }
+        //         }
+        //     }
+        // }
+
+        // return collisionClosest;
+    }
+
+    #raycastAll(shapes, from, dir, dist, ignoreSelf = true){
+        var collisions = [];
         var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
-        // this.#buffer.stroke(255, 0, 0);
-        // this.#buffer.line(from.x, from.y, end.x, end.y);
-
 
         for (let i = 0; i < shapes.length; i++) {
             const shape = shapes[i];
@@ -621,47 +729,115 @@ export default class GeneratorTool {
                 const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
                 const vc = vertices[r];
 
-                // if (Collision.pointCircle(vc.x, vc.y, end.x, end.y, 10)) {
-                //     circle(vc.x, vc.y, 10);
-                //     circle(vn.x, vn.y, 10);
-                // }
-
-                // if (Collision.lineLine(vc.x, vc.y, vn.x, vn.y, from.x, from.y, end.x, end.y)) {
-                //     strokeWeight(5);
-                //     stroke(255, 255, 0);
-                //     line(vn.x, vn.y, vc.x, vc.y);
-                // }
-
                 if (Collision.linePoint(vn.x, vn.y, vc.x, vc.y, from.x, from.y) && ignoreSelf) {
+
                     continue;
                 }
 
                 var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
                 if (collision != null) {
-                    var dist = Vector2.distance(from, collision);
-                    if (collisionClosest == null || dist < collisionDist) {
-                        collisionClosest = collision;
-                        collisionDist = dist;
-                    }
+                    collisions.push(collision);
                 }
             }
         }
 
-        return collisionClosest;
+        collisions.sort((a, b) => Vector2.distance(from, a) > Vector2.distance(from, b) ? 1 : -1);
+        return collisions;
     }
 
     toJSON() {
-        return { 'tiles': this.#tiles, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
+        var t = { 'Alucobond': [], 'X-Roof': [], 'Ventilatiekap': [] };
+
+        for (let i = 0; i < this.#tiles.length; i++) {
+            const tile = this.#tiles[i];
+            
+            if (tile.isDummy) {
+                t['Alucobond'].push(tile.toJSON());
+                this.#totalWidth += tile.width;
+                this.#totalHeight += tile.height;
+                this.#dummyWidth += tile.width;
+                this.#dummyHeight += tile.height;
+            }
+            else if(tile.isVent) {
+                t['Ventilatiekap'].push(tile.toJSON());
+            }
+            else {
+                t['X-Roof'].push(tile.toJSON());
+                this.#totalWidth += tile.width;
+                this.#totalHeight += tile.height;
+                this.#tileWidth += tile.width;
+                this.#tileHeight += tile.height;
+            }
+        }
+
+
+        // for (let i = 0; i < this.#tiles['Alucobond'].length; i++) {
+        //     const tile = this.#tiles['Alucobond'][i];
+        //     t['Alucobond'].push(tile.toJSON());
+        // }
+
+        // for (let i = 0; i < this.#tiles['X-Roof'].length; i++) {
+        //     const tile = this.#tiles['X-Roof'][i];
+        //     t['X-Roof'].push(tile.toJSON());
+        // }
+
+        return { 'tiles': t, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
     }
 
     fromJSON(json) {
-        this.#tiles = json.tiles;
-        this.#totalWidth = json.width;
-        this.#totalHeight = json.height;
-        this.#dummyWidth += tile.width;
-        this.#dummyHeight += tile.height;
-        this.#tileWidth += tile.width;
-        this.#tileHeight += tile.height;
+        if(!json){ return; }
+
+        if (json.tiles) {
+            this.#buffer.clear();
+
+            if (json.tiles['Alucobond']){
+                for (let i = 0; i < json.tiles['Alucobond'].length; i++) {
+                    const tile = json.tiles['Alucobond'][i];
+
+                    var vertices = [];
+                    for (let i = 0; i < tile.vertices.length; i++) {
+                        const vertice = tile.vertices[i];
+                        vertices.push(Vector2.fromJSON(vertice));
+                    }
+                    this.#tiles.push(new Tile(vertices, this.#buffer, tile.isDummy, tile.isVent));
+                }
+            }
+
+            if (json.tiles['X-Roof']){
+                for (let i = 0; i < json.tiles['X-Roof'].length; i++) {
+                    const tile = json.tiles['X-Roof'][i];
+
+                    var vertices = [];
+                    for (let i = 0; i < tile.vertices.length; i++) {
+                        const vertice = tile.vertices[i];
+                        vertices.push(Vector2.fromJSON(vertice));
+                    }
+                    this.#tiles.push(new Tile(vertices, this.#buffer, tile.isDummy, tile.isVent));
+                }
+            }
+
+            if (json.tiles['Ventilatiekap']){
+                for (let i = 0; i < json.tiles['Ventilatiekap'].length; i++) {
+                    const tile = json.tiles['Ventilatiekap'][i];
+
+                    var vertices = [];
+                    for (let i = 0; i < tile.vertices.length; i++) {
+                        const vertice = tile.vertices[i];
+                        vertices.push(Vector2.fromJSON(vertice));
+                    }
+                    this.#tiles.push(new Tile(vertices, this.#buffer, tile.isDummy, tile.isVent));
+                }
+            }
+        }
+
+        if (json.width) { this.#totalWidth = json.width; }
+        if (json.height) { this.#totalHeight = json.height; }
+
+        if (json.dummy_width) { this.#dummyWidth = json.dummy_width; }
+        if (json.dummy_height) { this.#dummyHeight = json.dummy_height; }
+
+        if (json.tile_width) { this.#tileWidth = json.tile_width; }
+        if (json.tile_height) { this.#tileHeight = json.tile_height; }
     }
 
     IsInside(vertices, x, y){
@@ -673,7 +849,10 @@ export default class GeneratorTool {
             const vc = vertices[i];
             const vn = vertices[i + 1 < vertices.length - 1 ? i + 1 : 0];
 
-            if(Collision.linePoint(vc.x, vc.y, vn.x, vn.y, x, y)){
+            if (Collision.linePoint(vc.x, vc.y, vn.x, vn.y, x, y)) {
+                if (y == 406.91537822811176 && x == 1907.2847231827582) {
+                    console.log("Inside");
+                }
                 return true;
             }
         }
@@ -692,5 +871,9 @@ export default class GeneratorTool {
         }
 
         return isInside;
+    }
+
+    getTiles(){
+        return this.#tiles;
     }
 }

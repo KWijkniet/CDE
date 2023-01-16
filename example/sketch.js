@@ -13,13 +13,17 @@ var HistoryTool = window.CDE.HistoryTool;
 var ContextMenu = window.CDE.ContextMenu;
 var ContextMenuOption = window.CDE.ContextMenuOption;
 var LineSelectorTool = window.CDE.LineSelectorTool;
+var TileSelectorTool = window.CDE.TileSelectorTool;
 
 //Core
-var cursor, grid, renderer, drawingTool, selectorTool, lineSelectorTool;
+var cursor, grid, renderer, drawingTool, selectorTool, lineSelectorTool, tileSelectorTool;
 //Visuals
-var drawingToolElem, selectorToolElem, selectorToolMenu, generatorElem, lineSelectorElem/*, generatorMenu*/;
+var drawingToolElem, selectorToolElem, selectorToolMenu, generatorElem, lineSelectorElem, tileSelectorElem/*, generatorMenu*/;
 //Other
 var hasSelectedShape;
+
+//Event
+onSetupComplete = () => {};
 
 function setup() {
     var canvas = createCanvas(visualViewport.width, visualViewport.height);
@@ -35,6 +39,7 @@ function setup() {
     generatorTool = new GeneratorTool();
     lineSelectorTool = new LineSelectorTool();
     lineSelectorTool.events.subscribe('selectLine', (e) => { $("#exampleModal").modal("show"); cursor.isDisabled = true; loadMargin(); });
+    tileSelectorTool = new TileSelectorTool(generatorTool);
 
     frameRate(60);
     Window.currentTool = null;
@@ -45,6 +50,7 @@ function setup() {
     selectorToolElem = document.getElementById("selectorTool");
     generatorElem = document.getElementById("generatorTool");
     lineSelectorElem = document.getElementById("lineTool");
+    tileSelectorElem = document.getElementById("tileTool");
 
     selectorToolMenu = new ContextMenu('selectorToolMenu', [
         new ContextMenuOption('Allowed', 'checkbox', null, null, (e) => { e.querySelector('input').checked = selectorTool.shape != null ? selectorTool.shape.isAllowed : false; }, null, (e) => {
@@ -56,6 +62,8 @@ function setup() {
         new ContextMenuOption('Confirm', null, 'fa-solid fa-check', null, null, (e) => { confirmSelected(); }),
         new ContextMenuOption('Delete Shape', null, 'fa-solid fa-trash', null, null, (e) => { deleteSelected(); }),
     ], "selectorTool");
+
+    onSetupComplete();
 }
 
 function draw() {
@@ -69,7 +77,9 @@ function draw() {
     drawingTool.update();
     selectorTool.update();
     generatorTool.update();
+    renderer.updateText();
     lineSelectorTool.update();
+    tileSelectorTool.update();
     cursor.update();
     pop();
 
@@ -83,6 +93,10 @@ function draw() {
     if (selectorTool.isEnabled && Window.currentTool != selectorTool) {
         Window.currentTool = selectorTool;
     }
+}
+
+function windowResized() {
+    resizeCanvas(visualViewport.width, visualViewport.height);
 }
 
 let fr = 60;
@@ -166,6 +180,14 @@ function updateVisuals(){
         lineSelectorElem.classList.remove("active");
     }
 
+    //TileSelectorTool tool
+    if (tileSelectorTool.isEnabled && !tileSelectorElem.classList.contains("active")) {
+        tileSelectorElem.classList.add("active");
+    }
+    else if (!tileSelectorTool.isEnabled && tileSelectorElem.classList.contains("active")) {
+        tileSelectorElem.classList.remove("active");
+    }
+
     // //Selector menu
     // if (!generatorMenu.isShown() && Window.currentTool == generatorTool) {
     //     generatorMenu.show();
@@ -200,6 +222,10 @@ function toggleSelectorTool() {
 
 function toggleGeneratorTool() {
     generatorTool.generate();
+    if (Window.currentTool != null){
+        Window.currentTool.disable();
+        Window.currentTool = null;
+    }
     // if (Window.currentTool != null && Window.currentTool != generatorTool) { Window.currentTool.disable(); }
     // Window.currentTool = generatorTool;
     // if (generatorTool.isEnabled) {
@@ -221,6 +247,19 @@ function toggleLineTool() {
     else {
         lineSelectorTool.enable();
     }
+}
+
+function toggleTileTool() {
+    if (Window.currentTool != null && Window.currentTool != tileSelectorTool) { Window.currentTool.disable(); }
+    Window.currentTool = tileSelectorTool;
+    if (tileSelectorTool.isEnabled) {
+        tileSelectorTool.disable();
+        Window.currentTool = null;
+    }
+    else {
+        tileSelectorTool.enable();
+    }
+
 }
 
 function recenter(){
@@ -277,6 +316,7 @@ function updateMargin() {
                 value = document.querySelector('[data-target="' + elem.id + '"]').value;
             }
             lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
+            Renderer.instance.replace(lineSelectorTool.selectedShape);
             break;
         }
     }
@@ -334,11 +374,11 @@ function importData(json){
         newShape.fromJSON(shape);
         renderer.add(newShape);
     }
-    generatorTool.fromJSON(json['generated']);
     document.getElementById("useRowOffset").checked = json['useRowOffset'];
     document.getElementById("tileType").value = json['tileType'];
-    document.getElementById("dakvoetprofielen").value = data['dakvoetprofielen'];
-    document.getElementById("vogelschroten").value = data['vogelschroten'];
+    document.getElementById("dakvoetprofielen").value = json['dakvoetprofielen'];
+    document.getElementById("vogelschroten").value = json['vogelschroten'];
+    generatorTool.fromJSON(json['generator']);
 }
 
 function canvasAsImage(){

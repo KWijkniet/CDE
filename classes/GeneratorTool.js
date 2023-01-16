@@ -499,132 +499,226 @@ export default class GeneratorTool {
             var startX = null;
             var startY = null;
             var delay = 100;
-
-            //place tiles along line
+            
+            // PHASE 1
+            var firstTileValid = true;
             for (let i = 0; i < insetPoints.length; i++) {
                 const vc = insetPoints[i];
                 const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
                 const lineType = inset.lineMargins[i];
+                var isFirst = true;
 
                 //Only apply when specific line options have been choosen
-                if (lineType.split("|")[0] != "daknok1" && lineType.split("|")[0] != "dakrand1" && lineType.split("|")[0] != "gootdetail3") { continue; }
-
-                //get dir of line.
+                if (lineType.split("|")[0] != "daknok1" && lineType.split("|")[0] != "dakrand1" && lineType.split("|")[0] != "gootdetail3") {
+                    firstTileValid = true;
+                    continue;
+                }
+                
                 var dir = vn.getCopy().remove(vc).normalized();
-
-                //This follows a grid since you only move it tilesize.x or tilesize.y
-                var killCounter = 0;
-                while (true) {
-                    //apply dir x.
-                    if (startX == null || startY == null) {
-                        startX = vc.x
-                        startY = vc.y;
+                var targetPoints = [
+                    new Vector2(vc.x - tileSize.x / 2, vc.y - tileSize.y / 2),
+                    new Vector2(vc.x + tileSize.x / 2, vc.y - tileSize.y / 2),
+                    new Vector2(vc.x + tileSize.x / 2, vc.y + tileSize.y / 2),
+                    new Vector2(vc.x - tileSize.x / 2, vc.y + tileSize.y / 2),
+                ];
+                if(startX != null && startY != null){
+                    for (let r = 0; r < targetPoints.length; r++) {
+                        targetPoints[r].x = self.#convertToGrid(targetPoints[r].x, startX, tileSize.x);
+                        targetPoints[r].y = self.#convertToGrid(targetPoints[r].y, startY, tileSize.y);
                     }
-                    else{
-                        startX += tileSize.x * dir.x;
-                        startY += tileSize.y * dir.y;
+                }
+                
+                if (isFirst && !firstTileValid) {
+                    //Update next position
+                    for (let r = 0; r < targetPoints.length; r++) {
+                        const tp = targetPoints[r];
+                        tp.add(new Vector2(dir.x * tileSize.x, dir.y * tileSize.y));
+                    }
+                }
+
+                //Update inset
+                if (isFirst) {
+                    const vp = insetPoints[i - 1 >= 0 ? i - 1 : insetPoints.length - 1];
+                    const dirP = vp.getCopy().remove(vc).normalized();
+
+                    const vnn = insetPoints[(i + 2 % insetPoints.length - 1) - 1];
+                    const dirN = vn.getCopy().remove(vnn).normalized();
+
+                    vc.add(new Vector2(dirP.x * (tileSize.x / 2), dirP.y * (tileSize.y / 2)));
+                    // vc.x = self.#convertToGrid(vc.x - (tileSize.x / 2), startX, tileSize.x);
+                    // vc.y = self.#convertToGrid(vc.y - (tileSize.x / 2), startY, tileSize.y);
+
+                    vn.add(new Vector2(dirN.x * (tileSize.x / 2), dirN.y * (tileSize.y / 2)));
+                    // vn.x = self.#convertToGrid(vn.x, startX, tileSize.x);
+                    // vn.y = self.#convertToGrid(vn.y, startY, tileSize.y);
+
+                    self.#buffer.circle(vc.x, vc.y, 10);
+                    self.#buffer.circle(vn.x, vn.y, 10);
+                }
+
+                var max = 999;
+                while (Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y)) {
+                    //Create tile
+                    self.#tiles.push(self.#createTile(targetPoints, true));
+                    firstTileValid = false;
+                    isFirst = false;
+                    if(self.#tiles.length == 1){
+                        startX = targetPoints[0].x;
+                        startY = targetPoints[0].y;
                     }
 
-                    var targetPoints = [
-                        new Vector2(startX - tileSize.x / 2, startY - tileSize.y / 2),
-                        new Vector2(startX + tileSize.x / 2, startY - tileSize.y / 2),
-                        new Vector2(startX + tileSize.x / 2, startY + tileSize.y / 2),
-                        new Vector2(startX - tileSize.x / 2, startY + tileSize.y / 2),
-                    ];
-
-                    //is on line
-                    if(Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y)){
-                        this.#tiles.push(this.#createTile(targetPoints, true));
-                        this.#buffer.fill(255, 0, 0);
-                        this.#buffer.text(killCounter, startX, startY);
+                    //Update next position
+                    for (let r = 0; r < targetPoints.length; r++) {
+                        const tp = targetPoints[r];
+                        tp.add(new Vector2(dir.x * tileSize.x, dir.y * tileSize.y));
                     }
-                    //if shape is not ON the line then add Y.
-                    else {
-                        startX -= tileSize.x * dir.x;
-                        startY -= tileSize.y * dir.y;
+                    await self.#sleep(delay);
+
+                    //Security
+                    max--;
+                    if(max <= 0){
+                        console.error("Infinite loop detected!");
                         break;
                     }
+                }
 
-                    //Emergency break :D
-                    killCounter++;
-                    if (killCounter > maxTiles){
-                        break;
-                    }
-                    await this.#sleep(delay);
+                console.log("Tile Count:", self.#tiles.length);
+            }
+
+            for (let i = 0; i < insetPoints.length; i++) {
+                const vc = insetPoints[i];
+                const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
+                const lineType = inset.lineMargins[i];
+                
+                //Only apply when specific line options have been choosen
+                if (lineType.split("|")[0] != "daknok1" && lineType.split("|")[0] != "dakrand1" && lineType.split("|")[0] != "gootdetail3") {
+                    continue;
                 }
             }
+
+            // //place tiles along line
+            // for (let i = 0; i < insetPoints.length; i++) {
+            //     const vc = insetPoints[i];
+            //     const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
+            //     const lineType = inset.lineMargins[i];
+
+            //     //Only apply when specific line options have been choosen
+            //     if (lineType.split("|")[0] != "daknok1" && lineType.split("|")[0] != "dakrand1" && lineType.split("|")[0] != "gootdetail3") { continue; }
+
+            //     //get dir of line.
+            //     var dir = vn.getCopy().remove(vc).normalized();
+
+            //     //This follows a grid since you only move it tilesize.x or tilesize.y
+            //     var killCounter = 0;
+            //     while (true) {
+            //         //apply dir x.
+            //         if (startX == null || startY == null) {
+            //             startX = vc.x
+            //             startY = vc.y;
+            //         }
+            //         else{
+            //             startX += tileSize.x * dir.x;
+            //             startY += tileSize.y * dir.y;
+            //         }
+
+            //         var targetPoints = [
+            //             new Vector2(startX - tileSize.x / 2, startY - tileSize.y / 2),
+            //             new Vector2(startX + tileSize.x / 2, startY - tileSize.y / 2),
+            //             new Vector2(startX + tileSize.x / 2, startY + tileSize.y / 2),
+            //             new Vector2(startX - tileSize.x / 2, startY + tileSize.y / 2),
+            //         ];
+
+            //         //is on line
+            //         if(Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y)){
+            //             this.#tiles.push(this.#createTile(targetPoints, true));
+            //             this.#buffer.fill(255, 0, 0);
+            //             this.#buffer.text(killCounter, startX, startY);
+            //         }
+            //         //if shape is not ON the line then add Y.
+            //         else {
+            //             startX -= tileSize.x * dir.x;
+            //             startY -= tileSize.y * dir.y;
+            //             break;
+            //         }
+
+            //         //Emergency break :D
+            //         killCounter++;
+            //         if (killCounter > maxTiles){
+            //             break;
+            //         }
+            //         await this.#sleep(delay);
+            //     }
+            // }
 
             //Calculate top left corner
-            var topLeftTile = null;
-            var topLeftTilePoints = [];
-            for (let i = 0; i < this.#tiles.length; i++) {
-                const tile = this.#tiles[i];
-                const tilePoints = tile != null ? tile.getVertices() : [];
-                if (tile == null || tilePoints.length <= 0){ continue; }
+            // var topLeftTile = null;
+            // var topLeftTilePoints = [];
+            // for (let i = 0; i < this.#tiles.length; i++) {
+            //     const tile = this.#tiles[i];
+            //     const tilePoints = tile != null ? tile.getVertices() : [];
+            //     if (tile == null || tilePoints.length <= 0){ continue; }
 
-                if(topLeftTilePoints.length <= 0 || (tilePoints[0].x <= topLeftTilePoints[0].x && tilePoints[0].y <= topLeftTilePoints[0].y)){
-                    topLeftTile = tile;
-                    topLeftTilePoints = tilePoints;
-                }
-            }
+            //     if(topLeftTilePoints.length <= 0 || (tilePoints[0].x <= topLeftTilePoints[0].x && tilePoints[0].y <= topLeftTilePoints[0].y)){
+            //         topLeftTile = tile;
+            //         topLeftTilePoints = tilePoints;
+            //     }
+            // }
 
             //Update the inset to include the "omvouw" tiles
             
-
-
             //Starting position of where to place the first inner tile
-            startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
-            startY = topLeftTile == null ? y : topLeftTilePoints[2].y;
+            // startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
+            // startY = topLeftTile == null ? y : topLeftTilePoints[2].y;
             
-            //Place tiles in the remaining area
-            var killCounter = 0;
-            var yIndex = 0;
-            var xIndex = 0;
-            var yMax = Math.ceil(boundingBox.h / tileSize.y);
-            var xMax = Math.ceil(boundingBox.w / tileSize.x);
-            while (true){
-                var targetPoints = [
-                    new Vector2(startX, startY),
-                    new Vector2(startX + tileSize.x, startY),
-                    new Vector2(startX + tileSize.x, startY + tileSize.y),
-                    new Vector2(startX, startY + tileSize.y),
-                ];
+            // //Place tiles in the remaining area
+            // var killCounter = 0;
+            // var yIndex = 0;
+            // var xIndex = 0;
+            // var yMax = Math.ceil(boundingBox.h / tileSize.y);
+            // var xMax = Math.ceil(boundingBox.w / tileSize.x);
+            // while (true){
+            //     var targetPoints = [
+            //         new Vector2(startX, startY),
+            //         new Vector2(startX + tileSize.x, startY),
+            //         new Vector2(startX + tileSize.x, startY + tileSize.y),
+            //         new Vector2(startX, startY + tileSize.y),
+            //     ];
                 
-                var resultPos = validateLocation(startX, startY, targetPoints);
-                if(resultPos){
-                    await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
-                        if (tile != null) {
-                            isFirstTile = false;
-                            self.#tiles.push(tile);
+            //     var resultPos = validateLocation(startX, startY, targetPoints);
+            //     if(resultPos){
+            //         await syncedPlaceTile(resultPos.x, resultPos.y, targetPoints).then((tile) => {
+            //             if (tile != null) {
+            //                 isFirstTile = false;
+            //                 self.#tiles.push(tile);
 
-                            // var points = tile.getVertices();
-                            // for (let r = 0; r < points.length; r++) {
-                            //     this.#buffer.circle(points[r].x, points[r].y, 10);
-                            // }
-                        }
-                    });
-                }
-                await this.#sleep(delay);
+            //                 // var points = tile.getVertices();
+            //                 // for (let r = 0; r < points.length; r++) {
+            //                 //     this.#buffer.circle(points[r].x, points[r].y, 10);
+            //                 // }
+            //             }
+            //         });
+            //     }
+            //     await this.#sleep(delay);
 
-                if(xIndex < xMax - 1){
-                    startX += tileSize.x;
-                    xIndex++;
-                }
-                else if (yIndex < yMax - 1) {
-                    startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
-                    startY += tileSize.y;
-                    xIndex = 0;
-                    yIndex++;
-                }
-                else{
-                    break;
-                }
+            //     if(xIndex < xMax - 1){
+            //         startX += tileSize.x;
+            //         xIndex++;
+            //     }
+            //     else if (yIndex < yMax - 1) {
+            //         startX = topLeftTile == null ? x : topLeftTilePoints[2].x;
+            //         startY += tileSize.y;
+            //         xIndex = 0;
+            //         yIndex++;
+            //     }
+            //     else{
+            //         break;
+            //     }
 
-                killCounter++;
-                if (killCounter > maxTiles){
-                    break;
-                }
-            }
+            //     killCounter++;
+            //     if (killCounter > maxTiles){
+            //         break;
+            //     }
+            // }
 
 
 
@@ -660,6 +754,10 @@ export default class GeneratorTool {
         };
 
         syncedLoop(boundingBox.x, boundingBox.y);
+    }
+
+    #convertToGrid(value, gridStart, gridSize){
+        return Math.round((value - gridStart) / gridSize) * gridSize + gridStart;
     }
 
     #createTile(vertices, isDummy){
@@ -871,6 +969,18 @@ export default class GeneratorTool {
         }
 
         return isInside;
+    }
+
+    isCollidingWithShapes(shapes, shape){
+        for (let i = 0; i < shapes.length; i++) {
+            const points = shapes[i].getVertices();
+            
+            if(Collision.polygonPolygon(points, shape)){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     getTiles(){

@@ -45,7 +45,7 @@ export default class Tile {
                 this.#buffer = createGraphics(this.width, this.height);
             }
 
-            this.#generate();
+            //this.#generate();
         }
     }
 

@@ -499,6 +499,7 @@ export default class GeneratorTool {
             var startX = null;
             var startY = null;
             var delay = 100;
+            var newInsetPoints = Vector2.copyAll(insetPoints);
             
             // PHASE 1
             var firstTileValid = true;
@@ -528,38 +529,69 @@ export default class GeneratorTool {
                     }
                 }
                 
-                if (isFirst && !firstTileValid) {
-                    //Update next position
-                    for (let r = 0; r < targetPoints.length; r++) {
-                        const tp = targetPoints[r];
-                        tp.add(new Vector2(dir.x * tileSize.x, dir.y * tileSize.y));
-                    }
-                }
+                // if (isFirst && !firstTileValid) {
+                //     //Update next position
+                //     for (let r = 0; r < targetPoints.length; r++) {
+                //         const tp = targetPoints[r];
+                //         tp.add(new Vector2(dir.x * tileSize.x, dir.y * tileSize.y));
+                //     }
+                // }
 
-                //Update inset
-                if (isFirst) {
-                    const vp = insetPoints[i - 1 >= 0 ? i - 1 : insetPoints.length - 1];
-                    const dirP = vp.getCopy().remove(vc).normalized();
-
-                    const vnn = insetPoints[(i + 2 % insetPoints.length - 1) - 1];
-                    const dirN = vn.getCopy().remove(vnn).normalized();
-
-                    vc.add(new Vector2(dirP.x * (tileSize.x / 2), dirP.y * (tileSize.y / 2)));
-                    // vc.x = self.#convertToGrid(vc.x - (tileSize.x / 2), startX, tileSize.x);
-                    // vc.y = self.#convertToGrid(vc.y - (tileSize.x / 2), startY, tileSize.y);
-
-                    vn.add(new Vector2(dirN.x * (tileSize.x / 2), dirN.y * (tileSize.y / 2)));
-                    // vn.x = self.#convertToGrid(vn.x, startX, tileSize.x);
-                    // vn.y = self.#convertToGrid(vn.y, startY, tileSize.y);
-
-                    self.#buffer.circle(vc.x, vc.y, 10);
-                    self.#buffer.circle(vn.x, vn.y, 10);
-                }
-
+                
                 var max = 999;
-                while (Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y)) {
+                while (Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y) && !Collision.polygonPoint(targetPoints, vn.x, vn.y)) {
                     //Create tile
-                    self.#tiles.push(self.#createTile(targetPoints, true));
+                    const tile = self.#createTile(targetPoints, true);
+                    self.#tiles.push(tile);
+                    
+                    //Update inset
+                    if (isFirst) {
+                        const vp = insetPoints[i - 1 >= 0 ? i - 1 : insetPoints.length - 1];
+                        const dirVCToPrev = vc.getCopy().remove(vp).normalized();
+                        const newVC = self.#raycast([tile], vc, dirVCToPrev, tileSize.x, false);
+
+                        if (newVC != null) {
+                            var dist = Vector2.distance(vc, newVC);
+                            var distPos = dirVCToPrev.getCopy().reverse().multiply(new Vector2(dist, dist));
+                            
+                            newInsetPoints[i].add(distPos);
+                            newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0].add(distPos);
+                            
+                            self.#buffer.circle(vc.x, vc.y, 25);
+                            self.#buffer.circle(newVC.x, newVC.y, 10);
+                            self.#buffer.circle(newInsetPoints[i + 1 < newInsetPoints.length - 1 ? i + 1 : 0].x, newInsetPoints[i + 1 < newInsetPoints.length - 1 ? i + 1 : 0].y, 15);
+                        }
+
+
+
+                        // const vnn = insetPoints[(i + 2 > newInsetPoints.length - 1 ? i + 2 - newInsetPoints.length : i + 2)];
+                        // const dirVNToNext = newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0].getCopy().remove(vnn).normalized();
+                        // const newVN = self.#raycast([tile], newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0], dirVNToNext, tileSize.x, false);
+                        // self.#buffer.circle(newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0].x, newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0].y, 25);
+
+                        // if (newVN != null) {
+                            // newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0] = newVC;
+                            // self.#buffer.circle(newVC.x, newVC.y, 10);
+                        // }
+
+
+                        // const dirP = vp.getCopy().remove(vc).normalized();
+    
+                        // const vnn = insetPoints[(i + 2 % insetPoints.length - 1) - 1];
+                        // const dirN = vn.getCopy().remove(vnn).normalized();
+                        // const vt = vn.getCopy().add(new Vector2(dirN.x * (tileSize.x / 2), dirN.y * (tileSize.y / 2)));
+                        
+                        // var newVC = vc.getCopy();
+                        // newVC.add(new Vector2(dirP.x * (tileSize.x / 2), dirP.y * (tileSize.y / 2)));
+                        
+                        // const dirT = newVC.getCopy().remove(vt).normalized();
+                        // newVC.remove(new Vector2(dirT.x * (tileSize.x / 2), dirT.y * (tileSize.y / 2)));
+                        
+                        // newVC.x = self.#convertToGrid(newVC.x, startX, tileSize.x);
+                        // newVC.y = self.#convertToGrid(newVC.y, startY, tileSize.y);
+                        // newInsetPoints.push(newVC);
+                    }
+
                     firstTileValid = false;
                     isFirst = false;
                     if(self.#tiles.length == 1){
@@ -584,12 +616,22 @@ export default class GeneratorTool {
 
                 console.log("Tile Count:", self.#tiles.length);
             }
+            
+            // //TEMP
+            // for (let i = 0; i < newInsetPoints.length; i++) {
+            //     const vc = newInsetPoints[i];
+            //     const vn = newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0];
 
-            for (let i = 0; i < insetPoints.length; i++) {
-                const vc = insetPoints[i];
-                const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
+            //     self.#buffer.circle(vc.x, vc.y, 10);
+            //     // self.#buffer.circle(vn.x, vn.y, 10);
+            // }
+            
+            //PHASE 2
+            for (let i = 0; i < newInsetPoints.length; i++) {
+                const vc = newInsetPoints[i];
+                const vn = newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0];
                 const lineType = inset.lineMargins[i];
-                
+
                 //Only apply when specific line options have been choosen
                 if (lineType.split("|")[0] != "daknok1" && lineType.split("|")[0] != "dakrand1" && lineType.split("|")[0] != "gootdetail3") {
                     continue;

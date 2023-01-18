@@ -23,6 +23,7 @@ export default class Vector2{
     static copyAll = (arr) => { var tmp = []; for (let i = 0; i < arr.length; i++) { tmp.push(new Vector2(arr[i].x, arr[i].y));} return tmp; };
     static dot = (v1, v2) => { return v1.x * v2.x + v1.y * v2.y; };
     static abs = (v) => { return new Vector2(Math.abs(v.x), Math.abs(v.y)); };
+    static reverse = (v) => { v.x = -v.x; v.y = -v.y; return v; };
 
     static toJSON = (v) => { return { x: v.x, y: v.y }; };
     static fromJSON = (json) => { return new Vector2(json.x, json.y); };
@@ -45,6 +46,7 @@ export default class Vector2{
     multiply = (v) => { this.x *= v.x; this.y *= v.y; return this; };
     devide = (v) => { this.x /= v.x; this.y /= v.y; return this; };
     equals = (v) => { return this.x == v.x && this.y == v.y; };
+    reverse = () => { this.x = -this.x; this.y = -this.y; return this; };
 
     toJSON = () => { return { x: this.x, y: this.y }; };
     fromJSON = (json) => { this.x = json.x; this.y = json.y; return this; };

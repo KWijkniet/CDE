@@ -27,6 +27,14 @@ export default class Vector2{
 
     static toJSON = (v) => { return { x: v.x, y: v.y }; };
     static fromJSON = (json) => { return new Vector2(json.x, json.y); };
+
+    static getBoundingBox = (vertices, pos) => {
+        const xArr = vertices.map(a => a.x);
+        const yArr = vertices.map(a => a.y);
+        const width = (Math.max(...xArr) - Math.min(...xArr));
+        const height = (Math.max(...yArr) - Math.min(...yArr));
+        return { "x": pos.x, "y": pos.y, "w": width, "h": height };
+    };
     
     magnitude = () => { return Math.sqrt(this.x * this.x + this.y * this.y); };
     normalized = () => { var mag = this.magnitude(); return new Vector2(this.x / mag, this.y / mag); };

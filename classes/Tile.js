@@ -38,13 +38,13 @@ export default class Tile {
         this.width = (Math.max(...xArr) - Math.min(...xArr));
         this.height = (Math.max(...yArr) - Math.min(...yArr));
         
-        if (this.width >= 20 && this.height >= 20) {
+        // if (this.width >= 20 && this.height >= 20) {
             if (buffer == null) {
                 this.#buffer = createGraphics(this.width, this.height);
             }
 
             this.#generate();
-        }
+        // }
     }
 
     getVertices(){

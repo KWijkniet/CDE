@@ -28,6 +28,7 @@ export default class Vector2{
     static fromJSON = (json) => { return new Vector2(json.x, json.y); };
     
     magnitude = () => { return Math.sqrt(this.x * this.x + this.y * this.y); };
+    distance = (v2) => { return new Vector2(this.x - v2.x, this.y - v2.y).magnitude(); };
     normalized = () => { var mag = this.magnitude(); return new Vector2(this.x / mag, this.y / mag); };
     getCopy = () => { return new Vector2(this.x, this.y); };
     toAngle = () => { return Math.atan2(Math.abs(this.x), Math.abs(this.y)) * 180 / Math.PI; };
@@ -45,6 +46,17 @@ export default class Vector2{
     multiply = (v) => { this.x *= v.x; this.y *= v.y; return this; };
     devide = (v) => { this.x /= v.x; this.y /= v.y; return this; };
     equals = (v) => { return this.x == v.x && this.y == v.y; };
+    addScalar = (v) => {this.x += v; this.y += v; return this;} 
+    divideScalar = (v) => {this.x /= v; this.y /= v; return this;} 
+    multiplyScalar = (v) => {this.x *= v; this.y *= v; return this;}
+    dot = ( v ) => { return this.x * v.x + this.y * v.y};
+    angleTo = ( v ) => {
+        var theta = this.dot( v ) / ( Math.sqrt( this.lengthSq() * v.lengthSq() ) );
+        // clamp, to handle numerical problems
+        return Math.acos( this.clamp( theta, - 1, 1 ) );
+    };
+    lengthSq = () => { return this.x * this.x + this.y * this.y };
+    clamp = (value, min, max) => {return Math.max(min, Math.min(max, value));};
 
     toJSON = () => { return { x: this.x, y: this.y }; };
     fromJSON = (json) => { this.x = json.x; this.y = json.y; return this; };

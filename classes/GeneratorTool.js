@@ -746,6 +746,7 @@ export default class GeneratorTool {
         var rowIndex = 0;
         var count= 0;
         var maxTiles = Math.floor((boundingBox.x + boundingBox.w) / tileSize.x) * Math.floor((boundingBox.y + boundingBox.h) / tileSize.y);
+        var tiledMode = false;
 
         // this.#tiles = { 'X-Roof': [], 'Alucobond': [] };
         this.#tiles = [];
@@ -1350,7 +1351,7 @@ export default class GeneratorTool {
             insetPoints = Vector2.copyAll(newInsetPoints, );
             
             var newBoundingBox = Vector2.getBoundingBox(newInsetPoints, topLeft);
-            self.#buffer.rect(newBoundingBox.x, newBoundingBox.y, newBoundingBox.w, newBoundingBox.h);
+            // self.#buffer.rect(newBoundingBox.x, newBoundingBox.y, newBoundingBox.w, newBoundingBox.h);
             console.log("Bounding Box", newBoundingBox.x + newBoundingBox.w, newBoundingBox.y + newBoundingBox.h);
 
             var targetPoints = [
@@ -1376,7 +1377,8 @@ export default class GeneratorTool {
                     }
                 });
                 xIndex++;
-                
+
+                //Next tile
                 if (targetPoints[0].x + tileSize.x < newBoundingBox.x + newBoundingBox.w){
                     for (let r = 0; r < targetPoints.length; r++) {
                         targetPoints[r].add(new Vector2(tileSize.x, 0));
@@ -1385,12 +1387,14 @@ export default class GeneratorTool {
                 else if (targetPoints[0].y + tileSize.y < newBoundingBox.y + newBoundingBox.h){
                     xIndex = 0;
                     yIndex++;
-                    
+
+                    var newX = startX - (tiledMode && yIndex % 2 == 0 ? tileSize.x / 2 : 0);
+                    var newY = startY;
                     targetPoints = [
-                        new Vector2(self.#convertToGrid(topLeft.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * (yIndex - 1), startY, tileSize.y, false)),
-                        new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * (yIndex - 1), startY, tileSize.y, false)),
-                        new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * yIndex, startY, tileSize.y, false)),
-                        new Vector2(self.#convertToGrid(topLeft.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * yIndex, startY, tileSize.y, false)),
+                        new Vector2(self.#convertToGrid(topLeft.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * (yIndex - 1), newY, tileSize.y, false)),
+                        new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * (yIndex - 1), newY, tileSize.y, false)),
+                        new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * yIndex, newY, tileSize.y, false)),
+                        new Vector2(self.#convertToGrid(topLeft.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * yIndex, newY, tileSize.y, false)),
                     ];
                 }
                 else if(targetPoints[0].y + tileSize.y >= newBoundingBox.y + newBoundingBox.h){

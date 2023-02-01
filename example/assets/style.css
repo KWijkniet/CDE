@@ -1,12 +1,15 @@
 :root{
     --grid-background: rgb(255, 255, 255);
     --grid-lines: rgba(0, 0, 0, 100);
+
     --shape-allowed: rgba(255, 255, 255, 128);
     --shape-forbidden: rgba(255, 0, 0, 128);
-    --tile-background-terracotta: rgba(179, 86, 66, 150);
-    --tile-background-zwart: rgba(100, 100, 100, 50);
-    --tile-background-terracotta-dummy: rgba(179, 86, 66, 200);
-    --tile-background-zwart-dummy: rgba(0, 0, 0, 50);
+
+    --tile-background-zwart: rgba(225, 225, 225, 100);
+    --tile-background-zwart-dummy: rgba(55, 55, 55, 100);
+
+    --tile-background-terracotta: rgba(208, 154, 142, 100);
+    --tile-background-terracotta-dummy: rgba(195, 122, 107, 100);
 }
 
 * {

@@ -82,30 +82,21 @@
                 </button>
             </div>
         </li>
+        <!-- SelectTile -->
+        <li class="nav-item pointer" id="tileTool">
+            <div class="dropdown">
+                <button class="btn btn-secondary" type="button" onclick="toggleTileTool()">
+                    <i class="fa-solid fa-magnifying-glass"></i><br />
+                    <span class="nav-title">Select Tile</span>
+                </button>
+            </div>
+        </li>
         <!-- Settings -->
         <li class="nav-item pointer">
             <div class="dropdown">
                 <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" onclick="cursor.isDisabled = true;">
                     <i class="fa-solid fa-cog"></i><br />
                     <span class="nav-title">Settings</span>
-                </button>
-            </div>
-        </li>
-        
-        <!-- TMP -->
-        <li class="nav-item pointer">
-            <div class="dropdown">
-                <button class="btn btn-secondary" type="button" onclick="console.log(exportData())">
-                    <i class="fa-solid fa-cog"></i><br />
-                    <span class="nav-title">Export</span>
-                </button>
-            </div>
-        </li>
-        <li class="nav-item pointer">
-            <div class="dropdown">
-                <button class="btn btn-secondary" type="button" onclick="importData()">
-                    <i class="fa-solid fa-cog"></i><br />
-                    <span class="nav-title">Import</span>
                 </button>
             </div>
         </li>
@@ -156,7 +147,8 @@
                                     </div>
                                 </div>
                             </div>
-                        </div><div class="accordion-item">
+                        </div>
+                        <div class="accordion-item">
                             <h2 class="accordion-header" id="Dakrand">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo"
                                     aria-expanded="false" aria-controls="collapseTwo">
@@ -246,6 +238,12 @@
                                                 <input class="form-control" data-target="other" style="text-align: left; display: inline-block; width: 75px; margin-top: 0px;" type="number" value="5" id="objectMargin">
                                             </label>
                                         </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="0" id="dummy">
+                                            <label class="form-check-label" for="dummy">
+                                                Paspaneel
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -303,6 +301,16 @@
             </div>
         </div>
     </div>
+    
+    <script>
+        onSetupComplete = () => {
+            importData({"shapes":[{"id":"4fc3-dfe0-972-c393","color":{"r":255,"g":255,"b":255,"a":128},"showData":true,"isAllowed":true,"isGenerated":false,"vertices":[{"x":1100,"y":200},{"x":1100,"y":700},{"x":1600,"y":700},{"x":1600,"y":200}],"lineMargins":["dummy|0","dummy|0","dummy|0","dummy|0"],"pos":{"x":1075,"y":175}}/*,{"id":"4420-b902-4a6-e5b1","color":{"r":255,"g":255,"b":255,"a":128},"showData":true,"isAllowed":true,"isGenerated":false,"vertices":[{"x":2300,"y":700},{"x":1800,"y":700},{"x":1800,"y":200},{"x":2300,"y":200}],"lineMargins":["daknok1|5","default|5","dummy|0","default|5"],"pos":{"x":1775,"y":175}}*/],"generator":{"tiles":{"Alucobond":[],"X-Roof":[],"Ventilatiekap":[]},"width":0,"height":0,"tile_width":0,"tile_height":0,"dummy_width":0,"dummy_height":0},"useRowOffset":false,"tileType":"Zwart","dakvoetprofielen":"","vogelschroten":""});
+        }
+    </script>
+
+    <div style="display: none">
+    </div>
+
 </body>
 <script>
     // importData({ "shapes": [{ "id": "686a-0f96-b19-cf07", "color": { "r": 255, "g": 0, "b": 0, "a": 255 }, "showData": true, "isAllowed": false, "isGenerated": false, "vertices": [{ "x": 900, "y": 500 }, { "x": 1200, "y": 500 }, { "x": 1500, "y": 700 }, { "x": 1500, "y": 1000 }, { "x": 1100, "y": 1000 }, { "x": 900, "y": 800 }], "lineMargins": ["daknok3|20", "daknok3|20", "daknok3|20", "daknok3|20", "daknok3|20", "daknok3|20"], "pos": { "x": 875, "y": 475 } }], "generator": { "tiles": { "X-Roof": 0, "Alucobond": 0 }, "width": 0, "height": 0, "tile_width": 0, "tile_height": 0, "dummy_width": 0, "dummy_height": 0 }, "useRowOffset": false, "tileType": "Zwart", "dakvoetprofielen": "", "vogelschroten": "" });

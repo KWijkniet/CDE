@@ -9,7 +9,8 @@ export default class Renderer {
     constructor() {
         Renderer.instance = this;
         this.#shapes = [];
-        // R
+        
+        // // R
         // this.add(new Shape([
         //     new Vector2(300, 200),
         //     new Vector2(300, 1200),
@@ -251,7 +252,10 @@ export default class Renderer {
 
             shape.update();
         }
+    }
 
+    updateText() {
+        var keys = Object.keys(this.#shapes);
         for (let i = 0; i < keys.length; i++) {
             const key = keys[i];
             var shape = this.#shapes[key];
@@ -274,10 +278,10 @@ export default class Renderer {
         }
     }
 
-    replace(target, value){
+    replace(value){
         for (let i = 0; i < this.#shapes.length; i++) {
             const shape = this.#shapes[i];
-            if (shape.getId() == target.getId()){
+            if (shape.getId() == value.getId()){
                 this.#shapes[i] = value;
                 return;
             }

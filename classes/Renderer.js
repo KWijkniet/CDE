@@ -10,26 +10,26 @@ export default class Renderer {
         Renderer.instance = this;
         this.#shapes = [];
         // R
-        this.add(new Shape([
-            new Vector2(300, 200),
-            new Vector2(300, 1200),
-            new Vector2(500, 1200),
-            new Vector2(500, 700),
-            new Vector2(700, 1200),
-            new Vector2(900, 1200),
-            new Vector2(900, 1000),
-            new Vector2(700, 600),
-            new Vector2(900, 600),
-            new Vector2(900, 200),
-        ], new Color(null, 255, 255, 255, 255)));
-        var forbidden = new Shape([
-            new Vector2(500, 300),
-            new Vector2(500, 500),
-            new Vector2(700, 500),
-            new Vector2(700, 300),
-        ], new Color(null, 255, 0, 0, 255));
-        forbidden.isAllowed = false;
-        this.add(forbidden);
+        // this.add(new Shape([
+        //     new Vector2(300, 200),
+        //     new Vector2(300, 1200),
+        //     new Vector2(500, 1200),
+        //     new Vector2(500, 700),
+        //     new Vector2(700, 1200),
+        //     new Vector2(900, 1200),
+        //     new Vector2(900, 1000),
+        //     new Vector2(700, 600),
+        //     new Vector2(900, 600),
+        //     new Vector2(900, 200),
+        // ], new Color(null, 255, 255, 255, 255)));
+        // var forbidden = new Shape([
+        //     new Vector2(500, 300),
+        //     new Vector2(500, 500),
+        //     new Vector2(700, 500),
+        //     new Vector2(700, 300),
+        // ], new Color(null, 255, 0, 0, 255));
+        // forbidden.isAllowed = false;
+        // this.add(forbidden);
 
         // // E
         // this.add(new Shape([
@@ -64,20 +64,20 @@ export default class Renderer {
         // ], new Color(null, 255, 255, 255, 255)));
 
         // // M
-        this.add(new Shape([
-            new Vector2(800, 1300),
-            new Vector2(700, 1700),
-            new Vector2(600, 1300),
-            new Vector2(300, 1300),
-            new Vector2(300, 2300),
-            new Vector2(500, 2300),
-            new Vector2(500, 1500),
-            new Vector2(700, 2300),
-            new Vector2(900, 1500),
-            new Vector2(900, 2300),
-            new Vector2(1100, 2300),
-            new Vector2(1100, 1300),
-        ], new Color(null, 255, 255, 255, 255)));
+        // this.add(new Shape([
+        //     new Vector2(800, 1300),
+        //     new Vector2(700, 1700),
+        //     new Vector2(600, 1300),
+        //     new Vector2(300, 1300),
+        //     new Vector2(300, 2300),
+        //     new Vector2(500, 2300),
+        //     new Vector2(500, 1500),
+        //     new Vector2(700, 2300),
+        //     new Vector2(900, 1500),
+        //     new Vector2(900, 2300),
+        //     new Vector2(1100, 2300),
+        //     new Vector2(1100, 1300),
+        // ], new Color(null, 255, 255, 255, 255)));
 
         // // E
         // this.add(new Shape([
@@ -229,6 +229,17 @@ export default class Renderer {
         //     new Vector2(900, 800),
         // ], new Color(null, 255, 255, 255, 50)));
         
+        // Outset test
+        var forbidden = new Shape([
+            new Vector2(900, 500),
+            new Vector2(1200, 500),
+            new Vector2(1500, 700),
+            new Vector2(1500, 1000),
+            new Vector2(1100, 1000),
+            new Vector2(900, 800),
+        ], new Color(null, 255, 0, 0, 255));
+        forbidden.isAllowed = false;
+        this.add(forbidden);
 
     }
 

@@ -30,7 +30,7 @@ export default class Shape {
         this.#vertices = vertices;
         this.lineMargins = [];
         for (let i = 0; i < vertices.length; i++) {
-            this.lineMargins.push("default|5");
+            this.lineMargins.push("default|25");
         }
         
         this.#generate();

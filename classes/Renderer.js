@@ -231,16 +231,16 @@ export default class Renderer {
         // ], new Color(null, 255, 255, 255, 50)));
         
         // Outset test
-        var forbidden = new Shape([
-            new Vector2(900, 500),
-            new Vector2(1200, 500),
-            new Vector2(1500, 700),
-            new Vector2(1500, 1000),
-            new Vector2(1100, 1000),
-            new Vector2(900, 800),
-        ], new Color(null, 255, 0, 0, 255));
-        forbidden.isAllowed = false;
-        this.add(forbidden);
+        // var forbidden = new Shape([
+        //     new Vector2(900, 500),
+        //     new Vector2(1200, 500),
+        //     new Vector2(1500, 700),
+        //     new Vector2(1500, 1000),
+        //     new Vector2(1100, 1000),
+        //     new Vector2(900, 800),
+        // ], new Color(null, 255, 0, 0, 255));
+        // forbidden.isAllowed = false;
+        // this.add(forbidden);
 
     }
 

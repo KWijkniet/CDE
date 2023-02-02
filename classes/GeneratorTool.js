@@ -1065,86 +1065,86 @@ export default class GeneratorTool {
             }, delay);
         });
 
-        var findStartingPos = (x, y, targetPoints) => {
+        // var findStartingPos = (x, y, targetPoints) => {
 
-            if (!this.IsInside(insetPoints, x, y)) {
-                var pos = new Vector2(x, y).add(Vector2.left().multiply(new Vector2(10, 10)));
-                var horizontal = self.#raycast([inset], pos, Vector2.left(), boundingBox.w);
+        //     if (!this.IsInside(insetPoints, x, y)) {
+        //         var pos = new Vector2(x, y).add(Vector2.left().multiply(new Vector2(10, 10)));
+        //         var horizontal = self.#raycast([inset], pos, Vector2.left(), boundingBox.w);
 
-                // self.#buffer.fill(0);
-                // self.#buffer.circle(pos.x, pos.y, 5);
-                if (horizontal) {
-                    // horizontal.add(Vector2.right());
-                    // self.#buffer.fill(255, 0, 0);
-                    // self.#buffer.circle(horizontal.x, horizontal.y, 5);
-                    if (!this.IsInside(insetPoints, horizontal.x, horizontal.y)) {
+        //         // self.#buffer.fill(0);
+        //         // self.#buffer.circle(pos.x, pos.y, 5);
+        //         if (horizontal) {
+        //             // horizontal.add(Vector2.right());
+        //             // self.#buffer.fill(255, 0, 0);
+        //             // self.#buffer.circle(horizontal.x, horizontal.y, 5);
+        //             if (!this.IsInside(insetPoints, horizontal.x, horizontal.y)) {
 
-                        pos = horizontal.getCopy().add(Vector2.down().multiply(new Vector2(10, 10)));
-                        var vertical = self.#raycast([inset], pos, Vector2.down(), boundingBox.h);
+        //                 pos = horizontal.getCopy().add(Vector2.down().multiply(new Vector2(10, 10)));
+        //                 var vertical = self.#raycast([inset], pos, Vector2.down(), boundingBox.h);
 
-                        // self.#buffer.fill(0);
-                        // self.#buffer.circle(pos.x, pos.y, 5);
-                        if (vertical) {
-                            // vertical.add(Vector2.up());
-                            // self.#buffer.fill(255, 0, 0);
-                            // self.#buffer.circle(vertical.x, vertical.y, 5);
-                            // console.log("Is inside shape (Vertical)");
-                            return vertical.getCopy();
-                        } else {
-                            // console.log("Could not collide (Vertical)");
-                        }
-                    } else {
-                        // console.log("Is inside shape (Horizontal)");
-                        return horizontal.getCopy();
-                    }
-                } else {
-                    // console.log("Could not collide (Horizontal)");
-                }
-            } else {
-                // console.log("Is inside shape!");
-                return new Vector2(x, y);
-            }
+        //                 // self.#buffer.fill(0);
+        //                 // self.#buffer.circle(pos.x, pos.y, 5);
+        //                 if (vertical) {
+        //                     // vertical.add(Vector2.up());
+        //                     // self.#buffer.fill(255, 0, 0);
+        //                     // self.#buffer.circle(vertical.x, vertical.y, 5);
+        //                     // console.log("Is inside shape (Vertical)");
+        //                     return vertical.getCopy();
+        //                 } else {
+        //                     // console.log("Could not collide (Vertical)");
+        //                 }
+        //             } else {
+        //                 // console.log("Is inside shape (Horizontal)");
+        //                 return horizontal.getCopy();
+        //             }
+        //         } else {
+        //             // console.log("Could not collide (Horizontal)");
+        //         }
+        //     } else {
+        //         // console.log("Is inside shape!");
+        //         return new Vector2(x, y);
+        //     }
 
-            return null;
-        }
+        //     return null;
+        // }
 
-        var validateLocation = (x, y, targetPoints) => {
-            var isValid = false;
-            for (let i = 0; i < targetPoints.length; i++) {
-                const vc = targetPoints[i];
+        // var validateLocation = (x, y, targetPoints) => {
+        //     var isValid = false;
+        //     for (let i = 0; i < targetPoints.length; i++) {
+        //         const vc = targetPoints[i];
 
-                if (self.IsInside(insetPoints, vc.x, vc.y)) {
-                    if(outsets.length <= 0){
-                        isValid = true;
-                    }
-                    else {
-                        for (let r = 0; r < outsets.length; r++) {
-                            const outset = outsets[r];
-                            const outsetPoints = outset.getVertices();
+        //         if (self.IsInside(insetPoints, vc.x, vc.y)) {
+        //             if(outsets.length <= 0){
+        //                 isValid = true;
+        //             }
+        //             else {
+        //                 for (let r = 0; r < outsets.length; r++) {
+        //                     const outset = outsets[r];
+        //                     const outsetPoints = outset.getVertices();
 
-                            if (!self.IsInside(outsetPoints, vc.x, vc.y)) {
-                                isValid = true;
-                            }
-                        }
-                    }
-                }
-            }
+        //                     if (!self.IsInside(outsetPoints, vc.x, vc.y)) {
+        //                         isValid = true;
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
             
-            if (isValid) {
-                return new Vector2(x, y);
-            }
+        //     if (isValid) {
+        //         return new Vector2(x, y);
+        //     }
             
-            // var horizontal = self.#raycast([inset], new Vector2(x, y), Vector2.left(), Vector2.distance(targetPoints[0], targetPoints[1]));
-            // if(horizontal != null){
-            //     return horizontal;
-            // }
-            return null;
-        }
+        //     // var horizontal = self.#raycast([inset], new Vector2(x, y), Vector2.left(), Vector2.distance(targetPoints[0], targetPoints[1]));
+        //     // if(horizontal != null){
+        //     //     return horizontal;
+        //     // }
+        //     return null;
+        // }
 
         var syncedLoop = async (x, y) => {
             var startX = null;
             var startY = null;
-            var delay = 100;
+            var delay = 1;
             var newInsetPoints = Vector2.copyAll(insetPoints);
             
             // PHASE 1
@@ -1363,7 +1363,6 @@ export default class GeneratorTool {
             var xIndex = 1;
             var yIndex = 1;
             var max = 999;
-            delay = 1000;
             while (true) {
                 for (let r = 0; r < targetPoints.length; r++) {
                     self.#buffer.fill(255, 0, 0);

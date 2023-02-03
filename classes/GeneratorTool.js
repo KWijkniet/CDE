@@ -51,7 +51,7 @@ export default class GeneratorTool {
         console.log('Generating...');
         var insets = [];
         var outsets = [];
-        var hideVisuals = false;
+        var hideVisuals = true;
 
         this.#buffer.clear();
         var shapes = this.#renderer.getAll();
@@ -436,7 +436,7 @@ export default class GeneratorTool {
         var outsets = [];
         this.#buffer.beginShape();
         var points = shape.getVertices();
-        var hideVisuals = false;
+        var hideVisuals = true;
         this.#buffer.push();
 
         for (let i = 0; i < points.length; i++) {
@@ -768,35 +768,58 @@ export default class GeneratorTool {
                 var startIndex, endIndex;
                 var amount = 0;
                 
+                if(count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63){
+                    print(count);    print(targetPoints);        
+                    
+                }
                 //validate target points
                 for (let i = 0; i < targetPoints.length; i++) {
+                    if(count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63){    
+                        this.#buffer.circle(targetPoints[i].x, targetPoints[i].y, 10);
+                    
+                    }
+                    
                     const vp = targetPoints[i - 1 >= 0 ? i - 1 : targetPoints.length - 1];
                     const vc = targetPoints[i];
                     const vn = targetPoints[i + 1 <= targetPoints.length - 1 ? i + 1 : 0];
 
                     //Point outside of shape
                     if (!self.IsInside(insetPoints, vc.x, vc.y) || self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) {
-                        isDummy = true;
+                        // isDummy = true;  
                         //Find a collision between current vertice and the previous vertice
                         var dirP = vp.getCopy().remove(vc).normalized();
-                        var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc), false);
+                        var toPrev = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc), true);
                         
                         //Find a collision between current vertice and the next vertice
                         var dirN = vn.getCopy().remove(vc).normalized();
-                        var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), false);
+                        var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), true);
 
+                        var hasPlaced = false;
                         //Push collision point into the result array
                         if (toPrev != null) {
                             // self.#buffer.text('x', toPrev.x - 3, toPrev.y + 3);
                             result.push(toPrev);
+                            hasPlaced = true;
                         }
 
                         //Include all inset points that are inside the tile
                         for (let r = 0; r < insetPoints.length; r++) {
                             const inset = insetPoints[r];
-
+                            
                             if (self.IsInside(targetPoints, inset.x, inset.y)) {
+                                if(count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63){
+                            print('penis ' + count);
+                            // print(targetPoints.length);
+                            // print(targetPoints[i]);
+                        }
                                 result.push(inset);
+                                hasPlaced = true;
+                            }else {
+                                if(count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63){    
+                        this.#buffer.circle(targetPoints[i].x, targetPoints[i].y, 10);
+                        print(count + " - i  = " + i + "    penis")
+                    
+                    }
                             }
                         }
 
@@ -810,6 +833,7 @@ export default class GeneratorTool {
 
                                 if (self.IsInside(targetPoints, outsetPoint.x, outsetPoint.y)) {
                                     result.push(outsetPoint);
+                                    hasPlaced = true;
                                 }
                             }
                         }
@@ -818,6 +842,12 @@ export default class GeneratorTool {
                         if (toNext != null) {
                             // self.#buffer.text('x', toNext.x - 3, toNext.y + 3);
                             result.push(toNext);
+                            hasPlaced = true;
+                        }
+
+                        if (!hasPlaced){
+                            result.push(vc);
+                            // isDummy = true;
                         }
                     }
                     else {
@@ -829,201 +859,114 @@ export default class GeneratorTool {
                 //TODO: If a raycast has more then 1 point then you need to seperate the 2 parts into different tiles
                 //TODO: raycast up a tiny bit to detect if this is the first tile on the Y axis. (wont work)
                 var tmp = [];
-                for (let i = 0; i < result.length; i++) {
-                    const vc = result[i];
-                    const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
-
-                    //Find a collision between current vertice and the next vertice
-                    var dirN = vn.getCopy().remove(vc).normalized();
-                    var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), true);
-                    var toCurr = self.#raycast([inset].concat(outsets), vn, new Vector2(dirN.x, dirN.y), Vector2.distance(vn, vc), true);
-                    if(count == 49){
-                        if (toNext !=null ) {
-                            this.#buffer.fill(0,255,255); // BLAUW
-                            this.#buffer.circle(toNext.x, toNext.y, 10);
-                        }
-                        if (toCurr !=null ) {
-                            
-                            this.#buffer.fill(255,255,0); // GEEEL
-                            this.#buffer.circle(toCurr.x, toCurr.y, 10);
-                        }
-
-                    }
-                    
-                    // tmp.push(vc);
-                    self.checkAndPush(tmp, vc, i,count);
-                    
-                    //Validate found collisions
-                    // if ((toNext != null && (Vector2.distance(toNext, vc) <= 2 || Vector2.distance(toNext, vn) <= 2)) || (toCurr != null && (Vector2.distance(toCurr, vn) <= 2 || Vector2.distance(toCurr, vc) <= 2))) {
-                    //     continue;
-                    // }
-                    
-                    if (toNext != null) {
-                        isDummy = true;
-                        // tmp.push(toNext);
-                        self.checkAndPush(tmp, toNext, i,count);
-                    }
-
-                    if(toNext != null && toCurr != null){
-                        if(!toCurr.equals(toNext) && Vector2.distance(toNext, toCurr) >= 2){
-                            if(count == 64){
-
-                            }
-                            if(startIndex == null)  {
-                                startIndex = tmp.length-1;
-                            }
-                            // // If StartIndex is set, set End Index
-                            else if(startIndex != null && endIndex == null) {
-                                endIndex = tmp.length-1;
-                                needToSplit= true;
-                            }
-                            
-                        }
-
-                        //Include all inset points that are inside the tile
-                        for (let r = 0; r < insetPoints.length; r++) {
-                            const inset = insetPoints[r];
-
-                            if (self.IsInside(result, inset.x, inset.y)) {
-                                // tmp.push(inset);
-                                self.checkAndPush(tmp, inset, i,count);
-                            }
-                        }
-
-                        //Include all outset points that are inside the tile
-                        for (let r = 0; r < outsets.length; r++) {
-                            const outset = outsets[r];
-                            const outsetPoints = outset.getVertices();
-
-                            for (let b = 0; b < outsetPoints.length; b++) {
-                                const outsetPoint = outsetPoints[b];
-
-                                if (self.IsInside(result, outsetPoint.x, outsetPoint.y)) {
-                                    // tmp.push(outsetPoint);
-                                    self.checkAndPush(tmp, outsetPoint, i,count);
-                                }
-                            }
-                        }
-
-                        
-                    }
-
-                    if (toCurr != null) {
-                        isDummy = true;
-                        // tmp.push(toCurr);
-                        self.checkAndPush(tmp, toCurr, i,count);
-                    }
-                    if(toNext != null && toCurr != null){
-                        
-                    }
-                }
-                
-
-                // Detect which tiles need to be split + missing vector2 fix
-                // for (let i = result.length - 1; i >= 0; i--) {
                 // for (let i = 0; i < result.length; i++) {
                 //     const vc = result[i];
-                //     // const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
-                //     const vn = result[i - 1 >= 0 ? i - 1 : result.length - 1];
+                //     const vn = result[i + 1 <= result.length - 1 ? i + 1 : 0];
 
-                //     var center = new Vector2((vc.x + vn.x) / 2, (vc.y + vn.y) / 2);
-                //     var centerToVc = new Vector2((vc.x + center.x) / 2, (vc.y + center.y) / 2);
-                //     var centerToVn = new Vector2((center.x + vn.x) / 2, (center.y + vn.y) / 2);
-
+                //     //Find a collision between current vertice and the next vertice
                 //     var dirN = vn.getCopy().remove(vc).normalized();
                 //     var toNext = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), true);
                 //     var toCurr = self.#raycast([inset].concat(outsets), vn, new Vector2(dirN.x, dirN.y), Vector2.distance(vn, vc), true);
+                //     if(count == 49){
+                //         if (toNext !=null ) {
+                //             this.#buffer.fill(0,255,255); // BLAUW
+                //             this.#buffer.circle(toNext.x, toNext.y, 10);
+                //         }
+                //         if (toCurr !=null ) {
+                            
+                //             this.#buffer.fill(255,255,0); // GEEEL
+                //             this.#buffer.circle(toCurr.x, toCurr.y, 10);
+                //         }
 
-                //     if(count == 29 || count == 39 || count == 49 || count == 34 || count == 44 || count == 54 || count == 64 || count == 72){
-                //     //     this.#buffer.circle(vc.x, vc.y, 10);
-                     
-                        
+                //     }
+                    
+                //     // tmp.push(vc);
+                //     self.checkAndPush(tmp, vc, i,count);
+                    
+                //     //Validate found collisions
+                //     // if ((toNext != null && (Vector2.distance(toNext, vc) <= 2 || Vector2.distance(toNext, vn) <= 2)) || (toCurr != null && (Vector2.distance(toCurr, vn) <= 2 || Vector2.distance(toCurr, vc) <= 2))) {
+                //     //     continue;
                 //     // }
                     
-                //     if (!self.IsInside(insetPoints, center.x, center.y) || !self.IsInside(insetPoints, centerToVc.x, centerToVc.y) || !self.IsInside(insetPoints, centerToVn.x, centerToVn.y)){
-                //         this.#buffer.fill(255, 255, 85);
-                //         // if (!self.IsInside(insetPoints, center.x, center.y)) this.#buffer.text('1', center.x, center.y);
-                //         // if (!self.IsInside(insetPoints, centerToVc.x, centerToVc.y))this.#buffer.text('2', centerToVc.x, centerToVc.y);
-                //         // if (!self.IsInside(insetPoints, centerToVn.x, centerToVn.y))this.#buffer.text('3', centerToVn.x, centerToVn.y);
-
-                //         if(toNext != null){
-                //             // this.#buffer.circle(toNext.x, toNext.y, 10);
-                //             // check if exists already, if not add to result
-                //             self.checkAndPush(result,toNext,i);
-                //         }
-
-                //         if(toCurr != null){
-                //             // this.#buffer.circle(toCurr.x, toCurr.y, 10);
-                //             // check if exists already, if not add to result
-                //             self.checkAndPush(result,toCurr,i);
-                //         }
-
-                //         // Set Start Index, if StartIndex is null
-                //         if(startIndex == null)  {
-                //             startIndex = i;
-                //         }
-                //         // // If StartIndex is set, set End Index
-                //         else if(startIndex != null && endIndex == null) {
-                //             endIndex = i;
-                //         }
-                        
-                //         if(startIndex != null && endIndex != null) needToSplit = true;
-                //     } else {
-                //         if(startIndex != null && endIndex == null) amount++;
+                //     if (toNext != null) {
+                //         isDummy = true;
+                //         // tmp.push(toNext);
+                //         self.checkAndPush(tmp, toNext, i,count);
                 //     }
 
-                //     // for (let r = 0; r < outsets.length; r++) {
-                //     //     const outset = outsets[r];
-                //     //     const outsetPoints = outset.getVertices();
+                //     if(toNext != null && toCurr != null){
+                //         if(!toCurr.equals(toNext) && Vector2.distance(toNext, toCurr) >= 2){
+                //             if(count == 64){
 
-                //     //     if (self.IsInside(outsetPoints, center.x, center.y) || self.IsInside(outsetPoints, centerToVc.x, centerToVc.y) || self.IsInside(outsetPoints, centerToVn.x, centerToVn.y)) {
-                //     //          this.#buffer.fill(255, 255, 85);
-                //     //         if (self.IsInside(outsetPoints, center.x, center.y)) this.#buffer.text('1', center.x, center.y);
-                //     //         if (self.IsInside(outsetPoints, centerToVc.x, centerToVc.y))this.#buffer.text('2', centerToVc.x, centerToVc.y);
-                //     //         if (self.IsInside(outsetPoints, centerToVn.x, centerToVn.y))this.#buffer.text('3', centerToVn.x, centerToVn.y);
-
-                //     //         if(toNext != null){
-                //     //             // this.#buffer.circle(toNext.x, toNext.y, 10);
-                //     //             // check if exists already, if not add to result
-                //     //             self.checkAndPush(result,toNext,i);
-                //     //         }
-
-                //     //         if(toCurr != null){
-                //     //             // this.#buffer.circle(toCurr.x, toCurr.y, 10);
-                //     //             // check if exists already, if not add to result
-                //     //             self.checkAndPush(result,toCurr,i);
-                //     //         }
-                //     //         //  Set Start Index, if StartIndex is null
-                //     //         if(startIndex == null)  {
-                //     //             startIndex = i;
-                //     //         }
-                //     //         // // If StartIndex is set, set End Index
-                //     //         else if(startIndex != null && endIndex == null) {
-                //     //             endIndex = amount + 1;
-                //     //         }
+                //             }
+                //             if(startIndex == null)  {
+                //                 startIndex = tmp.length-1;
+                //             }
+                //             // // If StartIndex is set, set End Index
+                //             else if(startIndex != null && endIndex == null) {
+                //                 endIndex = tmp.length-1;
+                //                 // needToSplit= true;
+                //             }
                             
-                //     //         if(startIndex != null && endIndex != null) needToSplit = true;
-                //     //     } else {
-                //     //         if(startIndex != null && endIndex == null) amount++;
-                //     //     }
+                //         }
+
+                //         //Include all inset points that are inside the tile
+                //         for (let r = 0; r < insetPoints.length; r++) {
+                //             const inset = insetPoints[r];
+
+                //             if (self.IsInside(result, inset.x, inset.y)) {
+                //                 // tmp.push(inset);
+                //                 self.checkAndPush(tmp, inset, i,count);
+                //             }
+                //         }
+
+                //         //Include all outset points that are inside the tile
+                //         for (let r = 0; r < outsets.length; r++) {
+                //             const outset = outsets[r];
+                //             const outsetPoints = outset.getVertices();
+
+                //             for (let b = 0; b < outsetPoints.length; b++) {
+                //                 const outsetPoint = outsetPoints[b];
+
+                //                 if (self.IsInside(result, outsetPoint.x, outsetPoint.y)) {
+                //                     // tmp.push(outsetPoint);
+                //                     self.checkAndPush(tmp, outsetPoint, i,count);
+                //                 }
+                //             }
+                //         }
+
+                        
+                //     }
+
+                //     if (toCurr != null) {
+                //         isDummy = true;
+                //         // tmp.push(toCurr);
+                //         self.checkAndPush(tmp, toCurr, i,count);
+                //     }
+                //     if(toNext != null && toCurr != null){
+                        
                 //     }
                 // }
                 
-                
-                 if(count == 29 || count == 39 || count == 49 || count == 34 || count == 44 || count == 54 || count == 64 || count == 72){
-                //     //     this.#buffer.circle(vc.x, vc.y, 10);
-                    // print(count);
-                    // print('tmp');
-                    // print(tmp);
-                    // print('result');
-                    // print(result);
-                    for (let i = 0; i < result.length; i++) {
-                        // print(Vector2.distance(result[i], result[i + 1 <= result.length - 1 ? i + 1 : 0]));
-                        // this.#buffer.circle(result[i].x, result[i].y, 5);
-                    }
+                // if(count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63){
+                // //     //     this.#buffer.circle(vc.x, vc.y, 10);
+                //     print(count);
+                //     print('tmp');
+                //     print(tmp);
+                //     print('result');
+                //     print(result);
+                //     for (let i = 0; i < result.length; i++) {
+                //         // print(Vector2.distance(result[i], result[i + 1 <= result.length - 1 ? i + 1 : 0]));
+                //         this.#buffer.circle(result[i].x, result[i].y, 5);
+                //     }
                         
+                // }
+                // result = tmp;
+
+                if(count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63){
+                    print(count);    print(result);        
+                    
                 }
-                result = tmp;
 
                 // Actual splitting of a tile
                 if(needToSplit){
@@ -1046,13 +989,14 @@ export default class GeneratorTool {
                     // print(tile2);
                     // print('__________________________');
                     // Place Tiles
+                    
                     self.#createTile(tile1, isFirstTile ? true : isDummy);
                     result = tile2;
                 }
 
                 // Tile count
-                this.#buffer.fill(255, 255, 85);
-                // this.#buffer.text(count, result[0].x, result[0].y);
+                this.#buffer.fill(255, 0    , 0   );
+                this.#buffer.text(count, result[0].x, result[0].y);
                 
                 //create tile
                 var tile = self.#createTile(result, isFirstTile ? true : isDummy);
@@ -1064,82 +1008,6 @@ export default class GeneratorTool {
                 resolve(tile);
             }, delay);
         });
-
-        // var findStartingPos = (x, y, targetPoints) => {
-
-        //     if (!this.IsInside(insetPoints, x, y)) {
-        //         var pos = new Vector2(x, y).add(Vector2.left().multiply(new Vector2(10, 10)));
-        //         var horizontal = self.#raycast([inset], pos, Vector2.left(), boundingBox.w);
-
-        //         // self.#buffer.fill(0);
-        //         // self.#buffer.circle(pos.x, pos.y, 5);
-        //         if (horizontal) {
-        //             // horizontal.add(Vector2.right());
-        //             // self.#buffer.fill(255, 0, 0);
-        //             // self.#buffer.circle(horizontal.x, horizontal.y, 5);
-        //             if (!this.IsInside(insetPoints, horizontal.x, horizontal.y)) {
-
-        //                 pos = horizontal.getCopy().add(Vector2.down().multiply(new Vector2(10, 10)));
-        //                 var vertical = self.#raycast([inset], pos, Vector2.down(), boundingBox.h);
-
-        //                 // self.#buffer.fill(0);
-        //                 // self.#buffer.circle(pos.x, pos.y, 5);
-        //                 if (vertical) {
-        //                     // vertical.add(Vector2.up());
-        //                     // self.#buffer.fill(255, 0, 0);
-        //                     // self.#buffer.circle(vertical.x, vertical.y, 5);
-        //                     // console.log("Is inside shape (Vertical)");
-        //                     return vertical.getCopy();
-        //                 } else {
-        //                     // console.log("Could not collide (Vertical)");
-        //                 }
-        //             } else {
-        //                 // console.log("Is inside shape (Horizontal)");
-        //                 return horizontal.getCopy();
-        //             }
-        //         } else {
-        //             // console.log("Could not collide (Horizontal)");
-        //         }
-        //     } else {
-        //         // console.log("Is inside shape!");
-        //         return new Vector2(x, y);
-        //     }
-
-        //     return null;
-        // }
-
-        // var validateLocation = (x, y, targetPoints) => {
-        //     var isValid = false;
-        //     for (let i = 0; i < targetPoints.length; i++) {
-        //         const vc = targetPoints[i];
-
-        //         if (self.IsInside(insetPoints, vc.x, vc.y)) {
-        //             if(outsets.length <= 0){
-        //                 isValid = true;
-        //             }
-        //             else {
-        //                 for (let r = 0; r < outsets.length; r++) {
-        //                     const outset = outsets[r];
-        //                     const outsetPoints = outset.getVertices();
-
-        //                     if (!self.IsInside(outsetPoints, vc.x, vc.y)) {
-        //                         isValid = true;
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-            
-        //     if (isValid) {
-        //         return new Vector2(x, y);
-        //     }
-            
-        //     // var horizontal = self.#raycast([inset], new Vector2(x, y), Vector2.left(), Vector2.distance(targetPoints[0], targetPoints[1]));
-        //     // if(horizontal != null){
-        //     //     return horizontal;
-        //     // }
-        //     return null;
-        // }
 
         var syncedLoop = async (x, y) => {
             var startX = null;
@@ -1365,8 +1233,10 @@ export default class GeneratorTool {
             var max = 999;
             while (true) {
                 for (let r = 0; r < targetPoints.length; r++) {
-                    self.#buffer.fill(255, 0, 0);
-                    self.#buffer.circle(targetPoints[r].x, targetPoints[r].y, 10);
+                    if(count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63){
+                        // self.#buffer.fill(255, 0, 0);
+                        // self.#buffer.circle(targetPoints[r].x, targetPoints[r].y, 10);
+                    }
                 }
                 
                 //Create tile
@@ -1763,8 +1633,10 @@ export default class GeneratorTool {
     }
 
     IsInside(vertices, x, y){
-        if (Collision.polygonPoint(vertices, x, y)) {
-            return true;
+        var isInside = false;
+        
+        if(Collision.polygonPoint(vertices, x, y)){
+            isInside = true;
         }
 
         for (let i = 0; i < vertices.length; i++) {
@@ -1772,14 +1644,30 @@ export default class GeneratorTool {
             const vn = vertices[i + 1 < vertices.length - 1 ? i + 1 : 0];
 
             if (Collision.linePoint(vc.x, vc.y, vn.x, vn.y, x, y)) {
-                if (y == 406.91537822811176 && x == 1907.2847231827582) {
-                    console.log("Inside");
-                }
-                return true;
+                isInside = true;
+                break;
             }
         }
 
-        return false;
+        return isInside;
+
+        // if (Collision.polygonPoint(vertices, x, y)) {
+        //     return true;
+        // }
+
+        // for (let i = 0; i < vertices.length; i++) {
+        //     const vc = vertices[i];
+        //     const vn = vertices[i + 1 < vertices.length - 1 ? i + 1 : 0];
+
+        //     if (Collision.linePoint(vc.x, vc.y, vn.x, vn.y, x, y)) {
+        //         if (y == 406.91537822811176 && x == 1907.2847231827582) {
+        //             console.log("Inside");
+        //         }
+        //         return true;
+        //     }
+        // }
+
+        // return false;
     }
 
     IsInsideForbiddenShapes(forbiddenShapes, x, y){

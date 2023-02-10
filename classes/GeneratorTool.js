@@ -759,6 +759,7 @@ export default class GeneratorTool {
                         var distP = Vector2.distance(vc, vp);
                         var raycastP = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, false);
                         if(raycastP != null){
+                            isDummy = true;
                             results.push(raycastP);
                             collisions.push(results.length - 1);
                             if (!hideVisuals) {
@@ -773,6 +774,7 @@ export default class GeneratorTool {
                         var distN = Vector2.distance(vc, vn);
                         var raycastN = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, false);
                         if (raycastN != null) {
+                            isDummy = true;
                             results.push(raycastN);
                             collisions.push(results.length);
                             if (!hideVisuals) {
@@ -781,6 +783,9 @@ export default class GeneratorTool {
                                 self.#buffer.circle(raycastN.x, raycastN.y, 3);
                             }
                         }
+                    }
+                    else{
+                        isDummy = true;
                     }
                 }
                 

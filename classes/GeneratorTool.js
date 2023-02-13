@@ -733,16 +733,18 @@ export default class GeneratorTool {
             var hideVisuals = false;
             count++;
 
-            if(count != 13 && count != 25 
-                && count != 26
-                 && count != 20 && count != 35) {
-            resolve(null);
-                return;
-            }
+            // if(count != 16 
+            //    ) {
+            //     //  && count != 25 
+            //     // && count != 26
+            //     //  && count != 20 && count != 35
+            // resolve(null);
+            //     return;
+            // }
             setTimeout(() => {
                 var results = [];
                 var collisions = [];
-                self.#buffer.text(count, predictionPoints[0].x + 10 + tileSize.x / 2, predictionPoints[0].y + 10 + tileSize.y / 2);
+                // self.#buffer.text(count, predictionPoints[0].x + 10 + tileSize.x / 2, predictionPoints[0].y + 10 + tileSize.y / 2);
 
                 for (let i = 0; i < predictionPoints.length; i++) {
                     const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
@@ -767,7 +769,8 @@ export default class GeneratorTool {
                         if(raycastP != null){
                             isDummy = true;
                             results.push(raycastP);
-                            collisions.push(results.length - 1);
+                            // if(self.IsInside(insetPoints, vp.x, vp.y)) 
+                                collisions.push(results.length - 1);
                             if (!hideVisuals) {
                                 self.#buffer.stroke(0);
                                 self.#buffer.fill(255, 255, 0);
@@ -782,7 +785,8 @@ export default class GeneratorTool {
                         if (raycastN != null) {
                             isDummy = true;
                             results.push(raycastN);
-                            collisions.push(results.length);
+                            // if(self.IsInside(insetPoints, vn.x, vn.y)) 
+                                collisions.push(results.length);
                             if (!hideVisuals) {
                                 self.#buffer.stroke(0);
                                 self.#buffer.fill(255, 255, 0);
@@ -795,108 +799,136 @@ export default class GeneratorTool {
                     }
                 }
 
+                var pointsNeedToBeAdded = [];
+                for (let r = 0; r < insetPoints.length; r++) {
+                    const insetPoint = insetPoints[r];
+                    if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
+                        pointsNeedToBeAdded.push(insetPoint);
+                    }
+                }
+                for (let x = 0; x < outsets.length; x++) {
+                    const outsetPoints = outsets[x].getVertices();
 
-                // if (count == 13 || count == 25) {
-                //     console.log(collisions.length, collisions);
-                //     console.log(results);
-                //     for (let i = 0; i < results.length; i++) {
-                //         const element = results[i];
-                //         self.#buffer.text(i, element.x, element.y);
-                //     }
-
-                    // Check for collision op first en laatste punt van result
-                    // var dir = results[results.length - 1].getCopy().remove(results[0]).normalized();
-                    // var toPrev = self.#raycastAll([inset].concat(outsets), results[0], new Vector2(-dir.x, -dir.y), Vector2.distance(results[results.length - 1], results[0]), false, true);
-                    // var toNext = self.#raycastAll([inset].concat(outsets), results[results.length - 1], new Vector2(dir.x, dir.y), Vector2.distance(results[0], results[results.length - 1]), false , true);
-
-                    // if (!hideVisuals){
-                    //     self.#buffer.fill(0);
-                    //     self.#buffer.stroke(255, 255, 0);
-                    //     self.#buffer.line(results[0].x, results[0].y, results[0].x + (dir.x * 20), results[0].y + (dir.y * 20));
-                    //     self.#buffer.stroke(0, 0, 255);
-                    //     self.#buffer.line(results[results.length - 1].x, results[results.length - 1].y, results[results.length - 1].x + (-dir.x * 20), results[results.length - 1].y + (-dir.y * 20));
-                    //     self.#buffer.stroke(0);
-                    // }
-                    
-                    // if(toPrev != null){
-                    //     print('toPrev');
-                    //     print(toPrev);
-                    //     for (let j = 0; j < toPrev.length; j++) {
-                    //         const element = toPrev[j];
-                    //         self.#buffer.fill(255,0,0);
-                    //         this.#buffer.circle(element.x,element.y,5);
-                    //     }
-                    // } 
-                    // if(toNext != null){
-                    //     print('toNext');
-                    //     print(toNext);
-                    //     for (let j = 0; j < toNext.length; j++) {
-                    //         const element = toNext[j];
-                    //         self.#buffer.fill(255,0,0);
-                    //         this.#buffer.circle(element.x,element.y,5);
-                    //     }
-                    // }
-                // }
-
+                    for (let r = 0; r < outsetPoints.length; r++) {
+                        const outsetPoint = outsetPoints[r];
+                        if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
+                            pointsNeedToBeAdded.push(outsetPoint);
+                        }
+                    }
+                }
                 //split tile
                 if(collisions.length >= 4){
-                    
-                    for (let r = 0; r < insetPoints.length; r++) {
-                        const insetPoint = insetPoints[r];
-                        if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
-                            // results.splice(index, 0, insetPoint);
-                            results.push(insetPoint);
-                        }
-                    }
-                    for (let x = 0; x < outsets.length; x++) {
-                        const outsetPoints = outsets[x].getVertices();
-                        for (let r = 0; r < outsetPoints.length; r++) {
-                            const outsetPoint = outsetPoints[r];
-                            if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
-                                // results.splice(index, 0, outsetPoint);
-                                results.push(outsetPoint);
+                    if(count == 16)console.log('pointsNeedToBeAdded.length',pointsNeedToBeAdded.length);
+                    // if (count != 13 || count != 25 || count != 26 || count != 20 || count != 35) {
+                        // Oplossing Kelvin
+                        if(pointsNeedToBeAdded.length == 1) {
+                            print('pemos');
+                            var index = collisions[0];
+                            for (let r = 0; r < insetPoints.length; r++) {
+                                const insetPoint = insetPoints[r];
+                                if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
+                                    results.splice(index, 0, insetPoint);
+                                }
+                            }
+                            for (let x = 0; x < outsets.length; x++) {
+                                const outsetPoints = outsets[x].getVertices();
+                                for (let r = 0; r < outsetPoints.length; r++) {
+                                    const outsetPoint = outsetPoints[r];
+                                    if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
+                                        results.splice(index, 0, outsetPoint);
+                                    }
+                                }
                             }
                         }
-                    }
+                        else if(pointsNeedToBeAdded.length >= 2){
+                            var newResults = [];
+                            for (let i = 0; i < results.length; i++) {
+                                const vp = results[i - 1 >= 0 ? i - 1 : results.length - 1];
+                                const vc = results[i];
+                                const vn = results[i + 1 <= results.length - 1 ? i + 1 : 0];
 
-                    
+                                newResults.push(vc);
+                                
+                                // Direction calculation
+                                var dirP = vp.getCopy().remove(vc).normalized();
+                                var dirN = vn.getCopy().remove(vc).normalized();
+                                // Make 90 degrees angles
+                                var maxP = Math.max(Math.abs(dirP.x), Math.abs(dirP.y));
+                                var maxN = Math.max(Math.abs(dirN.x), Math.abs(dirN.y));
+                                if (maxP === Math.abs(dirP.x)) {dirP.x = dirP.x > 0 ? 1 : -1; dirP.y = 0;}
+                                else {dirP.y = dirP.y > 0 ? 1 : -1; dirP.x = 0;}
+                                if (maxN === Math.abs(dirN.x)) {dirN.x = dirN.x > 0 ? 1 : -1; dirN.y = 0;}
+                                else {dirN.y = dirN.y > 0 ? 1 : -1; dirN.x = 0;}
+                                var distanceP = Vector2.distance(vc, vp);
+                                var distanceN = Vector2.distance(vc, vn);
+                                var hitPointsP = [];
+                                var hitPointsN = [];
+                                for (let j = 0; j < pointsNeedToBeAdded.length; j++) {
+                                    const element = pointsNeedToBeAdded[j];
+                                    if(Collision.lineCircle(vc.x, vc.y, vc.x + dirP.x * distanceP, vc.y + dirP.y * distanceP, element.x, element.y, 5)){
+                                        hitPointsP.push(element);
+                                    }
+                                    if(Collision.lineCircle(vc.x, vc.y, vc.x + dirN.x * distanceN, vc.y + dirN.y * distanceP, element.x, element.y, 5)){
+                                        hitPointsN.push(element);
+                                    }
+                                }
+                                
+                                if(hitPointsP.length > 0){
+                                    var closestVector;
+                                    var closestDistance = Infinity;
+                                    
+                                    for (let k = 0; k < hitPointsP.length; k++) {
+                                        var distance = dist(vc.x, vc.y, hitPointsP[k].x, hitPointsP[k].y);
+                                        if (distance < closestDistance) {
+                                            closestDistance = distance;
+                                            closestVector = hitPointsP[k];
+                                        }
+                                    }
+                                    self.checkAndPush(newResults, closestVector, newResults.length - 1, true);
+                                    collisions[1] ++;
+                                    collisions[2] ++;
+                                }
+                                
+                                if(hitPointsN.length > 0){
+                                    var closestVector;
+                                    var closestDistance = Infinity;
+                                    for (let k = 0; k < hitPointsN.length; k++) {
+                                        var distance = dist(vc.x, vc.y, hitPointsN[k].x, hitPointsN[k].y);
+                                        if (distance < closestDistance) {
+                                            closestDistance = distance;
+                                            closestVector = hitPointsN[k];
+                                        }
+                                    }
+                                    self.checkAndPush(newResults, closestVector, newResults.length , true);
+                                    collisions[3] ++;
+                                }
 
-                    if (count != 13 || count != 25 || count != 26
-                 || count != 20 || count != 35) {
+                            }
+
+                            results = newResults;
+
+                            var tile01 = results.slice(collisions[0], collisions[2]);
+                            var tile02 = results.slice(collisions[2], results.length).concat(results.slice(0, collisions[0]));
+        
+                            self.#createTile(tile01, isDummy);
+                            results = Vector2.copyAll(tile02);
+                        }  else {
+                            var tile01 = results.slice(collisions[0], collisions[2]);
+                            var tile02 = results.slice(collisions[2], results.length).concat(results.slice(0, collisions[0]));
+        
+                            self.#createTile(tile01, isDummy);
+                            results = Vector2.copyAll(tile02);
+                        }
+                        console.log(count);
                         console.log(collisions.length, collisions);
                         console.log(results);
-                        var newResults = this.#reorderClockwise(results);
-                        results = newResults;
-                        print(newResults)
-                        for (let i = 0; i < newResults.length; i++) {
-                            const element = newResults[i];
-                            self.#buffer.text(i, element.x, element.y);
-                        }
-
-                        collisions[0]++;
-                        collisions[1]++;
+                    // }
+                    
+                    for (let i = 0; i < results.length; i++) {
+                        const element = results[i];
+                        self.#buffer.text(i, element.x, element.y);
                     }
 
-                    var tile01 = results.slice(collisions[0], collisions[2]);
-                    var tile02 = results.slice(collisions[2], results.length).concat(results.slice(0, collisions[0]));
-                    
-                    // if (count == 13 || count == 25) {
-                    //     console.log(results);
-                    //     console.log(collisions.length, collisions);
-                    //     console.log(tile01);
-                    //     console.log(tile02);
-                    //     for (let i = 0; i < tile01.length; i++) {
-                    //         const element = tile01[i];
-                    //         self.#buffer.text(i, element.x, element.y);
-                    //     }
-                    //     for (let i = 0; i < tile02.length; i++) {
-                    //         const element = tile02[i];
-                    //         self.#buffer.text(i, element.x, element.y);
-                    //     }
-                    // }
-
-                    self.#createTile(tile01, isDummy);
-                    results = Vector2.copyAll(tile02);
                 }
                 //add point inside tile
                 else if(collisions.length == 2){
@@ -918,8 +950,7 @@ export default class GeneratorTool {
                         }
                     }
                 }
-
-                
+      
                 predictionPoints = Vector2.copyAll(results);
                 
                 // //PHASE 01: Move all the points to valid locations
@@ -1512,7 +1543,7 @@ export default class GeneratorTool {
         return isInside;
     }
 
-    checkAndPush(arr, vector2, index, count) {
+    checkAndPush(arr, vector2, index, useIndex = false) {
 
         var found = false;
         for (var i = 0; i < arr.length; i++) {
@@ -1523,8 +1554,8 @@ export default class GeneratorTool {
             }
         }
         if (!found) {
-            // arr.splice(index, 0, vector2);
-            arr.push(vector2);
+            if(useIndex) arr.splice(index, 0, vector2);
+            else arr.push(vector2);
         }
     }
 
@@ -1588,13 +1619,32 @@ export default class GeneratorTool {
         midpoint.x /= points.length;
         midpoint.y /= points.length;
 
+        
         points.sort((a, b) => {
             let angleA = atan2(a.y - midpoint.y, a.x - midpoint.x);
             let angleB = atan2(b.y - midpoint.y, b.x - midpoint.x);
             return angleA - angleB;
         });
-
         return points;
+        // Returns points with 0 always being top left
+        // let upperLeftIndex = 0;
+        // for (let i = 1; i < points.length; i++) {
+        //     if (points[i].y < points[upperLeftIndex].y ||
+        //         (points[i].y == points[upperLeftIndex].y && points[i].x < points[upperLeftIndex].x)) {
+        //     upperLeftIndex = i;
+        //     }
+        // }
+
+        // let rotatedPoints = [];
+        // for (let i = upperLeftIndex; i < points.length; i++) {
+        //     rotatedPoints.push(points[i]);
+        // }
+        // for (let i = 0; i < upperLeftIndex; i++) {
+        //     rotatedPoints.push(points[i]);
+        // }
+
+        // return rotatedPoints;
+
     }
 
     getTiles() {

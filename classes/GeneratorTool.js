@@ -567,56 +567,31 @@ export default class GeneratorTool {
             else newPosP = perpendicularEndPointP;
 
             if (!Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1) && !Collision.polygonCircle(shape.getVertices(), perpendicularEndPointN.x, perpendicularEndPointN.y, 1)) {
-                print(i + '- Beide perpendicularPoints van N zitten binnen');
                 var directionStart = new Vector2(perpendicularStartPointN.x, perpendicularStartPointN.y).remove(posN).normalized();
                 var directionEnd = new Vector2(perpendicularEndPointN.x, perpendicularEndPointN.y).remove(posN).normalized();
-
-                var raycastNSFalse = this.#raycast([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), false);
-                var raycastNSTrue = this.#raycast([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), true);
-                if (raycastNSFalse == null && raycastNSTrue == null) {
-                    if (!hideVisuals) {
-                        this.#buffer.fill(0, 255, 0);
-                        print(i + '- GEEN COLLISION RICHTING perpendicularStartPointN');
-                        this.#buffer.circle(perpendicularStartPointN.x, perpendicularStartPointN.y, 5);
-                    }
-                    newPosN = perpendicularStartPointN;
-                } else if (Vector2.distance(posN, raycastNSFalse) <= dBuffer && raycastNSTrue == null) {
-                    print('N prnis 1');
-                    newPosN = perpendicularStartPointN;
-                } else if (Vector2.distance(posN, raycastNSTrue) <= dBuffer && raycastNSFalse == null) {
-                    print('N prnis 2');
-                    newPosN = perpendicularStartPointN;
-                } else {
-                    if (!hideVisuals) {
-                        print(i + '- WEL COLLISION RICHTING perpendicularStartPointN');
-                        this.#buffer.line(posN.x, posN.y, perpendicularStartPointN.x, perpendicularStartPointN.y, 5);
-                    }
-                    newPosN = perpendicularEndPointN;
+                var start = this.#raycastAll([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), true);
+                var end = this.#raycastAll([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), true);
+                // print('PosP');
+                // print(posP);
+                // print('start');
+                // print(start);
+                // print('end');
+                // print(end);
+                if (start.length < 2) {
+                    if (start.length != 0) {
+                        for (let l = 0; l < start.length; l++) {
+                            if (!start[l].equals(posN)) { print('penis N 1'); newPosN = perpendicularEndPointN; }
+                            // newPosP = perpendicularStartPointP;
+                        }
+                    } else newPosN = perpendicularStartPointN;
                 }
-
-                if (newPosN == null) {
-                    var raycastNEFalse = this.#raycast([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), false);
-                    var raycastNETrue = this.#raycast([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), true);
-                    if (raycastNEFalse == null || raycastNETrue == null) {
-                        if (!hideVisuals) {
-                            print(i + '- GEEN COLLISION RICHTING perpendicularEndPointN');
-                            this.#buffer.fill(0, 255, 0);
-                            this.#buffer.circle(perpendicularEndPointN.x, perpendicularEndPointN.y, 5);
+                if (end.length < 2) {
+                    if (end.length != 0) {
+                        for (let l = 0; l < end.length; l++) {
+                            if (!end[l].equals(posN)) { print('penis N 2'); newPosN = perpendicularStartPointN; }
+                            // newPosP = perpendicularEndPointP;
                         }
-                        newPosN = perpendicularEndPointN;
-                    } else if (Vector2.distance(posN, raycastNEFalse) <= dBuffer && raycastNETrue == null) {
-                        print('N prnis 3');
-                        newPosN = perpendicularEndPointN;
-                    } else if (Vector2.distance(posN, raycastNETrue) <= dBuffer && raycastNEFalse == null) {
-                        print('N prnis 4');
-                        newPosN = perpendicularEndPointN;
-                    } else {
-                        if (!hideVisuals) {
-                            print(i + '- WEL COLLISION RICHTING perpendicularEndPointN');
-                            this.#buffer.line(posN.x, posN.y, perpendicularEndPointN.x, perpendicularEndPointN.y, 5);
-                        }
-                        newPosN = perpendicularStartPointN;
-                    }
+                    } else newPosN = perpendicularEndPointN;
                 }
 
             } else if (Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1) && Collision.polygonCircle(shape.getVertices(), perpendicularEndPointN.x, perpendicularEndPointN.y, 1)) {

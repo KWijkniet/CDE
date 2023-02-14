@@ -51,7 +51,7 @@ export default class GeneratorTool {
         console.log('Generating...');
         var insets = [];
         var outsets = [];
-        var hideVisuals = true;
+        var hideVisuals = false;
 
         this.#buffer.clear();
         var shapes = this.#renderer.getAll();
@@ -708,14 +708,6 @@ export default class GeneratorTool {
             var hideVisuals = false;
             count++;
 
-            // if(count != 16 
-            //    ) {
-            //     //  && count != 25 
-            //     // && count != 26
-            //     //  && count != 20 && count != 35
-            // resolve(null);
-            //     return;
-            // }
             setTimeout(() => {
                 var results = [];
                 var collisions = [];
@@ -741,11 +733,14 @@ export default class GeneratorTool {
 
                         var distP = Vector2.distance(vc, vp);
                         var raycastP = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, false);
+                        var distN = Vector2.distance(vc, vn);
+                        var raycastN = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, false);
+
                         if(raycastP != null){
                             isDummy = true;
                             results.push(raycastP);
                             // if(self.IsInside(insetPoints, vp.x, vp.y)) 
-                                collisions.push(results.length - 1);
+                                collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(insetPoints, vp.x, vp.y) });
                             if (!hideVisuals) {
                                 self.#buffer.stroke(0);
                                 self.#buffer.fill(255, 255, 0);
@@ -755,13 +750,11 @@ export default class GeneratorTool {
 
                         results.push(vc);
 
-                        var distN = Vector2.distance(vc, vn);
-                        var raycastN = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, false);
                         if (raycastN != null) {
                             isDummy = true;
                             results.push(raycastN);
                             // if(self.IsInside(insetPoints, vn.x, vn.y)) 
-                                collisions.push(results.length);
+                                collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(insetPoints, vn.x, vn.y) });
                             if (!hideVisuals) {
                                 self.#buffer.stroke(0);
                                 self.#buffer.fill(255, 255, 0);
@@ -773,7 +766,7 @@ export default class GeneratorTool {
                         isDummy = true;
                     }
                 }
-
+                
                 var pointsNeedToBeAdded = [];
                 for (let r = 0; r < insetPoints.length; r++) {
                     const insetPoint = insetPoints[r];
@@ -793,121 +786,151 @@ export default class GeneratorTool {
                 }
                 //split tile
                 if(collisions.length >= 4){
-                    if(count == 16)console.log('pointsNeedToBeAdded.length',pointsNeedToBeAdded.length);
-                    // if (count != 13 || count != 25 || count != 26 || count != 20 || count != 35) {
-                        // Oplossing Kelvin
-                        if(pointsNeedToBeAdded.length == 1) {
-                            print('pemos');
-                            var index = collisions[0];
-                            for (let r = 0; r < insetPoints.length; r++) {
-                                const insetPoint = insetPoints[r];
-                                if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
-                                    results.splice(index, 0, insetPoint);
-                                }
-                            }
-                            for (let x = 0; x < outsets.length; x++) {
-                                const outsetPoints = outsets[x].getVertices();
-                                for (let r = 0; r < outsetPoints.length; r++) {
-                                    const outsetPoint = outsetPoints[r];
-                                    if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
-                                        results.splice(index, 0, outsetPoint);
-                                    }
-                                }
-                            }
-                        }
-                        else if(pointsNeedToBeAdded.length >= 2){
-                            var newResults = [];
-                            for (let i = 0; i < results.length; i++) {
-                                const vp = results[i - 1 >= 0 ? i - 1 : results.length - 1];
-                                const vc = results[i];
-                                const vn = results[i + 1 <= results.length - 1 ? i + 1 : 0];
-
-                                newResults.push(vc);
-                                
-                                // Direction calculation
-                                var dirP = vp.getCopy().remove(vc).normalized();
-                                var dirN = vn.getCopy().remove(vc).normalized();
-                                // Make 90 degrees angles
-                                var maxP = Math.max(Math.abs(dirP.x), Math.abs(dirP.y));
-                                var maxN = Math.max(Math.abs(dirN.x), Math.abs(dirN.y));
-                                if (maxP === Math.abs(dirP.x)) {dirP.x = dirP.x > 0 ? 1 : -1; dirP.y = 0;}
-                                else {dirP.y = dirP.y > 0 ? 1 : -1; dirP.x = 0;}
-                                if (maxN === Math.abs(dirN.x)) {dirN.x = dirN.x > 0 ? 1 : -1; dirN.y = 0;}
-                                else {dirN.y = dirN.y > 0 ? 1 : -1; dirN.x = 0;}
-                                var distanceP = Vector2.distance(vc, vp);
-                                var distanceN = Vector2.distance(vc, vn);
-                                var hitPointsP = [];
-                                var hitPointsN = [];
-                                for (let j = 0; j < pointsNeedToBeAdded.length; j++) {
-                                    const element = pointsNeedToBeAdded[j];
-                                    if(Collision.lineCircle(vc.x, vc.y, vc.x + dirP.x * distanceP, vc.y + dirP.y * distanceP, element.x, element.y, 5)){
-                                        hitPointsP.push(element);
-                                    }
-                                    if(Collision.lineCircle(vc.x, vc.y, vc.x + dirN.x * distanceN, vc.y + dirN.y * distanceP, element.x, element.y, 5)){
-                                        hitPointsN.push(element);
-                                    }
-                                }
-                                
-                                if(hitPointsP.length > 0){
-                                    var closestVector;
-                                    var closestDistance = Infinity;
-                                    
-                                    for (let k = 0; k < hitPointsP.length; k++) {
-                                        var distance = dist(vc.x, vc.y, hitPointsP[k].x, hitPointsP[k].y);
-                                        if (distance < closestDistance) {
-                                            closestDistance = distance;
-                                            closestVector = hitPointsP[k];
-                                        }
-                                    }
-                                    self.checkAndPush(newResults, closestVector, newResults.length - 1, true);
-                                    collisions[1] ++;
-                                    collisions[2] ++;
-                                }
-                                
-                                if(hitPointsN.length > 0){
-                                    var closestVector;
-                                    var closestDistance = Infinity;
-                                    for (let k = 0; k < hitPointsN.length; k++) {
-                                        var distance = dist(vc.x, vc.y, hitPointsN[k].x, hitPointsN[k].y);
-                                        if (distance < closestDistance) {
-                                            closestDistance = distance;
-                                            closestVector = hitPointsN[k];
-                                        }
-                                    }
-                                    self.checkAndPush(newResults, closestVector, newResults.length , true);
-                                    collisions[3] ++;
-                                }
-
-                            }
-
-                            results = newResults;
-
-                            var tile01 = results.slice(collisions[0], collisions[2]);
-                            var tile02 = results.slice(collisions[2], results.length).concat(results.slice(0, collisions[0]));
-        
-                            self.#createTile(tile01, isDummy);
-                            results = Vector2.copyAll(tile02);
-                        }  else {
-                            var tile01 = results.slice(collisions[0], collisions[2]);
-                            var tile02 = results.slice(collisions[2], results.length).concat(results.slice(0, collisions[0]));
-        
-                            self.#createTile(tile01, isDummy);
-                            results = Vector2.copyAll(tile02);
-                        }
+                    if(pointsNeedToBeAdded.length == 1) {
                         console.log(count);
                         console.log(collisions.length, collisions);
                         console.log(results);
-                    // }
-                    
-                    for (let i = 0; i < results.length; i++) {
-                        const element = results[i];
-                        self.#buffer.text(i, element.x, element.y);
-                    }
+                        var index;
+                        for (let j = 0; j < collisions.length; j++) {
+                            const element = collisions[j];
+                            if(!element['isWall']) index = element['index'];
+                        }
 
+                        for (let r = 0; r < insetPoints.length; r++) {
+                            const insetPoint = insetPoints[r];
+                            if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
+                                if (self.IsInside(results, insetPoint.x, insetPoint.y, false)) {
+                                    results.splice(index, 0, insetPoint);
+                                } else {
+                                    const vp = results[index - 1];
+                                    const vc = insetPoint;
+                                    const vn = results[index];        
+                                    // Direction calculation
+                                    var dirP = vp.getCopy().remove(vc).normalized();
+                                    var dirN = vn.getCopy().remove(vc).normalized();
+                                    //Make a shape for the results
+                                    var shape = new Shape(results);
+                                    var toPrev = self.#raycast([shape], vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc), false);
+                                    var toNext = self.#raycast([shape], vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), false);
+                                    results.splice(index, 0, toPrev);
+                                    results.splice(index+1, 0, toNext);
+                                }
+                            }
+                        }
+                        for (let x = 0; x < outsets.length; x++) {
+                            const outsetPoints = outsets[x].getVertices();
+                            for (let r = 0; r < outsetPoints.length; r++) {
+                                const outsetPoint = outsetPoints[r];
+                                if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
+                                    if (self.IsInside(results, outsetPoint.x, outsetPoint.y, false)) {
+                                        results.splice(index, 0, outsetPoint);
+                                    } else {
+                                        const vp = results[index - 1];
+                                        const vc = outsetPoint;
+                                        const vn = results[index];        
+                                        // Direction calculation
+                                        var dirP = vp.getCopy().remove(vc).normalized();
+                                        var dirN = vn.getCopy().remove(vc).normalized();
+                                        //Make a shape for the results
+                                        var shape = new Shape(results);
+                                        var toPrev = self.#raycast([shape], vc, new Vector2(-dirP.x, -dirP.y), Vector2.distance(vp, vc), false);
+                                        var toNext = self.#raycast([shape], vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), false);
+                                        results.splice(index, 0, toPrev);
+                                        results.splice(index+1, 0, toNext);
+                                    }
+                                }
+                            }
+                        }
+
+                        for (let k = 0; k < results.length; k++) {
+                            const element = results[k];
+                            self.#buffer.text(k,element.x,element.y);
+                        }
+                    }
+                    else if(pointsNeedToBeAdded.length >= 2){
+                        var newResults = [];
+                        for (let i = 0; i < results.length; i++) {
+                            const vp = results[i - 1 >= 0 ? i - 1 : results.length - 1];
+                            const vc = results[i];
+                            const vn = results[i + 1 <= results.length - 1 ? i + 1 : 0];
+
+                            newResults.push(vc);
+                            
+                            // Direction calculation
+                            var dirP = vp.getCopy().remove(vc).normalized();
+                            var dirN = vn.getCopy().remove(vc).normalized();
+                            // Make 90 degrees angles
+                            var maxP = Math.max(Math.abs(dirP.x), Math.abs(dirP.y));
+                            var maxN = Math.max(Math.abs(dirN.x), Math.abs(dirN.y));
+                            if (maxP === Math.abs(dirP.x)) {dirP.x = dirP.x > 0 ? 1 : -1; dirP.y = 0;}
+                            else {dirP.y = dirP.y > 0 ? 1 : -1; dirP.x = 0;}
+                            if (maxN === Math.abs(dirN.x)) {dirN.x = dirN.x > 0 ? 1 : -1; dirN.y = 0;}
+                            else {dirN.y = dirN.y > 0 ? 1 : -1; dirN.x = 0;}
+                            var distanceP = Vector2.distance(vc, vp);
+                            var distanceN = Vector2.distance(vc, vn);
+                            var hitPointsP = [];
+                            var hitPointsN = [];
+                            for (let j = 0; j < pointsNeedToBeAdded.length; j++) {
+                                const element = pointsNeedToBeAdded[j];
+                                if(Collision.lineCircle(vc.x, vc.y, vc.x + dirP.x * distanceP, vc.y + dirP.y * distanceP, element.x, element.y, 5)){
+                                    hitPointsP.push(element);
+                                }
+                                if(Collision.lineCircle(vc.x, vc.y, vc.x + dirN.x * distanceN, vc.y + dirN.y * distanceP, element.x, element.y, 5)){
+                                    hitPointsN.push(element);
+                                }
+                            }
+                            
+                            if(hitPointsP.length > 0){
+                                var closestVector;
+                                var closestDistance = Infinity;
+                                
+                                for (let k = 0; k < hitPointsP.length; k++) {
+                                    var distance = dist(vc.x, vc.y, hitPointsP[k].x, hitPointsP[k].y);
+                                    if (distance < closestDistance) {
+                                        closestDistance = distance;
+                                        closestVector = hitPointsP[k];
+                                    }
+                                }
+                                self.checkAndPush(newResults, closestVector, newResults.length - 1, true);
+                                collisions[1]['index'] ++;
+                                collisions[2]['index'] ++;
+                            }
+                            
+                            if(hitPointsN.length > 0){
+                                var closestVector;
+                                var closestDistance = Infinity;
+                                for (let k = 0; k < hitPointsN.length; k++) {
+                                    var distance = dist(vc.x, vc.y, hitPointsN[k].x, hitPointsN[k].y);
+                                    if (distance < closestDistance) {
+                                        closestDistance = distance;
+                                        closestVector = hitPointsN[k];
+                                    }
+                                }
+                                self.checkAndPush(newResults, closestVector, newResults.length , true);
+                                collisions[3]['index'] ++;
+                            }
+
+                        }
+
+                        results = newResults;
+
+                        var tile01 = results.slice(collisions[0]['index'], collisions[2]['index']);
+                        var tile02 = results.slice(collisions[2]['index'], results.length).concat(results.slice(0, collisions[0]['index']));
+    
+                        self.#createTile(tile01, isDummy);
+                        results = Vector2.copyAll(tile02);
+                    }  
+                    else {
+                        var tile01 = results.slice(collisions[0]['index'], collisions[2]['index']);
+                        var tile02 = results.slice(collisions[2]['index'], results.length).concat(results.slice(0, collisions[0]['index']));
+    
+                        self.#createTile(tile01, isDummy);
+                        results = Vector2.copyAll(tile02);
+                    }
                 }
                 //add point inside tile
                 else if(collisions.length == 2){
-                    var index = collisions[0];
+                    var index = collisions[0]['index'];
                     for (let r = 0; r < insetPoints.length; r++) {
                         const insetPoint = insetPoints[r];
                         if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
@@ -1585,7 +1608,7 @@ export default class GeneratorTool {
         return false;
     }
 
-    #reorderClockwise(points) {
+    reorderClockwise(points) {
         let midpoint = createVector(0, 0);
         for (let i = 0; i < points.length; i++) {
             midpoint.x += points[i].x;
@@ -1619,7 +1642,6 @@ export default class GeneratorTool {
         // }
 
         // return rotatedPoints;
-
     }
 
     getTiles() {

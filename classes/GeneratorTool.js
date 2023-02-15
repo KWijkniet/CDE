@@ -591,7 +591,8 @@ export default class GeneratorTool {
                             if (!end[l].equals(posN)) { print('penis N 2'); newPosN = perpendicularStartPointN; }
                             // newPosP = perpendicularEndPointP;
                         }
-                    } else newPosN = perpendicularEndPointN;
+                        newPosN = perpendicularStartPointN;
+                    }
                 }
 
             } else if (Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1) && Collision.polygonCircle(shape.getVertices(), perpendicularEndPointN.x, perpendicularEndPointN.y, 1)) {
@@ -766,7 +767,6 @@ export default class GeneratorTool {
                         isDummy = true;
                     }
                 }
-                
                 var pointsNeedToBeAdded = [];
                 for (let r = 0; r < insetPoints.length; r++) {
                     const insetPoint = insetPoints[r];
@@ -913,7 +913,6 @@ export default class GeneratorTool {
                         }
 
                         results = newResults;
-
                         var tile01 = results.slice(collisions[0]['index'], collisions[2]['index']);
                         var tile02 = results.slice(collisions[2]['index'], results.length).concat(results.slice(0, collisions[0]['index']));
     
@@ -1364,6 +1363,7 @@ export default class GeneratorTool {
 
     #raycastAll(shapes, from, dir, dist, ignoreSelf = true) {
         var collisions = [];
+        var keys = [];
         var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
 
         for (let i = 0; i < shapes.length; i++) {
@@ -1373,14 +1373,19 @@ export default class GeneratorTool {
             for (let r = 0; r < vertices.length; r++) {
                 const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
                 const vc = vertices[r];
+                var key = i + "_" + r + "_" + (r + 1 < vertices.length ? r + 1 : 0);
+                if(keys.includes(key)){
+                    continue;
+                }
 
                 if (Collision.linePoint(vn.x, vn.y, vc.x, vc.y, from.x, from.y) && ignoreSelf) {
-
+                    keys.push(key);
                     continue;
                 }
 
                 var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
                 if (collision != null) {
+                    keys.push(key);
                     collisions.push(collision);
                 }
             }
@@ -1542,7 +1547,6 @@ export default class GeneratorTool {
     }
 
     checkAndPush(arr, vector2, index, useIndex = false) {
-
         var found = false;
         for (var i = 0; i < arr.length; i++) {
             // if(count == 64)print(Vector2.distance(arr[i], vector2));

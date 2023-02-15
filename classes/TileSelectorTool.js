@@ -62,5 +62,6 @@ export default class TileSelectorTool {
                 }
             }
         }
+        this.#generator.redraw();
     }
 }

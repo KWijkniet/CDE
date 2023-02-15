@@ -40,13 +40,13 @@ export default class Tile {
         this.width = (Math.max(...xArr) - Math.min(...xArr));
         this.height = (Math.max(...yArr) - Math.min(...yArr));
         
-        // if (this.width >= 20 && this.height >= 20) {
+        if (this.width >= 20 && this.height >= 20) {
             if (buffer == null) {
                 this.#buffer = createGraphics(this.width, this.height);
             }
 
-            this.#generate();
-        // }
+            this.generate();
+        }
     }
 
     getVertices(){
@@ -63,7 +63,7 @@ export default class Tile {
         return { "vertices": vertices, "width": this.width, "height": this.height, "isDummy": this.isDummy, "isVent": this.isVent };
     }
 
-    #generate() {
+    generate() {
         this.#buffer.beginShape();
         for (let i = 0; i < this.#vertices.length; i++) {
             this.#buffer.vertex(this.#vertices[i].x, this.#vertices[i].y);
@@ -104,6 +104,9 @@ export default class Tile {
 
     toggleVent(){
         this.isVent = !this.isVent;
-        this.#generate();
+    }
+
+    clone() {
+        return new Tile(Vector2.copyAll(this.#vertices), this.#buffer, this.isDummy, this.isVent);
     }
 }

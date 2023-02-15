@@ -691,7 +691,7 @@ export default class GeneratorTool {
         var insetPoints = inset.getVertices();
         var boundingBox = inset.getBoundingBox();
         var count = 0;
-        var tiledMode = false;
+        var tiledMode = rowOffsetMode;
 
         // this.#tiles = { 'X-Roof': [], 'Alucobond': [] };
         this.#tiles = [];

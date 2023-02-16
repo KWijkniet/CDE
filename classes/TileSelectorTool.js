@@ -51,7 +51,7 @@ export default class TileSelectorTool {
             var points = tile.getVertices();
 
             if (!tile.isDummy && Collision.polygonPoint(points, pos.x, pos.y)) {
-                tile.toggleVent();
+                tile.switchType();
                 for (let r = 0; r < points.length; r++) {
                     const vc = points[r];
                     const vn = r + 1 >= points.length ? points[0] : points[r + 1];
@@ -61,6 +61,20 @@ export default class TileSelectorTool {
                     this.#buffer.line(vc.x, vc.y, vn.x, vn.y);
                 }
             }
+
+            // if (Collision.polygonPoint(points, pos.x, pos.y)) {
+            //     if (tile.switchType()) {
+            //         for (let r = 0; r < points.length; r++) {
+            //             const vc = points[r];
+            //             const vn = r + 1 >= points.length ? points[0] : points[r + 1];
+
+            //             this.#buffer.stroke(0, 0, 255);
+            //             this.#buffer.strokeWeight(3);
+            //             this.#buffer.line(vc.x, vc.y, vn.x, vn.y);
+            //         }
+            //         this.#generator.redraw();
+            //     }
+            // }
         }
         this.#generator.redraw();
     }

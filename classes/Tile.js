@@ -11,6 +11,7 @@ export default class Tile {
     #buffer = null;
     #vertices = [];
     #color = null;
+    #isValid = false;
 
     constructor(vertices = [], buffer = null, isDummy = false, isVent = false) {
         this.#buffer = buffer;
@@ -40,14 +41,15 @@ export default class Tile {
         const yArr = this.#vertices.map(a => a.y);
         this.width = (Math.max(...xArr) - Math.min(...xArr));
         this.height = (Math.max(...yArr) - Math.min(...yArr));
+        this.#isValid = this.width >= 20 && this.height >= 20;
         
-        // if (this.width >= 20 && this.height >= 20) {
+        if (this.#isValid) {
             if (buffer == null) {
                 this.#buffer = createGraphics(this.width, this.height);
             }
 
-            this.#generate();
-        // }
+            this.generate();
+        }
     }
 
     getVertices(){
@@ -64,7 +66,7 @@ export default class Tile {
         return { "vertices": vertices, "width": this.width, "height": this.height, "isDummy": this.isDummy, "isVent": this.isVent };
     }
 
-    #generate() {
+    generate() {
         this.#buffer.beginShape();
         for (let i = 0; i < this.#vertices.length; i++) {
             this.#buffer.vertex(this.#vertices[i].x, this.#vertices[i].y);
@@ -91,6 +93,8 @@ export default class Tile {
     }
 
     getBoundingBox() {
+        if (!this.#isValid) { return { "x": 0, "y": 0, "w": 0, "h": 0}; }
+        
         const xArr = this.#vertices.map(a => a.x);
         const yArr = this.#vertices.map(a => a.y);
         const width = (Math.max(...xArr) - Math.min(...xArr));
@@ -103,8 +107,18 @@ export default class Tile {
         };
     }
 
-    toggleVent(){
+    switchType(){
+        //if tile is full sized than you can change it to/from dummy
+        //if tile is full sized than you can change it to/from vent
+        // var boundingBox = this.getBoundingBox();
+        // if(w == 82 && h == 60){
+            
+        // }
+
         this.isVent = !this.isVent;
-        this.#generate();
+    }
+
+    clone() {
+        return new Tile(Vector2.copyAll(this.#vertices), this.#buffer, this.isDummy, this.isVent);
     }
 }

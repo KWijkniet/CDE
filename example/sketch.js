@@ -27,6 +27,7 @@ onSetupComplete = () => {};
 
 function setup() {
     var canvas = createCanvas(visualViewport.width, visualViewport.height);
+    // document.getElementsByClassName("editor")[0].appendChild(canvas.elt);
 
     HistoryTool.instance();
     Settings.setCanvas(canvas);

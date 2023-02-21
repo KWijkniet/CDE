@@ -673,7 +673,6 @@ export default class GeneratorTool {
         var count = 0;
         var tiledMode = this.rowOffsetMode;
         var dummySize = this.dummyTileSize;
-        
 
         // this.#tiles = { 'X-Roof': [], 'Alucobond': [] };
         this.#tiles = [];
@@ -765,6 +764,8 @@ export default class GeneratorTool {
                         }
                     }
                 }
+                
+                var extraTile = null;
                 //split tile
                 if(collisions.length >= 4){
                     if(pointsNeedToBeAdded.length == 1) {
@@ -899,14 +900,24 @@ export default class GeneratorTool {
                         var tile01 = results.slice(collisions[0]['index'], collisions[2]['index']);
                         var tile02 = results.slice(collisions[2]['index'], results.length).concat(results.slice(0, collisions[0]['index']));
     
-                        self.#createTile(tile01, isDummy);
+                        // var tile = self.#createTile(tile01, isDummy);
+                        // var bb = tile.getBoundingBox();
+                        // if (bb.h > 0 && bb.w > 0) {
+                        //     self.#tiles.push(tile);
+                        // }
+                        extraTile = Vector2.copyAll(tile01);
                         results = Vector2.copyAll(tile02);
                     }  
                     else {
                         var tile01 = results.slice(collisions[0]['index'], collisions[2]['index']);
                         var tile02 = results.slice(collisions[2]['index'], results.length).concat(results.slice(0, collisions[0]['index']));
     
-                        self.#createTile(tile01, isDummy);
+                        // var tile = self.#createTile(tile01, isDummy);
+                        // var bb = tile.getBoundingBox();
+                        // if (bb.h > 0 && bb.w > 0) {
+                        //     self.#tiles.push(tile);
+                        // }
+                        extraTile = Vector2.copyAll(tile01);
                         results = Vector2.copyAll(tile02);
                     }
                 }
@@ -998,12 +1009,21 @@ export default class GeneratorTool {
 
                 // create tile
                 var tile = self.#createTile(predictionPoints, isDummy);
+                var extra = null;
+
                 var bb = tile.getBoundingBox();
                 if (bb.h <= 0 || bb.w <= 0) {
-                    resolve(null);
-                    return;
+                    tile = null;
                 }
-                resolve(tile);
+
+                if(extraTile != null){
+                    extra = self.#createTile(extraTile, isDummy);
+                    var extraBb = extra.getBoundingBox();
+                    if (extraBb.h <= 0 || extraBb.w <= 0) {
+                        extra = null;
+                    }
+                }
+                resolve([tile, extra]);
             }, delay);
         });
 
@@ -1042,6 +1062,7 @@ export default class GeneratorTool {
                 const nextLineType = inset.lineMargins[i + 1 <= inset.lineMargins.length - 1 ? i + 1 : 0];
                 var placeLastTile = false;
                 var isFirst = true;
+                var dir = vc.getCopy().remove(vn).normalized();
 
                 //Only apply when specific line options have been choosen
                 if (lineType.split("|")[0] != "daknok1" && lineType.split("|")[0] != "dakrand1" && lineType.split("|")[0] != "gootdetail3") {
@@ -1084,10 +1105,13 @@ export default class GeneratorTool {
                             break;
                         }
                     }
-                    
+
                     //Create tile
                     const tile = self.#createTile(Vector2.copyAll(targetPoints), true);
-                    tmpTiles.push(tile);
+                    var bb = tile.getBoundingBox();
+                    if (bb.h > 0 && bb.w > 0) {
+                        tmpTiles.push(tile);
+                    }
 
                     //Update inset
                     if (isFirst) {
@@ -1166,6 +1190,38 @@ export default class GeneratorTool {
             //         targetPoints[r].x = self.#convertToGrid(targetPoints[r].x, startX, tileSize.x, false);
             //         targetPoints[r].y = self.#convertToGrid(targetPoints[r].y, startY, tileSize.y, false);
             //     }
+            
+                var maxDist = Vector2.distance(vc, vn);
+                var maxSpacing = Math.abs(tileSize.x * dir.x + tileSize.y * dir.y);
+                var max = 999;
+                while (Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y) && (!Collision.polygonPoint(targetPoints, vn.x, vn.y) || Vector2.distance(vc, targetPoints[2]) - (placeLastTile ? maxSpacing : 0) <= maxDist)) {
+                    //Create tile
+                    await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tiles => {
+                        if (tiles != null) {
+                            for (let l = 0; l < tiles.length; l++) {
+                                const tile = tiles[l];
+                                if (tile != null) {
+                                    tmpTiles.push(tile);
+
+                                    //Update inset
+                                    if (isFirst) {
+                                        const vp = insetPoints[i - 1 >= 0 ? i - 1 : insetPoints.length - 1];
+                                        const dirVCToPrev = vc.getCopy().remove(vp).normalized();
+                                        const newVC = self.#raycast(tiles, vc, dirVCToPrev, tileSize.x, true);
+
+                                        if (newVC != null) {
+                                            var dist = Vector2.distance(vc, newVC);
+                                            var distPos = dirVCToPrev.getCopy().reverse().multiply(new Vector2(dist, dist));
+
+                                            newInsetPoints[i].add(distPos);
+                                            newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0].add(distPos);
+                                        }
+                                    }
+                                    isFirst = false;
+                                }
+                            }
+                        }
+                    });
 
             //     //Skip first if previous was alucobond
             //     if (placePreviousTile) {
@@ -1301,6 +1357,18 @@ export default class GeneratorTool {
             //             // self.#buffer.circle(targetPoints[r].x, targetPoints[r].y, 10);
             //         }
             //     }
+                //Create tile
+                await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tiles => {
+                    if (tiles != null) {
+                        for (let l = 0; l < tiles.length; l++) {
+                            const tile = tiles[l];
+                            if (tile != null) {
+                                tmpTiles.push(tile);
+                            }
+                        }
+                    }
+                });
+                xIndex++;
 
             //     //Create tile
             //     await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tile => {
@@ -1341,7 +1409,6 @@ export default class GeneratorTool {
             //         break;
             //     }
             // }
-            // self.#tiles = self.#tiles.concat(tmpTiles);
         };
 
         syncedLoop(boundingBox.x, boundingBox.y);
@@ -1698,5 +1765,14 @@ export default class GeneratorTool {
 
     getTiles() {
         return this.#tiles;
+    }
+
+    redraw(){
+        this.#buffer.clear();
+        for (let i = 0; i < this.#tiles.length; i++) {
+            const tile = this.#tiles[i];
+            
+            tile.generate();
+        }
     }
 }

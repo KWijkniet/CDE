@@ -18,10 +18,10 @@ export default class GeneratorTool {
     margin = 0;
     rowOffsetMode = false;
 
-    //Paspaneel Width - DUMMY THICC
-    dummyTileSize = 0;
-    // Overlap Alucobond
-    overlapTileSize = 0;
+    // // Paspaneel Width - DUMMY THICC
+    // dummyTileSize = 0;
+    // // Overlap Alucobond
+    // overlapTileSize = 0;
 
     #buffer = null;
     #renderer = null;
@@ -55,8 +55,9 @@ export default class GeneratorTool {
     generate() {
         console.log('Generating...');
         var insets = [];
+        var overhangs = [];
         var outsets = [];
-        var hideVisuals = true;
+        var hideVisuals = false;
 
         this.#buffer.clear();
         var shapes = this.#renderer.getAll();
@@ -64,13 +65,23 @@ export default class GeneratorTool {
             const shape = shapes[i];
             if (shape.isAllowed && !shape.isGenerated) {
                 var inset = this.#createInset(shape);
+                var overhang = this.#createOverhang(shape);
                 inset.lineMargins = shape.lineMargins;
                 var points = inset.getVertices();
+                var pointsOverhang = overhang.getVertices();
                 insets.push(inset);
 
                 if (!hideVisuals) {
                     //visualize inset
                     this.#buffer.push();
+                    for (let i = 0; i < pointsOverhang.length; i++) {
+                        const vc = pointsOverhang[i];
+                        const vn = pointsOverhang[i + 1 < pointsOverhang.length ? i + 1 : 0];
+                        this.#buffer.drawingContext.setLineDash([15, 15]);
+                        this.#buffer.stroke(0, 0, 255);
+                        this.#buffer.strokeWeight(3);
+                        this.#buffer.line(vc.x, vc.y, vn.x, vn.y);
+                    }
                     for (let i = 0; i < points.length; i++) {
                         const vc = points[i];
                         const vn = points[i + 1 < points.length ? i + 1 : 0];
@@ -125,7 +136,7 @@ export default class GeneratorTool {
 
         for (let i = 0; i < insets.length; i++) {
             const inset = insets[i];
-            this.#generateTiles(inset, outsets);
+            // this.#generateTiles(inset, outsets);
         }
     }
 
@@ -136,14 +147,14 @@ export default class GeneratorTool {
         var points = shape.getVertices();
         var hideVisuals = true;
         this.#buffer.push();
-
+        
         for (let i = 0; i < points.length; i++) {
             const vc = points[i];
             const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
             const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
 
-            var mp = 0;
-            var mn = 0;
+            var mp = 5;
+            var mn = 5;
             if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "daknok1" && 
                 shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "dakrand1" && 
                 shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "gootdetail3") {
@@ -160,28 +171,20 @@ export default class GeneratorTool {
             if ((vp.x == vc.x && vc.x == vn.x) || (vp.y == vc.y && vc.y == vn.y)) {
                 continue;
             }
-            console.log("inset: ", i);
-            console.log("mn: ", mn);
-            console.log("mp: ", mp);console.log(shape.lineMargins[i]);
 
             var dirN = vn.getCopy().remove(vc).normalized();
             dirN.multiply(new Vector2(mp, mp));
-
             var dirP = vp.getCopy().remove(vc).normalized();
             dirP.multiply(new Vector2(mn, mn));
-
             var posN = dirN.getCopy().add(vc);
             var posP = dirP.getCopy().add(vc);
-            // Old
-            var pos = dirN.getCopy().add(vc).add(dirP);
-
+            
             // Stap 2
             var perpendicularStartPointP = this.#getPerpendicularPoint(posP.x, posP.y, vp.x, vp.y, mp, 'right');
             var perpendicularEndPointP = this.#getPerpendicularPoint(posP.x, posP.y, vp.x, vp.y, mp, 'left');
-
             var perpendicularStartPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, mn, 'right');
             var perpendicularEndPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, mn, 'left');
-
+            
             if (!hideVisuals) {
                 this.#buffer.fill(0, 0, 255); // BLAUW
                 this.#buffer.stroke(0, 0, 0);
@@ -192,182 +195,13 @@ export default class GeneratorTool {
             }
 
             // Stap 3
-            // Check welk punt we moeten gebruiken
-            var newPosP, newPosN;
-            var dBuffer = 5
-            // Als beide punten in shape zitten
-            if (Collision.polygonCircle(shape.getVertices(), perpendicularStartPointP.x, perpendicularStartPointP.y, 1) && Collision.polygonCircle(shape.getVertices(), perpendicularEndPointP.x, perpendicularEndPointP.y, 1)) {
-                print(i + '- Beide perpendicularPoints van P zitten binnen');
-                var directionStart = new Vector2(perpendicularStartPointP.x, perpendicularStartPointP.y).remove(posP).normalized();
-                var directionEnd = new Vector2(perpendicularEndPointP.x, perpendicularEndPointP.y).remove(posP).normalized();
+            var dBuffer = 5;
+            var newPosP = this.#calculateInsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, dBuffer, hideVisuals);
+            var newPosN = this.#calculateInsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, dBuffer, hideVisuals);
 
-                var raycastPSFalse = this.#raycast([shape], posP, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posP, perpendicularStartPointP), false);
-                var raycastPSTrue = this.#raycast([shape], posP, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posP, perpendicularStartPointP), true);
-                if (raycastPSFalse == null && raycastPSTrue == null) {
-                    if (!hideVisuals) {
-                        this.#buffer.fill(0, 255, 0);
-                        this.#buffer.circle(perpendicularStartPointP.x, perpendicularStartPointP.y, 5);
-                        print(i + '- GEEN COLLISION RICHTING perpendicularStartPointP');
-                    }
-                    newPosP = perpendicularStartPointP;
-                } else if (Vector2.distance(posP, raycastPSFalse) <= dBuffer && raycastPSTrue == null) {
-                    newPosP = perpendicularStartPointP;
-                } else if (Vector2.distance(posP, raycastPSTrue) <= dBuffer && raycastPSFalse == null) {
-                    newPosP = perpendicularStartPointP;
-                } else {
-                    if (!hideVisuals) {
-                        print(i + '- WEL COLLISION RICHTING perpendicularStartPointP');
-                        this.#buffer.line(posP.x, posP.y, perpendicularStartPointP.x, perpendicularStartPointP.y, 5);
-                    }
-                    newPosP = perpendicularEndPointP;
-                }
-
-                if (newPosP == null) {
-                    var raycastPEFalse = this.#raycast([shape], posP, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posP, perpendicularEndPointP), false);
-                    var raycastPETrue = this.#raycast([shape], posP, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posP, perpendicularEndPointP), true);
-                    if (raycastPEFalse == null && raycastPETrue == null) {
-                        if (!hideVisuals) {
-                            this.#buffer.fill(0, 255, 0);
-                            this.#buffer.circle(perpendicularEndPointP.x, perpendicularEndPointP.y, 5);
-                            print(i + '- GEEN COLLISION RICHTING perpendicularEndPointP');
-                        }
-                        newPosP = perpendicularEndPointP;
-                    } else if (Vector2.distance(posP, raycastPEFalse) <= dBuffer && raycastPETrue == null) {
-                        print('N prnis 3');
-                        newPosN = perpendicularEndPointN;
-                    } else if (Vector2.distance(posP, raycastPETrue) <= dBuffer && raycastPEFalse == null) {
-                        print('N prnis 4');
-                        newPosN = perpendicularEndPointN;
-                    } else {
-                        if (!hideVisuals) {
-                            print(i + '- WEL COLLISION RICHTING perpendicularEndPointP');
-                            this.#buffer.line(posP.x, posP.y, perpendicularEndPointP.x, perpendicularEndPointP.y, 5);
-                        }
-                        newPosP = perpendicularStartPointP;
-                    }
-                }
-
-            }
-            // Als beide punten NIET in shape zitten 
-            else if (!Collision.polygonCircle(shape.getVertices(), perpendicularStartPointP.x, perpendicularStartPointP.y, 1) && !Collision.polygonCircle(shape.getVertices(), perpendicularEndPointP.x, perpendicularEndPointP.y, 1)) {
-                print(i + '- Beide perpendicularStartPoints van P zitten NIET binnen');
-                var directionStart = new Vector2(perpendicularStartPointP.x, perpendicularStartPointP.y).remove(posP).normalized();
-                var directionEnd = new Vector2(perpendicularEndPointP.x, perpendicularEndPointP.y).remove(posP).normalized();
-
-                var raycastPSFalse = this.#raycast([shape], posP, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posP, perpendicularStartPointP), false);
-                var raycastPSTrue = this.#raycast([shape], posP, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posP, perpendicularStartPointP), true);
-                if (raycastPSFalse != null && raycastPSTrue != null) {
-                    this.#buffer.fill(0, 255, 0);
-                    this.#buffer.circle(perpendicularStartPointP.x, perpendicularStartPointP.y, 5);
-                    print(i + '- WEL COLLISION RICHTING perpendicularStartPointP');
-                    newPosP = perpendicularStartPointP;
-                }
-
-                var raycastPEFalse = this.#raycast([shape], posP, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posP, perpendicularEndPointP), false);
-                var raycastPETrue = this.#raycast([shape], posP, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posP, perpendicularEndPointP), true);
-                if (raycastPEFalse != null && raycastPETrue != null) {
-                    this.#buffer.fill(0, 255, 0);
-                    this.#buffer.circle(perpendicularEndPointP.x, perpendicularEndPointP.y, 5);
-                    print(i + '- WEL COLLISION RICHTING perpendicularEndPointP');
-                    newPosP = perpendicularEndPointP;
-                }
-            }
-            // Als start punt in shape zitten  
-            else if (Collision.polygonCircle(shape.getVertices(), perpendicularStartPointP.x, perpendicularStartPointP.y, 1))
-                newPosP = perpendicularStartPointP;
-            // Anders pak eind punt
-            else newPosP = perpendicularEndPointP;
-
-            if (Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1) && Collision.polygonCircle(shape.getVertices(), perpendicularEndPointN.x, perpendicularEndPointN.y, 1)) {
-                print(i + '- Beide perpendicularPoints van N zitten binnen');
-                var directionStart = new Vector2(perpendicularStartPointN.x, perpendicularStartPointN.y).remove(posN).normalized();
-                var directionEnd = new Vector2(perpendicularEndPointN.x, perpendicularEndPointN.y).remove(posN).normalized();
-
-                var raycastNSFalse = this.#raycast([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), false);
-                var raycastNSTrue = this.#raycast([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), true);
-                if (raycastNSFalse == null && raycastNSTrue == null) {
-                    if (!hideVisuals) {
-                        this.#buffer.fill(0, 255, 0);
-                        print(i + '- GEEN COLLISION RICHTING perpendicularStartPointN');
-                        this.#buffer.circle(perpendicularStartPointN.x, perpendicularStartPointN.y, 5);
-                    }
-                    newPosN = perpendicularStartPointN;
-                } else if (Vector2.distance(posN, raycastNSFalse) <= dBuffer && raycastNSTrue == null) {
-                    print('N prnis 1');
-                    newPosN = perpendicularStartPointN;
-                } else if (Vector2.distance(posN, raycastNSTrue) <= dBuffer && raycastNSFalse == null) {
-                    print('N prnis 2');
-                    newPosN = perpendicularStartPointN;
-                } else {
-                    if (!hideVisuals) {
-                        print(i + '- WEL COLLISION RICHTING perpendicularStartPointN');
-                        this.#buffer.line(posN.x, posN.y, perpendicularStartPointN.x, perpendicularStartPointN.y, 5);
-                    }
-                    newPosN = perpendicularEndPointN;
-                }
-
-                if (newPosN == null) {
-                    var raycastNEFalse = this.#raycast([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), false);
-                    var raycastNETrue = this.#raycast([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), true);
-                    if (raycastNEFalse == null || raycastNETrue == null) {
-                        if (!hideVisuals) {
-                            print(i + '- GEEN COLLISION RICHTING perpendicularEndPointN');
-                            this.#buffer.fill(0, 255, 0);
-                            this.#buffer.circle(perpendicularEndPointN.x, perpendicularEndPointN.y, 5);
-                        }
-                        newPosN = perpendicularEndPointN;
-                    } else if (Vector2.distance(posN, raycastNEFalse) <= dBuffer && raycastNETrue == null) {
-                        print('N prnis 3');
-                        newPosN = perpendicularEndPointN;
-                    } else if (Vector2.distance(posN, raycastNETrue) <= dBuffer && raycastNEFalse == null) {
-                        print('N prnis 4');
-                        newPosN = perpendicularEndPointN;
-                    } else {
-                        if (!hideVisuals) {
-                            print(i + '- WEL COLLISION RICHTING perpendicularEndPointN');
-                            this.#buffer.line(posN.x, posN.y, perpendicularEndPointN.x, perpendicularEndPointN.y, 5);
-                        }
-                        newPosN = perpendicularStartPointN;
-                    }
-                }
-
-            } else if (!Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1) && !Collision.polygonCircle(shape.getVertices(), perpendicularEndPointN.x, perpendicularEndPointN.y, 1)) {
-                print(i + '- Beide perpendicularStartPoints van N zitten NIET binnen');
-
-                var directionStart = new Vector2(perpendicularStartPointN.x, perpendicularStartPointN.y).remove(posN).normalized();
-                var directionEnd = new Vector2(perpendicularEndPointN.x, perpendicularEndPointN.y).remove(posN).normalized();
-
-                var raycastNSFalse = this.#raycast([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), false);
-                var raycastNSTrue = this.#raycast([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), true);
-                if (raycastNSFalse != null && raycastNSTrue != null) {
-                    // this.#buffer.fill(0, 255, 0);
-                    // print(i + '- WEL COLLISION RICHTING perpendicularStartPointN');
-                    // this.#buffer.circle(perpendicularStartPointN.x, perpendicularStartPointN.y, 5);
-                    newPosN = perpendicularStartPointN;
-                }
-
-                var raycastNEFalse = this.#raycast([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), false);
-                var raycastNETrue = this.#raycast([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), true);
-                if (raycastNEFalse != null && raycastNETrue != null) {
-                    if (!hideVisuals) {
-                        // this.#buffer.fill(0, 255, 0);
-                        // print(i + '- WEL COLLISION RICHTING perpendicularEndPointN');
-                        // this.#buffer.circle(perpendicularEndPointN.x, perpendicularEndPointN.y, 5);
-                    }
-                    newPosN = perpendicularEndPointN;
-                }
-            } else if (Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1))
-                newPosN = perpendicularStartPointN;
-            else newPosN = perpendicularEndPointN;
-
-
-            // Check if points are on the same coordinates
             if (Collision.pointPoint(newPosP.x, newPosP.y, newPosN.x, newPosN.y)) {
                 insets.push(new Vector2(newPosN.x, newPosN.y));
-                // insets.push(pos);
-                // print(i + 'BENIS');
             } else {
-                // Draw a line parallel of original line
                 var directionP = vp.getCopy().remove(vc).normalized();
                 var startPointP = Vector2.add(newPosP, directionP.multiplyScalar(1000));
                 var endPointP = Vector2.add(newPosP, directionP.multiplyScalar(-1000));
@@ -377,6 +211,8 @@ export default class GeneratorTool {
                 var endPointN = Vector2.add(newPosN, directionN.multiplyScalar(-1000));
 
                 var collisionPoint = this.#lineIntersection(startPointP, endPointP, startPointN, endPointN);
+                insets.push(collisionPoint);
+
                 if (!hideVisuals) {
                     this.#buffer.circle(startPointN.x, startPointN.y, 5);
                     this.#buffer.line(startPointN.x, startPointN.y, endPointN.x, endPointN.y, 5);
@@ -385,7 +221,6 @@ export default class GeneratorTool {
                     this.#buffer.text("Collision Point", collisionPoint.x - 30, collisionPoint.y - 10);
                     this.#buffer.circle(collisionPoint.x, collisionPoint.y, 15);
                 }
-                insets.push(collisionPoint);
             }
 
             if (!hideVisuals) {
@@ -398,9 +233,121 @@ export default class GeneratorTool {
                 this.#buffer.circle(newPosP.x, newPosP.y, 10);
                 this.#buffer.circle(newPosN.x, newPosN.y, 10);
             }
-            // insets.push(pos);
         }
+        this.#buffer.vertex(insets[0].x, insets[0].y);
+        this.#buffer.noStroke();
+        this.#buffer.noFill();
+        this.#buffer.endShape();
+        this.#buffer.pop();
 
+        return new Shape(insets);
+    }
+
+    #createOverhang(shape) {
+        var insets = [];
+        this.#buffer.beginShape();
+        var points = shape.getVertices();
+        var hideVisuals = true;
+        this.#buffer.push();
+        
+        var op = 20;
+        var on = 20;
+        for (let i = 0; i < points.length; i++) {
+            // Overhang Variables
+            var enableOverhangP = false;
+            var enableOverhangN = false;
+            const vc = points[i];
+            const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
+            const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
+
+            var mp = 5;
+            var mn = 5;
+            if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "daknok1" && 
+                shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "dakrand1" && 
+                shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "gootdetail3") {
+                if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
+                    mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
+                }
+            }else if(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] == "daknok1"){
+                enableOverhangP = true;
+            }
+            if (shape.lineMargins[i].split("|")[0] != "daknok1" && shape.lineMargins[i].split("|")[0] != "dakrand1" && shape.lineMargins[i].split("|")[0] != "gootdetail3") {
+                if (shape.lineMargins[i] != null) {
+                    mn = parseInt(shape.lineMargins[i].split('|')[1]);
+                }
+            }else if(shape.lineMargins[i].split("|")[0] == "daknok1"){ 
+                enableOverhangN = true;
+            }
+
+            if ((vp.x == vc.x && vc.x == vn.x) || (vp.y == vc.y && vc.y == vn.y)) {
+                continue;
+            }
+
+            var dirN = vn.getCopy().remove(vc).normalized();
+            dirN.multiply(new Vector2(enableOverhangP ? op : mp, enableOverhangP ? op : mp));
+            var dirP = vp.getCopy().remove(vc).normalized();
+            dirP.multiply(new Vector2(enableOverhangN ? on : mn, enableOverhangN ? on : mn));
+            var posN = dirN.getCopy().add(vc);
+            var posP = dirP.getCopy().add(vc);
+            
+            // Stap 2
+            var perpendicularStartPointP = this.#getPerpendicularPoint(posP.x, posP.y, vp.x, vp.y, enableOverhangP ? op : mp, 'right');
+            var perpendicularEndPointP = this.#getPerpendicularPoint(posP.x, posP.y, vp.x, vp.y, enableOverhangP ? op : mp, 'left');
+            var perpendicularStartPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, enableOverhangN ? on : mn, 'right');
+            var perpendicularEndPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, enableOverhangN ? on : mn, 'left');
+            
+            if (!hideVisuals) {
+                this.#buffer.fill(0, 0, 255); // BLAUW
+                this.#buffer.stroke(0, 0, 0);
+                this.#buffer.text("SPP", perpendicularStartPointP.x - 20, perpendicularStartPointP.y);
+                this.#buffer.text("SPN", perpendicularStartPointN.x - 10, perpendicularStartPointN.y);
+                this.#buffer.text("EPP", perpendicularEndPointP.x + 20, perpendicularEndPointP.y);
+                this.#buffer.text("EPN", perpendicularEndPointN.x + 10, perpendicularEndPointN.y);
+            }
+
+            // Stap 3
+            var dBuffer = 5;
+            var newPosP, newPosN;
+            if(!enableOverhangP) newPosP = this.#calculateInsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, dBuffer, hideVisuals);
+            else newPosP = this.#calculateOutsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, hideVisuals);
+            if(!enableOverhangN) newPosN = this.#calculateInsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, dBuffer, hideVisuals);
+            else newPosN = this.#calculateOutsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, hideVisuals);
+
+            if (Collision.pointPoint(newPosP.x, newPosP.y, newPosN.x, newPosN.y)) {
+                insets.push(new Vector2(newPosN.x, newPosN.y));
+            } else {
+                var directionP = vp.getCopy().remove(vc).normalized();
+                var startPointP = Vector2.add(newPosP, directionP.multiplyScalar(1000));
+                var endPointP = Vector2.add(newPosP, directionP.multiplyScalar(-1000));
+
+                var directionN = vn.getCopy().remove(vc).normalized();
+                var startPointN = Vector2.add(newPosN, directionN.multiplyScalar(1000));
+                var endPointN = Vector2.add(newPosN, directionN.multiplyScalar(-1000));
+
+                var collisionPoint = this.#lineIntersection(startPointP, endPointP, startPointN, endPointN);
+                insets.push(collisionPoint);
+
+                if (!hideVisuals) {
+                    this.#buffer.circle(startPointN.x, startPointN.y, 5);
+                    this.#buffer.line(startPointN.x, startPointN.y, endPointN.x, endPointN.y, 5);
+                    this.#buffer.line(startPointP.x, startPointP.y, endPointP.x, endPointP.y, 5);
+                    this.#buffer.fill(0, 255, 0);
+                    this.#buffer.text("Collision Point", collisionPoint.x - 30, collisionPoint.y - 10);
+                    this.#buffer.circle(collisionPoint.x, collisionPoint.y, 15);
+                }
+            }
+
+            if (!hideVisuals) {
+                this.#buffer.text(i, vc.x, vc.y + 10);
+                this.#buffer.fill(0, 255, 0);
+                // this.#buffer.circle(pos.x, pos.y, 10);
+                this.#buffer.circle(posP.x, posP.y, 5);
+                this.#buffer.circle(posN.x, posN.y, 5);
+                this.#buffer.fill(255, 0, 0);
+                this.#buffer.circle(newPosP.x, newPosP.y, 10);
+                this.#buffer.circle(newPosN.x, newPosN.y, 10);
+            }
+        }
         this.#buffer.vertex(insets[0].x, insets[0].y);
         this.#buffer.noStroke();
         this.#buffer.noFill();
@@ -438,29 +385,14 @@ export default class GeneratorTool {
                 continue;
             }
 
-            // var dirP = vp.getCopy().remove(vc).normalized().multiply(new Vector2(mn, mn));
-            // var dirN = vn.getCopy().remove(vc).normalized().multiply(new Vector2(mp, mp));
-
-            // var posP = vc.getCopy().remove(dirP);
-            // var posN = vc.getCopy().remove(dirN);
-
             var dirN = vn.getCopy().remove(vc).normalized();
             dirN.multiply(new Vector2(mp, mp));
-
             var dirP = vp.getCopy().remove(vc).normalized();
             dirP.multiply(new Vector2(mn, mn));
-
             var posN = dirN.getCopy().add(vc);
             var posP = dirP.getCopy().add(vc);
-            // Old
-            var pos = vc.getCopy().remove(dirN).remove(dirP);
 
             // Stap 2
-            var slopeP = (vp.y - vc.y) / (vp.x - vc.x);
-            var slopeN = (vn.y - vc.y) / (vn.x - vc.x);
-
-            var tolerance = .1;
-
             var perpendicularStartPointP = this.#getPerpendicularPoint(posP.x, posP.y, vp.x, vp.y, mp, 'right');
             var perpendicularEndPointP = this.#getPerpendicularPoint(posP.x, posP.y, vp.x, vp.y, mp, 'left');
 
@@ -482,133 +414,13 @@ export default class GeneratorTool {
             }
 
             // Stap 3
-            // Check welk punt we moeten gebruiken
-            var newPosP, newPosN;
-            var dBuffer = 5
-            // !Als beide punten in shape zitten
-            if (!Collision.polygonCircle(shape.getVertices(), perpendicularStartPointP.x, perpendicularStartPointP.y, 1) && !Collision.polygonCircle(shape.getVertices(), perpendicularEndPointP.x, perpendicularEndPointP.y, 1)) {
-                var directionStart = new Vector2(perpendicularStartPointP.x, perpendicularStartPointP.y).remove(posP).normalized();
-                var directionEnd = new Vector2(perpendicularEndPointP.x, perpendicularEndPointP.y).remove(posP).normalized();
-                var start = this.#raycastAll([shape], posP, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posP, perpendicularStartPointP), true);
-                var end = this.#raycastAll([shape], posP, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posP, perpendicularEndPointP), true);
-                // print('PosP');
-                // print(posP);
-                // print('start');
-                // print(start);
-                // print('end');
-                // print(end);
-                if (start.length < 2) {
-                    if (start.length != 0) {
-                        for (let l = 0; l < start.length; l++) {
-                            if (!start[l].equals(posP)) { print('penis P 1'); newPosP = perpendicularEndPointP; }
-                            // newPosP = perpendicularStartPointP;
-                        }
-                    } else newPosP = perpendicularStartPointP
-                }
-                if (end.length < 2) {
-                    if (end.length != 0) {
-                        for (let l = 0; l < end.length; l++) {
-                            if (!end[l].equals(posP)) { print('penis P 2'); newPosP = perpendicularStartPointP; }
-                            // newPosP = perpendicularEndPointP;
-                        }
-                    } else newPosP = perpendicularEndPointP;
-                }
-
-            }
-            // !Als beide punten NIET in shape zitten 
-            else if (Collision.polygonCircle(shape.getVertices(), perpendicularStartPointP.x, perpendicularStartPointP.y, 1) && Collision.polygonCircle(shape.getVertices(), perpendicularEndPointP.x, perpendicularEndPointP.y, 1)) {
-                print(i + '- Beide perpendicularStartPoints van P zitten NIET binnen');
-                var directionStart = new Vector2(perpendicularStartPointP.x, perpendicularStartPointP.y).remove(posP).normalized();
-                var directionEnd = new Vector2(perpendicularEndPointP.x, perpendicularEndPointP.y).remove(posP).normalized();
-
-                var raycastPSFalse = this.#raycast([shape], posP, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posP, perpendicularStartPointP), false);
-                var raycastPSTrue = this.#raycast([shape], posP, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posP, perpendicularStartPointP), true);
-                if (raycastPSFalse != null && raycastPSTrue != null) {
-                    this.#buffer.fill(0, 255, 0);
-                    this.#buffer.circle(perpendicularStartPointP.x, perpendicularStartPointP.y, 5);
-                    print(i + '- WEL COLLISION RICHTING perpendicularStartPointP');
-                    newPosP = perpendicularStartPointP;
-                }
-
-                var raycastPEFalse = this.#raycast([shape], posP, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posP, perpendicularEndPointP), false);
-                var raycastPETrue = this.#raycast([shape], posP, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posP, perpendicularEndPointP), true);
-                if (raycastPEFalse != null && raycastPETrue != null) {
-                    this.#buffer.fill(0, 255, 0);
-                    this.#buffer.circle(perpendicularEndPointP.x, perpendicularEndPointP.y, 5);
-                    print(i + '- WEL COLLISION RICHTING perpendicularEndPointP');
-                    newPosP = perpendicularEndPointP;
-                }
-            }
-            // Als start punt in shape zitten  
-            else if (!Collision.polygonCircle(shape.getVertices(), perpendicularStartPointP.x, perpendicularStartPointP.y, 1))
-                newPosP = perpendicularStartPointP;
-            // Anders pak eind punt
-            else newPosP = perpendicularEndPointP;
-
-            if (!Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1) && !Collision.polygonCircle(shape.getVertices(), perpendicularEndPointN.x, perpendicularEndPointN.y, 1)) {
-                var directionStart = new Vector2(perpendicularStartPointN.x, perpendicularStartPointN.y).remove(posN).normalized();
-                var directionEnd = new Vector2(perpendicularEndPointN.x, perpendicularEndPointN.y).remove(posN).normalized();
-                var start = this.#raycastAll([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), true);
-                var end = this.#raycastAll([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), true);
-                // print('PosP');
-                // print(posP);
-                // print('start');
-                // print(start);
-                // print('end');
-                // print(end);
-                if (start.length < 2) {
-                    if (start.length != 0) {
-                        for (let l = 0; l < start.length; l++) {
-                            if (!start[l].equals(posN)) { print('penis N 1'); newPosN = perpendicularEndPointN; }
-                            // newPosP = perpendicularStartPointP;
-                        }
-                    } else newPosN = perpendicularStartPointN;
-                }
-                if (end.length < 2) {
-                    if (end.length != 0) {
-                        for (let l = 0; l < end.length; l++) {
-                            if (!end[l].equals(posN)) { print('penis N 2'); newPosN = perpendicularStartPointN; }
-                            // newPosP = perpendicularEndPointP;
-                        }
-                        newPosN = perpendicularStartPointN;
-                    }
-                }
-
-            } else if (Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1) && Collision.polygonCircle(shape.getVertices(), perpendicularEndPointN.x, perpendicularEndPointN.y, 1)) {
-                print(i + '- Beide perpendicularStartPoints van N zitten NIET binnen');
-
-                var directionStart = new Vector2(perpendicularStartPointN.x, perpendicularStartPointN.y).remove(posN).normalized();
-                var directionEnd = new Vector2(perpendicularEndPointN.x, perpendicularEndPointN.y).remove(posN).normalized();
-
-                var raycastNSFalse = this.#raycast([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), false);
-                var raycastNSTrue = this.#raycast([shape], posN, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(posN, perpendicularStartPointN), true);
-                if (raycastNSFalse != null && raycastNSTrue != null) {
-                    // this.#buffer.fill(0, 255, 0);
-                    // print(i + '- WEL COLLISION RICHTING perpendicularStartPointN');
-                    // this.#buffer.circle(perpendicularStartPointN.x, perpendicularStartPointN.y, 5);
-                    newPosN = perpendicularStartPointN;
-                }
-
-                var raycastNEFalse = this.#raycast([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), false);
-                var raycastNETrue = this.#raycast([shape], posN, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(posN, perpendicularEndPointN), true);
-                if (raycastNEFalse != null && raycastNETrue != null) {
-                    if (!hideVisuals) {
-                        // this.#buffer.fill(0, 255, 0);
-                        // print(i + '- WEL COLLISION RICHTING perpendicularEndPointN');
-                        // this.#buffer.circle(perpendicularEndPointN.x, perpendicularEndPointN.y, 5);
-                    }
-                    newPosN = perpendicularEndPointN;
-                }
-            } else if (!Collision.polygonCircle(shape.getVertices(), perpendicularStartPointN.x, perpendicularStartPointN.y, 1))
-                newPosN = perpendicularStartPointN;
-            else newPosN = perpendicularEndPointN;
-
+            // #calculateOutsetPoint(shape, point, startPoint, endPoint, hideVisuals = true)
+            var newPosP = this.#calculateOutsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, hideVisuals); 
+            var newPosN = this.#calculateOutsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, hideVisuals);
 
             // Check if points are on the same coordinates
             if (Collision.pointPoint(newPosP.x, newPosP.y, newPosN.x, newPosN.y)) {
                 outsets.push(new Vector2(newPosN.x, newPosN.y));
-                // insets.push(pos);
-                // print(i + 'BENIS');
             } else {
                 // Draw a line parallel of original line
                 var directionP = vp.getCopy().remove(vc).normalized();
@@ -637,24 +449,7 @@ export default class GeneratorTool {
                 // this.#buffer.circle(pos.x, pos.y, 10);
                 this.#buffer.circle(posP.x, posP.y, 10);
                 this.#buffer.circle(posN.x, posN.y, 10);
-                this.#buffer.fill(255, 0, 0);
-                // this.#buffer.circle(newPosP.x, newPosP.y, 10);
-                // this.#buffer.circle(newPosN.x, newPosN.y, 10);
             }
-
-            // if (Collision.polygonCircle(shape.getVertices(), pos.x, pos.y, 5)) {
-            //     var posP = vc.getCopy().add(dirP);
-            //     var posN = vc.getCopy().add(dirN);
-            //     var pos = vc.getCopy().add(dirN).add(dirP);
-            //     if (!hideVisuals) {
-            //         this.#buffer.fill(0, 0, 255);
-            //         this.#buffer.circle(posP.x, posP.y, 10);
-            //         this.#buffer.circle(posN.x, posN.y, 10);
-            //         this.#buffer.circle(pos.x, pos.y, 10);
-            //     }
-            // }
-
-            // outsets.push(pos);
         }
         this.#buffer.vertex(outsets[0].x, outsets[0].y);
         this.#buffer.noStroke();
@@ -1154,188 +949,133 @@ export default class GeneratorTool {
             insetPoints = Vector2.copyAll(newInsetPoints);
 
             //PHASE 2: Tiles along the inset
-            // tmpTiles = [];
-            // for (let i = 0; i < insetPoints.length; i++) {
-            //     const vc = insetPoints[i];
-            //     const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
-            //     const lineType = inset.lineMargins[i];
-            //     const nextLineType = inset.lineMargins[i + 1 <= inset.lineMargins.length - 1 ? i + 1 : 0];
-            //     const lastLineType = inset.lineMargins[i - 1 >= 0 ? i - 1 : inset.lineMargins.length - 1];
-            //     var isFirst = true;
-            //     var placeLastTile = false;
-            //     var placePreviousTile = true;
+            tmpTiles = [];
+            for (let i = 0; i < insetPoints.length; i++) {
+                const vc = insetPoints[i];
+                const vn = insetPoints[i + 1 <= insetPoints.length - 1 ? i + 1 : 0];
+                const lineType = inset.lineMargins[i];
+                const nextLineType = inset.lineMargins[i + 1 <= inset.lineMargins.length - 1 ? i + 1 : 0];
+                const lastLineType = inset.lineMargins[i - 1 >= 0 ? i - 1 : inset.lineMargins.length - 1];
+                var isFirst = true;
+                var placeLastTile = false;
+                var placePreviousTile = true;
 
-            //     //Only apply when specific line options have been choosen
-            //     if (lineType.split("|")[0] != "dummy") {
-            //         continue;
-            //     }
-            //     if (nextLineType.split("|")[0] != "dummy") {
-            //         placeLastTile = true;
-            //     }
-            //     if (lastLineType.split("|")[0] == "daknok1" || lastLineType.split("|")[0] == "dakrand1" || lastLineType.split("|")[0] == "gootdetail3") {
-            //         placePreviousTile = false;
-            //     }
+                //Only apply when specific line options have been choosen
+                if (lineType.split("|")[0] != "dummy") {
+                    continue;
+                }
+                if (nextLineType.split("|")[0] != "dummy") {
+                    placeLastTile = true;
+                }
+                if (lastLineType.split("|")[0] == "daknok1" || lastLineType.split("|")[0] == "dakrand1" || lastLineType.split("|")[0] == "gootdetail3") {
+                    placePreviousTile = false;
+                }
 
-            //     var dir = vn.getCopy().remove(vc).normalized();
-            //     var targetPoints = [
-            //         new Vector2(vc.x, vc.y),
-            //         new Vector2(vc.x + (tileSize.x * (dir.x != 0 ? dir.x : 1)), vc.y),
-            //         new Vector2(vc.x + (tileSize.x * (dir.x != 0 ? dir.x : 1)), vc.y + (tileSize.y * (dir.y != 0 ? dir.y : 1))),
-            //         new Vector2(vc.x, vc.y + (tileSize.y * (dir.y != 0 ? dir.y : 1))),
-            //     ];
-            //     console.log('targetPoints');
-            //     console.log(targetPoints);
-            //     console.log(dummySize);
-            //     for (let r = 0; r < targetPoints.length; r++) {
-            //         targetPoints[r].x = self.#convertToGrid(targetPoints[r].x, startX, tileSize.x, false);
-            //         targetPoints[r].y = self.#convertToGrid(targetPoints[r].y, startY, tileSize.y, false);
-            //     }
-            
+                var dir = vn.getCopy().remove(vc).normalized();
+                var targetPoints = [
+                    new Vector2(vc.x, vc.y),
+                    new Vector2(vc.x + (tileSize.x * (dir.x != 0 ? dir.x : 1)), vc.y),
+                    new Vector2(vc.x + (tileSize.x * (dir.x != 0 ? dir.x : 1)), vc.y + (tileSize.y * (dir.y != 0 ? dir.y : 1))),
+                    new Vector2(vc.x, vc.y + (tileSize.y * (dir.y != 0 ? dir.y : 1))),
+                ];
+                console.log('targetPoints');
+                console.log(targetPoints);
+                console.log(dummySize);
+                for (let r = 0; r < targetPoints.length; r++) {
+                    targetPoints[r].x = self.#convertToGrid(targetPoints[r].x, startX, tileSize.x, false);
+                    targetPoints[r].y = self.#convertToGrid(targetPoints[r].y, startY, tileSize.y, false);
+                }
+
+                //Skip first if previous was alucobond
+                if (placePreviousTile) {
+                    //Starting tile is not at the correct position
+                    if (!Collision.polygonPoint(targetPoints, vc.x, vc.y)) {
+                        for (let r = 0; r < targetPoints.length; r++) {
+                            targetPoints[r].x -= tileSize.x * (dir.x != 0 ? dir.x : 0);
+                            targetPoints[r].y -= tileSize.y * (dir.y != 0 ? dir.y : 0);
+                        }
+                    }
+                }
+
                 var maxDist = Vector2.distance(vc, vn);
                 var maxSpacing = Math.abs(tileSize.x * dir.x + tileSize.y * dir.y);
                 var max = 999;
                 while (Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y) && (!Collision.polygonPoint(targetPoints, vn.x, vn.y) || Vector2.distance(vc, targetPoints[2]) - (placeLastTile ? maxSpacing : 0) <= maxDist)) {
                     //Create tile
-                    await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tiles => {
-                        if (tiles != null) {
-                            for (let l = 0; l < tiles.length; l++) {
-                                const tile = tiles[l];
-                                if (tile != null) {
-                                    tmpTiles.push(tile);
+                    await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tile => {
+                        if (tile != null) {
+                            tmpTiles.push(tile);
 
-                                    //Update inset
-                                    if (isFirst) {
-                                        const vp = insetPoints[i - 1 >= 0 ? i - 1 : insetPoints.length - 1];
-                                        const dirVCToPrev = vc.getCopy().remove(vp).normalized();
-                                        const newVC = self.#raycast(tiles, vc, dirVCToPrev, tileSize.x, true);
+                            //Update inset
+                            if (isFirst) {
+                                const vp = insetPoints[i - 1 >= 0 ? i - 1 : insetPoints.length - 1];
+                                const dirVCToPrev = vc.getCopy().remove(vp).normalized();
+                                const newVC = self.#raycast([tile], vc, dirVCToPrev, tileSize.x, true);
 
-                                        if (newVC != null) {
-                                            var dist = Vector2.distance(vc, newVC);
-                                            var distPos = dirVCToPrev.getCopy().reverse().multiply(new Vector2(dist, dist));
+                                if (newVC != null) {
+                                    var dist = Vector2.distance(vc, newVC);
+                                    var distPos = dirVCToPrev.getCopy().reverse().multiply(new Vector2(dist, dist));
 
-                                            newInsetPoints[i].add(distPos);
-                                            newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0].add(distPos);
-                                        }
-                                    }
-                                    isFirst = false;
+                                    newInsetPoints[i].add(distPos);
+                                    newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0].add(distPos);
                                 }
                             }
+                            isFirst = false;
                         }
                     });
 
-            //     //Skip first if previous was alucobond
-            //     if (placePreviousTile) {
-            //         //Starting tile is not at the correct position
-            //         if (!Collision.polygonPoint(targetPoints, vc.x, vc.y)) {
-            //             for (let r = 0; r < targetPoints.length; r++) {
-            //                 targetPoints[r].x -= tileSize.x * (dir.x != 0 ? dir.x : 0);
-            //                 targetPoints[r].y -= tileSize.y * (dir.y != 0 ? dir.y : 0);
-            //             }
-            //         }
-            //     }
+                    if (Collision.polygonPoint(targetPoints, vn.x, vn.y)) {
+                        break;
+                    }
 
-            //     var maxDist = Vector2.distance(vc, vn);
-            //     var maxSpacing = Math.abs(tileSize.x * dir.x + tileSize.y * dir.y);
-            //     var max = 999;
-            //     while (Collision.polygonLine(targetPoints, vc.x, vc.y, vn.x, vn.y) && (!Collision.polygonPoint(targetPoints, vn.x, vn.y) || Vector2.distance(vc, targetPoints[2]) - (placeLastTile ? maxSpacing : 0) <= maxDist)) {
-            //         //Create tile
-            //         await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tile => {
-            //             if (tile != null) {
-            //                 tmpTiles.push(tile);
+                    //Update next position
+                    for (let r = 0; r < targetPoints.length; r++) {
+                        const tp = targetPoints[r];
+                        tp.add(new Vector2(dir.x * tileSize.x, dir.y * tileSize.y));
+                    }
+                    await self.#sleep(delay);
 
-            //                 //Update inset
-            //                 if (isFirst) {
-            //                     const vp = insetPoints[i - 1 >= 0 ? i - 1 : insetPoints.length - 1];
-            //                     const dirVCToPrev = vc.getCopy().remove(vp).normalized();
-            //                     const newVC = self.#raycast([tile], vc, dirVCToPrev, tileSize.x, true);
+                    //Security
+                    max--;
+                    if (max <= 0) {
+                        console.error("Infinite loop detected!");
+                        break;
+                    }
+                }
+            }
+            console.log("Tile Count:", tmpTiles.length);
+            self.#tiles = self.#tiles.concat(tmpTiles);
+            insetPoints = Vector2.copyAll(newInsetPoints);
 
-            //                     if (newVC != null) {
-            //                         var dist = Vector2.distance(vc, newVC);
-            //                         var distPos = dirVCToPrev.getCopy().reverse().multiply(new Vector2(dist, dist));
+            for (let index = 0; index < newInsetPoints.length; index++) {
+                const element = newInsetPoints[index];
+                this.#buffer.fill(255,0,0);
+                this.#buffer.circle(element.x, element.y, 10);
+            }
 
-            //                         newInsetPoints[i].add(distPos);
-            //                         newInsetPoints[i + 1 <= newInsetPoints.length - 1 ? i + 1 : 0].add(distPos);
-            //                     }
-            //                 }
-            //                 isFirst = false;
-            //             }
-            //         });
+            //PHASE 3: Tiles inside the inset
+            tmpTiles = [];
+            var topLeft = null;
+            for (let i = 0; i < insetPoints.length; i++) {
+                const vc = insetPoints[i];
 
-            //         if (Collision.polygonPoint(targetPoints, vn.x, vn.y)) {
-            //             break;
-            //         }
-
-            //         //Update next position
-            //         for (let r = 0; r < targetPoints.length; r++) {
-            //             const tp = targetPoints[r];
-            //             tp.add(new Vector2(dir.x * tileSize.x, dir.y * tileSize.y));
-            //         }
-            //         await self.#sleep(delay);
-
-            //         //Security
-            //         max--;
-            //         if (max <= 0) {
-            //             console.error("Infinite loop detected!");
-            //             break;
-            //         }
-            //     }
-            // }
-            // console.log("Tile Count:", tmpTiles.length);
-            // self.#tiles = self.#tiles.concat(tmpTiles);
-            // insetPoints = Vector2.copyAll(newInsetPoints);
-
-            // for (let index = 0; index < newInsetPoints.length; index++) {
-            //     const element = newInsetPoints[index];
-            //     this.#buffer.fill(255,0,0);
-            //     this.#buffer.circle(element.x, element.y, 10);
-            // }
-
-            // //PHASE 3: Tiles inside the inset
-            // tmpTiles = [];
-            // var topLeft = null;
-            // for (let i = 0; i < insetPoints.length; i++) {
-            //     const vc = insetPoints[i];
-
-            //     if (topLeft == null || (vc.x <= topLeft.x && vc.y <= topLeft.y)) {
-            //         topLeft = vc.getCopy();
-            //     }
-            // }
-            // // if Topleft is not the highest point of the shape or the most left
-            // // // set either the X or Y axis
-            // for (let i = 0; i < insetPoints.length; i++) {
+                if (topLeft == null || (vc.x <= topLeft.x && vc.y <= topLeft.y)) {
+                    topLeft = vc.getCopy();
+                }
+            }
+            // if Topleft is not the highest point of the shape or the most left
+            // // set either the X or Y axis
+            for (let i = 0; i < insetPoints.length; i++) {
                 
-            //     if (insetPoints[i].y < topLeft.y) {
-            //         topLeft.y = insetPoints[i].y;
-            //         // topLeft.x = insetPoints[i].x;
-            //     }
-            //     if (insetPoints[i].x < topLeft.x) {
-            //         // topLeft.y = insetPoints[i].y;
-            //         topLeft.x = insetPoints[i].x;
-            //     }
-            // }
-
-            // // var targetPoints = [
-            // //     new Vector2(self.#convertToGrid(topLeft.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y, startY, tileSize.y, false)),
-            // //     new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y, startY, tileSize.y, false)),
-            // //     new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y, startY, tileSize.y, false)),
-            // //     new Vector2(self.#convertToGrid(topLeft.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y, startY, tileSize.y, false)),
-            // // ];
-            // // for (let r = 0; r < targetPoints.length; r++) {
-            // //     // targetPoints[r].x = self.#convertToGrid(targetPoints[r].x, startX, tileSize.x, false);
-            // //     // targetPoints[r].y = self.#convertToGrid(targetPoints[r].y, startY, tileSize.y, false);
-
-            // //     self.#buffer.fill(255, 0, 0);
-            // //     self.#buffer.circle(targetPoints[r].x, targetPoints[r].y, 10);
-            // // }
-
-            // console.log("Tile Count:", tmpTiles.length);
-            // self.#tiles = self.#tiles.concat(tmpTiles);
-            // insetPoints = Vector2.copyAll(newInsetPoints);
-
-            // var newBoundingBox = Vector2.getBoundingBox(newInsetPoints, topLeft);
-            // this.#buffer.fill(255,0,0,100);
-            // self.#buffer.rect(newBoundingBox.x, newBoundingBox.y, newBoundingBox.w, newBoundingBox.h);
-            // console.log("Bounding Box", newBoundingBox.x + newBoundingBox.w, newBoundingBox.y + newBoundingBox.h);
+                if (insetPoints[i].y < topLeft.y) {
+                    topLeft.y = insetPoints[i].y;
+                    // topLeft.x = insetPoints[i].x;
+                }
+                if (insetPoints[i].x < topLeft.x) {
+                    // topLeft.y = insetPoints[i].y;
+                    topLeft.x = insetPoints[i].x;
+                }
+            }
 
             // var targetPoints = [
             //     new Vector2(self.#convertToGrid(topLeft.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y, startY, tileSize.y, false)),
@@ -1343,72 +1083,84 @@ export default class GeneratorTool {
             //     new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y, startY, tileSize.y, false)),
             //     new Vector2(self.#convertToGrid(topLeft.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y, startY, tileSize.y, false)),
             // ];
+            // for (let r = 0; r < targetPoints.length; r++) {
+            //     // targetPoints[r].x = self.#convertToGrid(targetPoints[r].x, startX, tileSize.x, false);
+            //     // targetPoints[r].y = self.#convertToGrid(targetPoints[r].y, startY, tileSize.y, false);
 
-            // console.log('startX', startX);
-            // console.log('startY',startY);
+            //     self.#buffer.fill(255, 0, 0);
+            //     self.#buffer.circle(targetPoints[r].x, targetPoints[r].y, 10);
+            // }
 
-            // var xIndex = 1;
-            // var yIndex = 1;
-            // var max = 999;
-            // while (true) {
-            //     for (let r = 0; r < targetPoints.length; r++) {
-            //         if (count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63) {
-            //             // self.#buffer.fill(255, 0, 0);
-            //             // self.#buffer.circle(targetPoints[r].x, targetPoints[r].y, 10);
-            //         }
-            //     }
+            console.log("Tile Count:", tmpTiles.length);
+            self.#tiles = self.#tiles.concat(tmpTiles);
+            insetPoints = Vector2.copyAll(newInsetPoints);
+
+            var newBoundingBox = Vector2.getBoundingBox(newInsetPoints, topLeft);
+            this.#buffer.fill(255,0,0,100);
+            self.#buffer.rect(newBoundingBox.x, newBoundingBox.y, newBoundingBox.w, newBoundingBox.h);
+            console.log("Bounding Box", newBoundingBox.x + newBoundingBox.w, newBoundingBox.y + newBoundingBox.h);
+
+            var targetPoints = [
+                new Vector2(self.#convertToGrid(topLeft.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y, startY, tileSize.y, false)),
+                new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y, startY, tileSize.y, false)),
+                new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y, startY, tileSize.y, false)),
+                new Vector2(self.#convertToGrid(topLeft.x, startX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y, startY, tileSize.y, false)),
+            ];
+
+            console.log('startX', startX);
+            console.log('startY',startY);
+
+            var xIndex = 1;
+            var yIndex = 1;
+            var max = 999;
+            while (true) {
+                for (let r = 0; r < targetPoints.length; r++) {
+                    if (count == 33 || count == 38 || count == 43 || count == 48 || count == 53 || count == 58 || count == 63) {
+                        // self.#buffer.fill(255, 0, 0);
+                        // self.#buffer.circle(targetPoints[r].x, targetPoints[r].y, 10);
+                    }
+                }
+
                 //Create tile
-                await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tiles => {
-                    if (tiles != null) {
-                        for (let l = 0; l < tiles.length; l++) {
-                            const tile = tiles[l];
-                            if (tile != null) {
-                                tmpTiles.push(tile);
-                            }
-                        }
+                await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tile => {
+                    if (tile != null) {
+                        tmpTiles.push(tile);
                     }
                 });
                 xIndex++;
 
-            //     //Create tile
-            //     await syncedPlaceTile(targetPoints[0].x, targetPoints[0].y, targetPoints).then(tile => {
-            //         if (tile != null) {
-            //             tmpTiles.push(tile);
-            //         }
-            //     });
-            //     xIndex++;
+                //Next tile
+                if (targetPoints[0].x + tileSize.x < newBoundingBox.x + newBoundingBox.w) {
+                    for (let r = 0; r < targetPoints.length; r++) {
+                        targetPoints[r].add(new Vector2(tileSize.x, 0));
+                    }
+                }
+                else if (targetPoints[0].y + tileSize.y < newBoundingBox.y + newBoundingBox.h) {
+                    xIndex = 0;
+                    yIndex++;
 
-            //     //Next tile
-            //     if (targetPoints[0].x + tileSize.x < newBoundingBox.x + newBoundingBox.w) {
-            //         for (let r = 0; r < targetPoints.length; r++) {
-            //             targetPoints[r].add(new Vector2(tileSize.x, 0));
-            //         }
-            //     }
-            //     else if (targetPoints[0].y + tileSize.y < newBoundingBox.y + newBoundingBox.h) {
-            //         xIndex = 0;
-            //         yIndex++;
+                    var newX = startX - (tiledMode && yIndex % 2 == 0 ? tileSize.x / 2 : 0);
+                    var newY = startY;
+                    targetPoints = [
+                        new Vector2(self.#convertToGrid(topLeft.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * (yIndex - 1), newY, tileSize.y, false)),
+                        new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * (yIndex - 1), newY, tileSize.y, false)),
+                        new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * yIndex, newY, tileSize.y, false)),
+                        new Vector2(self.#convertToGrid(topLeft.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * yIndex, newY, tileSize.y, false)),
+                    ];
+                }
+                else if (targetPoints[0].y + tileSize.y >= newBoundingBox.y + newBoundingBox.h) {
+                    break;
+                }
+                await self.#sleep(delay);
 
-            //         var newX = startX - (tiledMode && yIndex % 2 == 0 ? tileSize.x / 2 : 0);
-            //         var newY = startY;
-            //         targetPoints = [
-            //             new Vector2(self.#convertToGrid(topLeft.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * (yIndex - 1), newY, tileSize.y, false)),
-            //             new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * (yIndex - 1), newY, tileSize.y, false)),
-            //             new Vector2(self.#convertToGrid(topLeft.x + tileSize.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * yIndex, newY, tileSize.y, false)),
-            //             new Vector2(self.#convertToGrid(topLeft.x, newX, tileSize.x, false), self.#convertToGrid(topLeft.y + tileSize.y * yIndex, newY, tileSize.y, false)),
-            //         ];
-            //     }
-            //     else if (targetPoints[0].y + tileSize.y >= newBoundingBox.y + newBoundingBox.h) {
-            //         break;
-            //     }
-            //     await self.#sleep(delay);
-
-            //     //Security
-            //     max--;
-            //     if (max <= 0) {
-            //         console.error("Infinite loop detected!");
-            //         break;
-            //     }
-            // }
+                //Security
+                max--;
+                if (max <= 0) {
+                    console.error("Infinite loop detected!");
+                    break;
+                }
+            }
+            self.#tiles = self.#tiles.concat(tmpTiles);
         };
 
         syncedLoop(boundingBox.x, boundingBox.y);
@@ -1688,17 +1440,6 @@ export default class GeneratorTool {
         var xCoor = (tempA * z2 - z1 * tempB) / dist;
         var yCoor = (tempA * z4 - z3 * tempB) / dist;
 
-        // if (xCoor < Math.min(pointA.x, pointB.x) || xCoor > Math.max(pointA.x, pointB.x) ||
-        //     xCoor < Math.min(pointC.x, pointD.x) || xCoor > Math.max(pointC.x, pointD.x)) {
-        //     print("eerste Null");
-        //     return null;
-        // }
-        // if (yCoor < Math.min(pointA.y, pointB.y) || yCoor > Math.max(pointA.y, pointB.y) ||
-        //     yCoor < Math.min(pointC.y, pointD.y) || yCoor > Math.max(pointC.y, pointD.y)) {
-        //     print("Tweede Null");
-        //     return null;
-        // }
-
         return new Vector2(xCoor, yCoor);
     }
 
@@ -1715,52 +1456,133 @@ export default class GeneratorTool {
         }
     }
 
-    isCollidingWithShapes(shapes, shape) {
-        for (let i = 0; i < shapes.length; i++) {
-            const points = shapes[i].getVertices();
+    #calculateInsetPoint(shape, point, startPoint, endPoint, dBuffer, hideVisuals = true){
+        let newPos = null;
 
-            if (Collision.polygonPolygon(points, shape)) {
-                return true;
+        if (Collision.polygonCircle(shape.getVertices(), startPoint.x, startPoint.y, 1) && Collision.polygonCircle(shape.getVertices(), endPoint.x, endPoint.y, 1)) {
+            const directionStart = new Vector2(startPoint.x, startPoint.y).remove(point).normalized();
+            const directionEnd = new Vector2(endPoint.x, endPoint.y).remove(posP).normalized();
+
+            const raycastPSFalse = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), false);
+            const raycastPSTrue = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), true);
+            if (raycastPSFalse == null && raycastPSTrue == null) {
+                if (!hideVisuals) {
+                    this.#buffer.fill(0, 255, 0);
+                    this.#buffer.circle(startPoint.x, startPoint.y, 5);
+                }
+                newPos = startPoint;
+            } else if (Vector2.distance(point, raycastPSFalse) <= dBuffer && raycastPSTrue == null) {
+                newPos = startPoint;
+            } else if (Vector2.distance(point, raycastPSTrue) <= dBuffer && raycastPSFalse == null) {
+                newPos = startPoint;
+            } else {
+                if (!hideVisuals) {
+                    this.#buffer.line(point.x, point.y, startPoint.x, startPoint.y, 5);
+                }
+                newPos = endPoint;
+            }
+
+            if (newPos == null) {
+                const raycastPEFalse = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), false);
+                const raycastPETrue = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), true);
+                if (raycastPEFalse == null && raycastPETrue == null) {
+                    if (!hideVisuals) {
+                        this.#buffer.fill(0, 255, 0);
+                        this.#buffer.circle(endPoint.x, endPoint.y, 5);
+                    }
+                    newPos = endPoint;
+                } else if (Vector2.distance(point, raycastPEFalse) <= dBuffer && raycastPETrue == null) {
+                    newPos = endPoint;
+                } else if (Vector2.distance(point, raycastPETrue) <= dBuffer && raycastPEFalse == null) {
+                    newPos = endPoint;
+                }else{
+                    if (!hideVisuals) {
+                        this.#buffer.line(posP.x, posP.y, endPoint.x, endPoint.y, 5);
+                    }
+                    newPos = startPoint;
+                }
             }
         }
+        else if (!Collision.polygonCircle(shape.getVertices(), startPoint.x, startPoint.y, 1) && !Collision.polygonCircle(shape.getVertices(), endPoint.x, endPoint.y, 1)) {
+            var directionStart = new Vector2(startPoint.x, startPoint.y).remove(point).normalized();
+            var directionEnd = new Vector2(endPoint.x, endPoint.y).remove(point).normalized();
 
-        return false;
+            var raycastSFalse = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), false);
+            var raycastSTrue = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), true);
+            if (raycastSFalse != null && raycastSTrue != null) {
+                this.#buffer.fill(0, 255, 0);
+                this.#buffer.circle(startPoint.x, startPoint.y, 5);
+                newPos = startPoint;
+            }
+
+            var raycastEFalse = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), false);
+            var raycastETrue = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), true);
+            if (raycastEFalse != null && raycastETrue != null) {
+                this.#buffer.fill(0, 255, 0);
+                this.#buffer.circle(endPoint.x, endPoint.y, 5);
+                newPos = endPoint;
+            }
+        }
+        // Als start punt in shape zitten  
+        else if (Collision.polygonCircle(shape.getVertices(), startPoint.x, startPoint.y, 1)) newPos = startPoint;
+        // Anders pak eind punt
+        else newPos = endPoint;
+
+
+        return newPos;
     }
 
-    reorderClockwise(points) {
-        let midpoint = createVector(0, 0);
-        for (let i = 0; i < points.length; i++) {
-            midpoint.x += points[i].x;
-            midpoint.y += points[i].y;
-        }
-        midpoint.x /= points.length;
-        midpoint.y /= points.length;
+    #calculateOutsetPoint(shape, point, startPoint, endPoint, hideVisuals = true){
+        let newPos = null;
 
+        if (!Collision.polygonCircle(shape.getVertices(), startPoint.x, startPoint.y, 1) && !Collision.polygonCircle(shape.getVertices(), endPoint.x, endPoint.y, 1)) {
+            var directionStart = new Vector2(startPoint.x, startPoint.y).remove(point).normalized();
+            var directionEnd = new Vector2(endPoint.x, endPoint.y).remove(point).normalized();
+            var start = this.#raycastAll([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), true);
+            var end = this.#raycastAll([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), true);
+            if (start.length < 2) {
+                if (start.length != 0) {
+                    for (let l = 0; l < start.length; l++) {
+                        if (!start[l].equals(point)) newPos = endPoint;
+                    }
+                } else newPos = startPoint
+            }
+            if (end.length < 2) {
+                if (end.length != 0) {
+                    for (let l = 0; l < end.length; l++) {
+                        if (!end[l].equals(point))  newPos = startPoint; 
+                    }
+                } else newPos = endPoint;
+            }
         
-        points.sort((a, b) => {
-            let angleA = atan2(a.y - midpoint.y, a.x - midpoint.x);
-            let angleB = atan2(b.y - midpoint.y, b.x - midpoint.x);
-            return angleA - angleB;
-        });
-        return points;
-        // Returns points with 0 always being top left
-        // let upperLeftIndex = 0;
-        // for (let i = 1; i < points.length; i++) {
-        //     if (points[i].y < points[upperLeftIndex].y ||
-        //         (points[i].y == points[upperLeftIndex].y && points[i].x < points[upperLeftIndex].x)) {
-        //     upperLeftIndex = i;
-        //     }
-        // }
+        }
+        // !Als beide punten NIET in shape zitten 
+        else if (Collision.polygonCircle(shape.getVertices(), startPoint.x, startPoint.y, 1) && Collision.polygonCircle(shape.getVertices(), endPoint.x, endPoint.y, 1)) {
+            var directionStart = new Vector2(startPoint.x, startPoint.y).remove(point).normalized();
+            var directionEnd = new Vector2(endPoint.x, endPoint.y).remove(point).normalized();
+        
+            var raycastPSFalse = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), false);
+            var raycastPSTrue = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), true);
+            if (raycastPSFalse != null && raycastPSTrue != null) {
+                if (!hideVisuals) {this.#buffer.fill(0, 255, 0);
+                this.#buffer.circle(startPoint.x, startPoint.y, 5);}
+                newPos = startPoint;
+            }
+        
+            var raycastPEFalse = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), false);
+            var raycastPETrue = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), true);
+            if (raycastPEFalse != null && raycastPETrue != null) {
+                if (!hideVisuals) {this.#buffer.fill(0, 255, 0);
+                this.#buffer.circle(endPoint.x, endPoint.y, 5);}
+                newPos = endPoint;
+            }
+        }
+        // Als start punt in shape zitten  
+        else if (!Collision.polygonCircle(shape.getVertices(), startPoint.x, startPoint.y, 1)) newPos = startPoint;
+        // Anders pak eind punt
+        else newPos = endPoint;
 
-        // let rotatedPoints = [];
-        // for (let i = upperLeftIndex; i < points.length; i++) {
-        //     rotatedPoints.push(points[i]);
-        // }
-        // for (let i = 0; i < upperLeftIndex; i++) {
-        //     rotatedPoints.push(points[i]);
-        // }
-
-        // return rotatedPoints;
+        return newPos;
     }
 
     getTiles() {

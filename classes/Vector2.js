@@ -48,7 +48,7 @@ export default class Vector2{
         this.y = this.y > v2.y ? v2.y : this.y;
         return this;
     };
-    abs = () => { return new Vector2(Math.abs(this.x), Math.abs(this.y)); };
+    abs = () => { return new Vector2(this.x != 0 ? Math.abs(this.x) : 0, this.y != 0 ? Math.abs(this.y) : 0); };
     
     add = (v) => { this.x += v.x; this.y += v.y; return this; };
     remove = (v) => { this.x -= v.x; this.y -= v.y; return this; };

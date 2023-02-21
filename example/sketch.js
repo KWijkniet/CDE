@@ -316,13 +316,19 @@ function updateMargin() {
             if (!value) {
                 value = document.querySelector('[data-target="' + elem.id + '"]').value;
             }
-            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
+            if(elem.id == "daknok1" || elem.id == "dakrand1" || elem.id == "gootdetail3"){
+                lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + document.getElementById(elem.id + '_overlap').value;
+            }else{
+                lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
+            }
             Renderer.instance.replace(lineSelectorTool.selectedShape);
             break;
         }
     }
 
     generatorTool.margin = document.getElementById("objectMargin").value;
+    generatorTool.dummyTileSize = document.getElementById("dummyTileSize").value;
+    // generatorTool.overlapTileSize = document.getElementById("overlapTileSize").value;
     generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
 }
 

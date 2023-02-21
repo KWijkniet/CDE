@@ -29,6 +29,7 @@ export default class Tile {
             }
         }
 
+
         if(isDummy){
             this.#color = Settings.type == "Zwart" ? Settings.dummyZwartBackground : Settings.dummyTerracottaBackground;
         }else{

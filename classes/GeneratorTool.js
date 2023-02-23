@@ -17,12 +17,14 @@ export default class GeneratorTool {
     overhang = 0;
     offsetX = 0;
     offsetY = 0;
-    debugBoundingBox = false;
-    debugRaycast = false;
-    debugInset = false;
-    debugOutset = false;
-    debugTiles = false;
-    debugParallel = false;
+
+    debugBoundingBox = true;
+    debugRaycast = true;
+    debugInset = true;
+    debugOutset = true;
+    debugTiles = true;
+    debugParallel = true;
+    debugStartingPoint = true;
 
     #buffer = null;
     #renderer = null;
@@ -511,7 +513,9 @@ export default class GeneratorTool {
             setTimeout(() => {
                 var results = [];
                 var collisions = [];
-                // self.#buffer.text(count, predictionPoints[0].x + 10 + tileSize.x / 2, predictionPoints[0].y + 10 + tileSize.y / 2);
+                if(self.debugTiles){
+                    self.#buffer.text(count, predictionPoints[0].x + 10 + tileSize.x / 2, predictionPoints[0].y + 10 + tileSize.y / 2);
+                }
 
                 for (let i = 0; i < predictionPoints.length; i++) {
                     const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
@@ -532,9 +536,9 @@ export default class GeneratorTool {
                         }
 
                         var distP = Vector2.distance(vc, vp);
-                        var raycastP = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, false);
+                        var raycastP = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
                         var distN = Vector2.distance(vc, vn);
-                        var raycastN = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, false);
+                        var raycastN = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
 
                         if(raycastP != null){
                             isDummy = true;
@@ -852,54 +856,53 @@ export default class GeneratorTool {
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
                 await syncedPlaceTile(x, y, predictedPoints).then(tiles =>{
                     tmpTiles[x + "_" + y] = tiles;
-                    console.log(x + "_" + y);
-
-                    //Neighbouring tiles
-                    setTimeout(() => {
-                        // //Right
-                        // var right = self.#raycast([inset].concat(outsets), new Vector2(x, y), new Vector2(-1, 0), w, true);
-                        // if(right == null){
-                        //     right = new Vector2(x + w, y);
-                        //     // loop(right.x, right.y, w, h);
-                        // }
-                        // self.#buffer.circle(right.x, right.y, 5);
-
-                        // //Down
-                        // var down = self.#raycast([inset].concat(outsets), new Vector2(x + w, y), new Vector2(0, -1), h, true);
-                        // if(down == null){ down = new Vector2(x + w, y + h); }
-                        // self.#buffer.circle(down.x, down.y, 5);
-
-                        // //Left
-                        // var left = self.#raycast([inset].concat(outsets), new Vector2(x + w, y + h), new Vector2(1, 0), w, true);
-                        // if(left == null){
-                        //     left = new Vector2(x, y + h);
-                        //     // loop(left.x, left.y, w, h);
-                        // }
-                        // self.#buffer.circle(left.x, left.y, 5);
-                    }, 250);
                 });
                 await self.#sleep(100);
-
-                //left
-                if(typeof tmpTiles[(x - w) + "_" + y] === "undefined"){
-                    await loop(x - w, y, w, h);
-                }
-                //right
-                if(typeof tmpTiles[(x + w) + "_" + y] === "undefined"){
-                    await loop(x + w, y, w, h);
-                }
-                    //up
-                if(typeof tmpTiles[x + "_" + (y - h)] === "undefined"){
-                    await loop(x, y - h, w, h);
-                }
-                //down
-                if(typeof tmpTiles[x + "_" + (y + h)] === "undefined"){
-                    await loop(x, y + h, w, h);
+                if(tmpTiles[x + "_" + y][0] != null || tmpTiles[x + "_" + y][1] != null){
+                    //Neighbour left
+                    if(typeof tmpTiles[(x - w) + "_" + y] === "undefined"){
+                        await loop(x - w, y, w, h);
+                    }
+                    //Neighbour right
+                    if(typeof tmpTiles[(x + w) + "_" + y] === "undefined"){
+                        await loop(x + w, y, w, h);
+                    }
+                    //Neighbour up
+                    if(typeof tmpTiles[x + "_" + (y - h)] === "undefined"){
+                        await loop(x, y - h, w, h);
+                    }
+                    //Neighbour down
+                    if(typeof tmpTiles[x + "_" + (y + h)] === "undefined"){
+                        await loop(x, y + h, w, h);
+                    }
                 }
             }
         };
+
+        //Find the top left vertice of the shape
+        var topleft = null;
+        for (let i = 0; i < insetPoints.length; i++) {
+            const vc = insetPoints[i];
+            
+            if(topleft == null){
+                topleft = vc;
+            }
+            else if(Vector2.distance(vc, boundingBox) < Vector2.distance(topleft, boundingBox)){
+                topleft = vc;
+            }
+            // else if(topleft.y >= vc.y && topleft.x >= vc.x){
+            //     topleft = vc;
+            // }
+        }
+
         //center
-        loop(boundingBox.x + self.offsetX, boundingBox.y + self.offsetY, tileSize.x, tileSize.y);
+        await loop(topleft.x + self.offsetX, topleft.y + self.offsetY, tileSize.x, tileSize.y);
+        
+        console.log(this.#tiles);
+        if(this.debugStartingPoint){
+            this.#buffer.fill(255, 0, 0);
+            this.#buffer.circle(topleft.x + self.offsetX, topleft.y + self.offsetY, 10);
+        }
     }
 
     #convertToGrid(value, gridStart, gridSize, useRound = true) {
@@ -916,61 +919,20 @@ export default class GeneratorTool {
     }
 
     #raycast(shapes, from, dir, dist, ignoreSelf = true) {
-        var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
-        this.#buffer.line(from.x, from.y, end.x, end.y);
         var collisions = this.#raycastAll(shapes, from, dir, dist, ignoreSelf);
         if (collisions.length > 0) {
             return collisions[0];
         }
         return null;
-
-        // var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
-        // this.#buffer.line(from.x, from.y, end.x, end.y);
-
-        // var collisionClosest = null;
-        // var collisionDist = 99999999999;
-
-        // for (let i = 0; i < shapes.length; i++) {
-        //     const shape = shapes[i];
-        //     const vertices = shape.getVertices();
-
-        //     for (let r = 0; r < vertices.length; r++) {
-        //         const vn = vertices[r + 1 < vertices.length ? r + 1 : 0];
-        //         const vc = vertices[r];
-
-        //         // if (Collision.pointCircle(vc.x, vc.y, end.x, end.y, 10)) {
-        //         //     circle(vc.x, vc.y, 10);
-        //         //     circle(vn.x, vn.y, 10);
-        //         // }
-
-        //         // if (Collision.lineLine(vc.x, vc.y, vn.x, vn.y, from.x, from.y, end.x, end.y)) {
-        //         //     strokeWeight(5);
-        //         //     stroke(255, 255, 0);
-        //         //     line(vn.x, vn.y, vc.x, vc.y);
-        //         // }
-
-        //         if (Collision.linePoint(vn.x, vn.y, vc.x, vc.y, from.x, from.y) && ignoreSelf) {
-        //             continue;
-        //         }
-
-        //         var collision = Collision.lineLineCollision(from.x, from.y, end.x, end.y, vc.x, vc.y, vn.x, vn.y);
-        //         if (collision != null) {
-        //             var dist = Vector2.distance(from, collision);
-        //             if (collisionClosest == null || dist < collisionDist) {
-        //                 collisionClosest = collision;
-        //                 collisionDist = dist;
-        //             }
-        //         }
-        //     }
-        // }
-
-        // return collisionClosest;
     }
 
     #raycastAll(shapes, from, dir, dist, ignoreSelf = true) {
         var collisions = [];
         var keys = [];
         var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
+        if(this.debugRaycast){
+            this.#buffer.line(from.x, from.y, end.x, end.y);
+        }
 
         for (let i = 0; i < shapes.length; i++) {
             const shape = shapes[i];

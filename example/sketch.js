@@ -314,7 +314,8 @@ function updateSettings(){
     generatorTool.debugInset = document.getElementById("showInset").checked ? true : false;
     generatorTool.debugOutset = document.getElementById("showOutset").checked ? true : false;
     generatorTool.debugTiles = document.getElementById("showTiles").checked ? true : false;
-    generatorTool.debugParallel = document.getElementById("showparallel").checked ? true : false;
+    generatorTool.debugParallel = document.getElementById("showParallel").checked ? true : false;
+    generatorTool.debugStartingPoint = document.getElementById("showStartPoint").checked ? true : false;
 }
 
 function updateMargin() {
@@ -397,6 +398,7 @@ function exportData() {
     data['debugOutset'] = document.getElementById("showOutset").checked ? true : false;
     data['debugTiles'] = document.getElementById("showTiles").checked ? true : false;
     data['debugParallel'] = document.getElementById("showParallel").checked ? true : false;
+    data['showStartPoint'] = document.getElementById("showStartPoint").checked ? true : false;
 
     return JSON.stringify(data);
 }
@@ -422,6 +424,7 @@ function importData(json){
     document.getElementById("showOutset").checked = json['debugOutset'] ? true : false;
     document.getElementById("showTiles").checked = json['debugTiles'] ? true : false;
     document.getElementById("showParallel").checked = json['debugParallel'] ? true : false;
+    document.getElementById("showStartPoint").checked = json['showStartPoint'] ? true : false;
 
     generatorTool.fromJSON(json['generator']);
 }

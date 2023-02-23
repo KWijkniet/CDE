@@ -314,7 +314,8 @@ function updateSettings(){
     generatorTool.debugInset = document.getElementById("showInset").checked ? true : false;
     generatorTool.debugOutset = document.getElementById("showOutset").checked ? true : false;
     generatorTool.debugTiles = document.getElementById("showTiles").checked ? true : false;
-    generatorTool.debugParallel = document.getElementById("showparallel").checked ? true : false;
+    generatorTool.debugParallel = document.getElementById("showParallel").checked ? true : false;
+    generatorTool.debugStartingPoint = document.getElementById("showStartPoint").checked ? true : false;
 }
 
 function updateMargin() {
@@ -323,17 +324,19 @@ function updateMargin() {
     for (let i = 0; i < elems.length; i++) {
         const elem = elems[i];
         if (elem.checked) {
+            var marginValue = 0;
+            var overhangValue = 0;
+
             var margin = elem.getAttribute("data-margin");
             if (!margin) {
-                margin = document.querySelector('[data-target="' + elem.id + '"]').margin;
+                marginValue = document.getElementById("objectMargin").value;
             }
-            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + margin;
-
+            
             var overhang = elem.getAttribute("data-overhang");
             if (!overhang) {
-                overhang = document.querySelector('[data-target="' + elem.id + '"]').overhang;
+                overhangValue = document.getElementById("objectOverhang").value;
             }
-            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + overhang;
+            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + marginValue + "|" + overhangValue;
             Renderer.instance.replace(lineSelectorTool.selectedShape);
             
             hasFound = true;
@@ -359,7 +362,8 @@ function loadMargin() {
             elem.checked = true;
 
             if (!elem.getAttribute("data-margin")){
-                document.querySelector('[data-target="' + elem.id + '"]').value = data[1];
+                document.getElementById("objectMargin").value = data[1];
+                document.getElementById("objectOverhang").value = data[2];
             }
         }
         else if (elem.checked){
@@ -394,6 +398,7 @@ function exportData() {
     data['debugOutset'] = document.getElementById("showOutset").checked ? true : false;
     data['debugTiles'] = document.getElementById("showTiles").checked ? true : false;
     data['debugParallel'] = document.getElementById("showParallel").checked ? true : false;
+    data['showStartPoint'] = document.getElementById("showStartPoint").checked ? true : false;
 
     return JSON.stringify(data);
 }
@@ -419,6 +424,7 @@ function importData(json){
     document.getElementById("showOutset").checked = json['debugOutset'] ? true : false;
     document.getElementById("showTiles").checked = json['debugTiles'] ? true : false;
     document.getElementById("showParallel").checked = json['debugParallel'] ? true : false;
+    document.getElementById("showStartPoint").checked = json['showStartPoint'] ? true : false;
 
     generatorTool.fromJSON(json['generator']);
 }

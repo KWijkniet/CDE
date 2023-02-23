@@ -60,7 +60,6 @@ export default class GeneratorTool {
         var insets = [];
         var overhangs = [];
         var outsets = [];
-        var hideVisuals = false;
 
         this.#buffer.clear();
         var shapes = this.#renderer.getAll();
@@ -75,7 +74,7 @@ export default class GeneratorTool {
                 insets.push(inset);
                 overhangs.push(overhang);
 
-                if (!hideVisuals) {
+                if (this.debugInset) {
                     //visualize inset
                     this.#buffer.push();
                     for (let i = 0; i < pointsOverhang.length; i++) {
@@ -102,7 +101,7 @@ export default class GeneratorTool {
                 var points = outset.getVertices();
                 outsets.push(outset);
 
-                if (!hideVisuals) {
+                if (this.debugOutset) {
                     //visualize outset
                     this.#buffer.push();
                     for (let i = 0; i < points.length; i++) {
@@ -118,14 +117,14 @@ export default class GeneratorTool {
             }
         }
 
-        if (!hideVisuals) {
+        if (this.debugBoundingBox) {
             for (let i = 0; i < insets.length; i++) {
                 const inset = insets[i];
-                this.#buffer.stroke(0);
+                this.#buffer.stroke(0, 0, 255);
                 this.#buffer.strokeWeight(2);
                 var boundingBox = overhangs[i].getBoundingBox();
                 this.#buffer.fill(255, 255, 255, 0);
-                // this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+                this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
             }
 
             for (let i = 0; i < outsets.length; i++) {
@@ -134,7 +133,7 @@ export default class GeneratorTool {
                 this.#buffer.strokeWeight(2);
                 var boundingBox = outset.getBoundingBox();
                 this.#buffer.fill(255, 0, 0, 150);
-                // this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+                this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
             }
         }
 
@@ -149,7 +148,6 @@ export default class GeneratorTool {
         var insets = [];
         this.#buffer.beginShape();
         var points = shape.getVertices();
-        var hideVisuals = true;
         this.#buffer.push();
         
         for (let i = 0; i < points.length; i++) {
@@ -197,7 +195,7 @@ export default class GeneratorTool {
             var perpendicularStartPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, mn, 'right');
             var perpendicularEndPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, mn, 'left');
             
-            if (!hideVisuals) {
+            if (this.debugParallel) {
                 this.#buffer.fill(0, 0, 255); // BLAUW
                 this.#buffer.stroke(0, 0, 0);
                 this.#buffer.text("SPP", perpendicularStartPointP.x - 20, perpendicularStartPointP.y);
@@ -208,8 +206,8 @@ export default class GeneratorTool {
 
             // Stap 3
             var dBuffer = 5;
-            var newPosP = this.#calculateInsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, dBuffer, hideVisuals);
-            var newPosN = this.#calculateInsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, dBuffer, hideVisuals);
+            var newPosP = this.#calculateInsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, dBuffer, this.debugParallel);
+            var newPosN = this.#calculateInsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, dBuffer, this.debugParallel);
 
             if (Collision.pointPoint(newPosP.x, newPosP.y, newPosN.x, newPosN.y)) {
                 insets.push(new Vector2(newPosN.x, newPosN.y));
@@ -226,7 +224,7 @@ export default class GeneratorTool {
                 insets.push(collisionPoint);
 
 
-                if (!hideVisuals) {
+                if (this.debugParallel) {
                     this.#buffer.circle(startPointN.x, startPointN.y, 5);
                     this.#buffer.line(startPointN.x, startPointN.y, endPointN.x, endPointN.y, 5);
                     this.#buffer.line(startPointP.x, startPointP.y, endPointP.x, endPointP.y, 5);
@@ -236,7 +234,7 @@ export default class GeneratorTool {
                 }
             }
 
-            if (!hideVisuals) {
+            if (this.debugParallel) {
                 this.#buffer.text(i, vc.x, vc.y + 10);
                 this.#buffer.fill(0, 255, 0);
                 // this.#buffer.circle(pos.x, pos.y, 10);
@@ -260,7 +258,6 @@ export default class GeneratorTool {
         var insets = [];
         this.#buffer.beginShape();
         var points = shape.getVertices();
-        var hideVisuals = true;
         this.#buffer.push();
         
         for (let i = 0; i < points.length; i++) {
@@ -322,7 +319,7 @@ export default class GeneratorTool {
             var perpendicularStartPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, enableOverhangN ? on : mn, 'right');
             var perpendicularEndPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, enableOverhangN ? on : mn, 'left');
             
-            if (!hideVisuals) {
+            if (this.debugParallel) {
                 this.#buffer.fill(0, 0, 255); // BLAUW
                 this.#buffer.stroke(0, 0, 0);
                 this.#buffer.text("SPP", perpendicularStartPointP.x - 20, perpendicularStartPointP.y);
@@ -334,10 +331,10 @@ export default class GeneratorTool {
             // Stap 3
             var dBuffer = 5;
             var newPosP, newPosN;
-            if(!enableOverhangP) newPosP = this.#calculateInsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, dBuffer, hideVisuals);
-            else newPosP = this.#calculateOutsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, hideVisuals);
-            if(!enableOverhangN) newPosN = this.#calculateInsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, dBuffer, hideVisuals);
-            else newPosN = this.#calculateOutsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, hideVisuals);
+            if(!enableOverhangP) newPosP = this.#calculateInsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, dBuffer, this.debugParallel);
+            else newPosP = this.#calculateOutsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, this.debugParallel);
+            if(!enableOverhangN) newPosN = this.#calculateInsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, dBuffer, this.debugParallel);
+            else newPosN = this.#calculateOutsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, this.debugParallel);
 
             if (Collision.pointPoint(newPosP.x, newPosP.y, newPosN.x, newPosN.y)) {
                 insets.push(new Vector2(newPosN.x, newPosN.y));
@@ -353,7 +350,7 @@ export default class GeneratorTool {
                 var collisionPoint = this.#lineIntersection(startPointP, endPointP, startPointN, endPointN);
                 insets.push(collisionPoint);
 
-                if (!hideVisuals) {
+                if (this.debugParallel) {
                     this.#buffer.circle(startPointN.x, startPointN.y, 5);
                     this.#buffer.line(startPointN.x, startPointN.y, endPointN.x, endPointN.y, 5);
                     this.#buffer.line(startPointP.x, startPointP.y, endPointP.x, endPointP.y, 5);
@@ -363,7 +360,7 @@ export default class GeneratorTool {
                 }
             }
 
-            if (!hideVisuals) {
+            if (this.debugParallel) {
                 this.#buffer.text(i, vc.x, vc.y + 10);
                 this.#buffer.fill(0, 255, 0);
                 // this.#buffer.circle(pos.x, pos.y, 10);
@@ -425,7 +422,7 @@ export default class GeneratorTool {
             var perpendicularStartPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, mn, 'right');
             var perpendicularEndPointN = this.#getPerpendicularPoint(posN.x, posN.y, vn.x, vn.y, mn, 'left');
 
-            if (!hideVisuals) {
+            if (this.debugParallel) {
                 this.#buffer.fill(0, 0, 255); // BLAUW
                 this.#buffer.stroke(0, 0, 0);
                 this.#buffer.text("SPP", perpendicularStartPointP.x - 20, perpendicularStartPointP.y);
@@ -440,9 +437,9 @@ export default class GeneratorTool {
             }
 
             // Stap 3
-            // #calculateOutsetPoint(shape, point, startPoint, endPoint, hideVisuals = true)
-            var newPosP = this.#calculateOutsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, hideVisuals); 
-            var newPosN = this.#calculateOutsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, hideVisuals);
+            // #calculateOutsetPoint(shape, point, startPoint, endPoint, this.debugParallel = true)
+            var newPosP = this.#calculateOutsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, this.debugParallel); 
+            var newPosN = this.#calculateOutsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, this.debugParallel);
 
             // Check if points are on the same coordinates
             if (Collision.pointPoint(newPosP.x, newPosP.y, newPosN.x, newPosN.y)) {
@@ -458,7 +455,7 @@ export default class GeneratorTool {
                 var endPointN = Vector2.add(newPosN, directionN.multiplyScalar(-1000));
 
                 var collisionPoint = this.#lineIntersection(startPointP, endPointP, startPointN, endPointN);
-                if (!hideVisuals) {
+                if (this.debugParallel) {
                     this.#buffer.circle(startPointN.x, startPointN.y, 5);
                     this.#buffer.line(startPointN.x, startPointN.y, endPointN.x, endPointN.y, 5);
                     this.#buffer.line(startPointP.x, startPointP.y, endPointP.x, endPointP.y, 5);
@@ -469,7 +466,7 @@ export default class GeneratorTool {
                 outsets.push(collisionPoint);
             }
 
-            if (!hideVisuals) {
+            if (this.debugParallel) {
                 this.#buffer.text(i, vc.x, vc.y + 10);
                 this.#buffer.fill(0, 255, 0);
                 // this.#buffer.circle(pos.x, pos.y, 10);
@@ -507,7 +504,6 @@ export default class GeneratorTool {
         var syncedPlaceTile = async (x, y, predictionPoints) => new Promise((resolve) => {
             var delay = 1;
             var isDummy = false;
-            var hideVisuals = true;
             count++;
 
             setTimeout(() => {
@@ -526,7 +522,7 @@ export default class GeneratorTool {
                         var dirP = vp.getCopy().remove(vc).normalized();
                         var dirN = vn.getCopy().remove(vc).normalized();
     
-                        if (!hideVisuals){
+                        if (this.debugTiles){
                             self.#buffer.fill(0);
                             self.#buffer.circle(vc.x, vc.y, 5);
                             self.#buffer.stroke(255, 255, 0);
@@ -544,9 +540,9 @@ export default class GeneratorTool {
                             isDummy = true;
                             results.push(raycastP);
                             // if(self.IsInside(insetPoints, vp.x, vp.y)) 
-                                collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(insetPoints, vp.x, vp.y) });
-                                self.#buffer.stroke(0);
-                                if (!hideVisuals) {
+                            collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(insetPoints, vp.x, vp.y) });
+                            self.#buffer.stroke(0);
+                            if (this.debugTiles) {
                                 self.#buffer.fill(255, 255, 0);
                                 self.#buffer.circle(raycastP.x, raycastP.y, 3);
                             }
@@ -559,7 +555,7 @@ export default class GeneratorTool {
                             results.push(raycastN);
                             // if(self.IsInside(insetPoints, vn.x, vn.y)) 
                                 collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(insetPoints, vn.x, vn.y) });
-                            if (!hideVisuals) {
+                            if (this.debugTiles) {
                                 self.#buffer.stroke(0);
                                 self.#buffer.fill(255, 255, 0);
                                 self.#buffer.circle(raycastN.x, raycastN.y, 3);
@@ -647,7 +643,7 @@ export default class GeneratorTool {
                             }
                         }
 
-                        if(!hideVisuals){
+                        if(this.debugTiles){
                             for (let k = 0; k < results.length; k++) {
                                 const element = results[k];
                                 self.#buffer.text(k,element.x,element.y);
@@ -854,10 +850,12 @@ export default class GeneratorTool {
         var loop = async (x, y, w, h) => {
             var predictedPoints = [new Vector2(x, y), new Vector2(x + w, y), new Vector2(x + w, y + h), new Vector2(x, y + h)];
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
-                await syncedPlaceTile(x, y, predictedPoints).then(tiles =>{
+                await syncedPlaceTile(x, y, predictedPoints).then(tiles => {
                     tmpTiles[x + "_" + y] = tiles;
                 });
-                await self.#sleep(100);
+
+                await self.#sleep(10);
+
                 if(tmpTiles[x + "_" + y][0] != null || tmpTiles[x + "_" + y][1] != null){
                     //Neighbour left
                     if(typeof tmpTiles[(x - w) + "_" + y] === "undefined"){
@@ -890,9 +888,6 @@ export default class GeneratorTool {
             else if(Vector2.distance(vc, boundingBox) < Vector2.distance(topleft, boundingBox)){
                 topleft = vc;
             }
-            // else if(topleft.y >= vc.y && topleft.x >= vc.x){
-            //     topleft = vc;
-            // }
         }
 
         //center
@@ -1154,7 +1149,7 @@ export default class GeneratorTool {
         }
     }
 
-    #calculateInsetPoint(shape, point, startPoint, endPoint, dBuffer, hideVisuals = true){
+    #calculateInsetPoint(shape, point, startPoint, endPoint, dBuffer, debug = false){
         let newPos = null;
 
         if (Collision.polygonCircle(shape.getVertices(), startPoint.x, startPoint.y, 1) && Collision.polygonCircle(shape.getVertices(), endPoint.x, endPoint.y, 1)) {
@@ -1164,7 +1159,7 @@ export default class GeneratorTool {
             const raycastPSFalse = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), false);
             const raycastPSTrue = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), true);
             if (raycastPSFalse == null && raycastPSTrue == null) {
-                if (!hideVisuals) {
+                if (debug) {
                     this.#buffer.fill(0, 255, 0);
                     this.#buffer.circle(startPoint.x, startPoint.y, 5);
                 }
@@ -1174,7 +1169,7 @@ export default class GeneratorTool {
             } else if (Vector2.distance(point, raycastPSTrue) <= dBuffer && raycastPSFalse == null) {
                 newPos = startPoint;
             } else {
-                if (!hideVisuals) {
+                if (debug) {
                     this.#buffer.line(point.x, point.y, startPoint.x, startPoint.y, 5);
                 }
                 newPos = endPoint;
@@ -1184,7 +1179,7 @@ export default class GeneratorTool {
                 const raycastPEFalse = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), false);
                 const raycastPETrue = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), true);
                 if (raycastPEFalse == null && raycastPETrue == null) {
-                    if (!hideVisuals) {
+                    if (debug) {
                         this.#buffer.fill(0, 255, 0);
                         this.#buffer.circle(endPoint.x, endPoint.y, 5);
                     }
@@ -1194,7 +1189,7 @@ export default class GeneratorTool {
                 } else if (Vector2.distance(point, raycastPETrue) <= dBuffer && raycastPEFalse == null) {
                     newPos = endPoint;
                 }else{
-                    if (!hideVisuals) {
+                    if (debug) {
                         this.#buffer.line(posP.x, posP.y, endPoint.x, endPoint.y, 5);
                     }
                     newPos = startPoint;
@@ -1230,7 +1225,7 @@ export default class GeneratorTool {
         return newPos;
     }
 
-    #calculateOutsetPoint(shape, point, startPoint, endPoint, hideVisuals = true){
+    #calculateOutsetPoint(shape, point, startPoint, endPoint, debug = true){
         let newPos = null;
 
         if (!Collision.polygonCircle(shape.getVertices(), startPoint.x, startPoint.y, 1) && !Collision.polygonCircle(shape.getVertices(), endPoint.x, endPoint.y, 1)) {
@@ -1262,7 +1257,7 @@ export default class GeneratorTool {
             var raycastPSFalse = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), false);
             var raycastPSTrue = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), true);
             if (raycastPSFalse != null && raycastPSTrue != null) {
-                if (!hideVisuals) {this.#buffer.fill(0, 255, 0);
+                if (debug) {this.#buffer.fill(0, 255, 0);
                 this.#buffer.circle(startPoint.x, startPoint.y, 5);}
                 newPos = startPoint;
             }
@@ -1270,7 +1265,7 @@ export default class GeneratorTool {
             var raycastPEFalse = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), false);
             var raycastPETrue = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), true);
             if (raycastPEFalse != null && raycastPETrue != null) {
-                if (!hideVisuals) {this.#buffer.fill(0, 255, 0);
+                if (debug) {this.#buffer.fill(0, 255, 0);
                 this.#buffer.circle(endPoint.x, endPoint.y, 5);}
                 newPos = endPoint;
             }

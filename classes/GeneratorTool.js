@@ -71,6 +71,7 @@ export default class GeneratorTool {
                 var points = inset.getVertices();
                 var pointsOverhang = overhang.getVertices();
                 insets.push(inset);
+                overhangs.push(overhang);
 
                 if (!hideVisuals) {
                     //visualize inset
@@ -120,9 +121,9 @@ export default class GeneratorTool {
                 const inset = insets[i];
                 this.#buffer.stroke(0);
                 this.#buffer.strokeWeight(2);
-                var boundingBox = inset.getBoundingBox();
+                var boundingBox = overhangs[i].getBoundingBox();
                 this.#buffer.fill(255, 255, 255, 0);
-                this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+                // this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
             }
 
             for (let i = 0; i < outsets.length; i++) {
@@ -131,13 +132,13 @@ export default class GeneratorTool {
                 this.#buffer.strokeWeight(2);
                 var boundingBox = outset.getBoundingBox();
                 this.#buffer.fill(255, 0, 0, 150);
-                this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
+                // this.#buffer.rect(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
             }
         }
 
         for (let i = 0; i < insets.length; i++) {
             const inset = insets[i];
-            // this.#generateTiles(inset, outsets);
+            this.#generateTiles(inset,overhangs[i], outsets);
         }
     }
 
@@ -156,18 +157,26 @@ export default class GeneratorTool {
 
             var mp = 5;
             var mn = 5;
-            if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "daknok1" && 
-                shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "dakrand1" && 
-                shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "gootdetail3") {
-                if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
-                    mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
-                }
-            }
-            if (shape.lineMargins[i].split("|")[0] != "daknok1" && shape.lineMargins[i].split("|")[0] != "dakrand1" && shape.lineMargins[i].split("|")[0] != "gootdetail3") {
-                if (shape.lineMargins[i] != null) {
-                    mn = parseInt(shape.lineMargins[i].split('|')[1]);
-                }
-            }
+            // if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "daknok1" && 
+            //     shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "dakrand1" && 
+            //     shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "gootdetail3") {
+            //     if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
+            //         mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
+            //     }
+            // }
+            // if (shape.lineMargins[i].split("|")[0] != "daknok1" && shape.lineMargins[i].split("|")[0] != "dakrand1" && shape.lineMargins[i].split("|")[0] != "gootdetail3") {
+            //     if (shape.lineMargins[i] != null) {
+            //         mn = parseInt(shape.lineMargins[i].split('|')[1]);
+            //     }
+            // }
+
+            console.log(i, shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1], shape.lineMargins[i]);
+            
+
+            mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
+            mn = parseInt(shape.lineMargins[i].split('|')[1]);
+
+            console.log(mp, mn);
 
             if ((vp.x == vc.x && vc.x == vn.x) || (vp.y == vc.y && vc.y == vn.y)) {
                 continue;
@@ -252,8 +261,6 @@ export default class GeneratorTool {
         var hideVisuals = true;
         this.#buffer.push();
         
-        var op = 20;
-        var on = 20;
         for (let i = 0; i < points.length; i++) {
             // Overhang Variables
             var enableOverhangP = false;
@@ -261,25 +268,40 @@ export default class GeneratorTool {
             const vc = points[i];
             const vp = points[i - 1 >= 0 ? i - 1 : points.length - 1];
             const vn = points[i + 1 <= points.length - 1 ? i + 1 : 0];
-
+            
             var mp = 5;
             var mn = 5;
-            if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "daknok1" && 
-                shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "dakrand1" && 
-                shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "gootdetail3") {
-                if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
-                    mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
-                }
-            }else if(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] == "daknok1"){
-                enableOverhangP = true;
-            }
-            if (shape.lineMargins[i].split("|")[0] != "daknok1" && shape.lineMargins[i].split("|")[0] != "dakrand1" && shape.lineMargins[i].split("|")[0] != "gootdetail3") {
-                if (shape.lineMargins[i] != null) {
-                    mn = parseInt(shape.lineMargins[i].split('|')[1]);
-                }
-            }else if(shape.lineMargins[i].split("|")[0] == "daknok1"){ 
-                enableOverhangN = true;
-            }
+            var op = 0;
+            var on = 0;
+            // if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "daknok1" && 
+            //     shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "dakrand1" && 
+            //     shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "gootdetail3") {
+            //     if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
+            //         mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
+            //     }
+            // }else if(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] == "daknok1"){
+            //     enableOverhangP = true;
+            // }
+            // if (shape.lineMargins[i].split("|")[0] != "daknok1" && shape.lineMargins[i].split("|")[0] != "dakrand1" && shape.lineMargins[i].split("|")[0] != "gootdetail3") {
+            //     if (shape.lineMargins[i] != null) {
+            //         mn = parseInt(shape.lineMargins[i].split('|')[1]);
+            //     }
+            // }else if(shape.lineMargins[i].split("|")[0] == "daknok1"){ 
+            //     enableOverhangN = true;
+            // }
+            // console.log(i, shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1], shape.lineMargins[i]);
+            
+            mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
+            mn = parseInt(shape.lineMargins[i].split('|')[1]);
+
+            op = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[2]);
+            on = parseInt(shape.lineMargins[i].split('|')[2]);
+
+            if(op != 0) enableOverhangP = true; 
+            if(on != 0) enableOverhangN = true; 
+
+            // console.log(mp, mn); 
+
 
             if ((vp.x == vc.x && vc.x == vn.x) || (vp.y == vc.y && vc.y == vn.y)) {
                 continue;
@@ -462,10 +484,11 @@ export default class GeneratorTool {
         return new Shape(outsets);
     }
 
-    async #generateTiles(inset, outsets) {
+    async #generateTiles(inset, overhang, outsets) {
         var self = this;
         var tileSize = new Vector2(820 / 10, 600 / 10);
         var insetPoints = inset.getVertices();
+        var overhangPoints = overhang.getVertices();
         var boundingBox = inset.getBoundingBox();
         var count = 0;
         var tiledMode = this.rowOffsetMode;

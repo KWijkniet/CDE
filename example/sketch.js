@@ -323,17 +323,19 @@ function updateMargin() {
     for (let i = 0; i < elems.length; i++) {
         const elem = elems[i];
         if (elem.checked) {
+            var marginValue = 0;
+            var overhangValue = 0;
+
             var margin = elem.getAttribute("data-margin");
             if (!margin) {
-                margin = document.querySelector('[data-target="' + elem.id + '"]').margin;
+                marginValue = document.getElementById("objectMargin").value;
             }
-            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + margin;
-
+            
             var overhang = elem.getAttribute("data-overhang");
             if (!overhang) {
-                overhang = document.querySelector('[data-target="' + elem.id + '"]').overhang;
+                overhangValue = document.getElementById("objectOverhang").value;
             }
-            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + overhang;
+            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + marginValue + "|" + overhangValue;
             Renderer.instance.replace(lineSelectorTool.selectedShape);
             
             hasFound = true;
@@ -359,7 +361,8 @@ function loadMargin() {
             elem.checked = true;
 
             if (!elem.getAttribute("data-margin")){
-                document.querySelector('[data-target="' + elem.id + '"]').value = data[1];
+                document.getElementById("objectMargin").value = data[1];
+                document.getElementById("objectOverhang").value = data[2];
             }
         }
         else if (elem.checked){

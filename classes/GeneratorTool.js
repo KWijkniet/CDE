@@ -1007,12 +1007,13 @@ export default class GeneratorTool {
         });
 
         var tmpTiles = [];
-        var loop = (x, y, w, h) => {
+        var loop = async (x, y, w, h) => {
             var predictedPoints = [new Vector2(x, y), new Vector2(x + w, y), new Vector2(x + w, y + h), new Vector2(x, y + h)];
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
-                syncedPlaceTile(x, y, predictedPoints).then(tiles =>{
+                await syncedPlaceTile(x, y, predictedPoints).then(tiles =>{
                     tmpTiles[x + "_" + y] = tiles;
-                    
+                    console.log(x + "_" + y);
+
                     //Neighbouring tiles
                     setTimeout(() => {
                         // //Right
@@ -1035,25 +1036,26 @@ export default class GeneratorTool {
                         //     // loop(left.x, left.y, w, h);
                         // }
                         // self.#buffer.circle(left.x, left.y, 5);
-
-                        //left
-                        if(typeof tmpTiles[(x - w) + "_" + y] === "undefined"){
-                            loop(x - w, y, w, h);
-                        }
-                        //right
-                        if(typeof tmpTiles[(x + w) + "_" + y] === "undefined"){
-                            loop(x + w, y, w, h);
-                        }
-                        //up
-                        if(typeof tmpTiles[x + "_" + (y - h)] === "undefined"){
-                            loop(x, y - h, w, h);
-                        }
-                        //down
-                        if(typeof tmpTiles[x + "_" + (y + h)] === "undefined"){
-                            loop(x, y + h, w, h);
-                        }
                     }, 250);
                 });
+                await self.#sleep(100);
+
+                //left
+                if(typeof tmpTiles[(x - w) + "_" + y] === "undefined"){
+                    await loop(x - w, y, w, h);
+                }
+                //right
+                if(typeof tmpTiles[(x + w) + "_" + y] === "undefined"){
+                    await loop(x + w, y, w, h);
+                }
+                    //up
+                if(typeof tmpTiles[x + "_" + (y - h)] === "undefined"){
+                    await loop(x, y - h, w, h);
+                }
+                //down
+                if(typeof tmpTiles[x + "_" + (y + h)] === "undefined"){
+                    await loop(x, y + h, w, h);
+                }
             }
         };
         //center

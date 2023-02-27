@@ -324,19 +324,16 @@ function updateMargin() {
     for (let i = 0; i < elems.length; i++) {
         const elem = elems[i];
         if (elem.checked) {
-            var marginValue = 0;
-            var overhangValue = 0;
-
             var margin = elem.getAttribute("data-margin");
             if (!margin) {
-                marginValue = document.getElementById("objectMargin").value;
+                margin = document.getElementById("objectMargin").value;
             }
             
             var overhang = elem.getAttribute("data-overhang");
             if (!overhang) {
-                overhangValue = document.getElementById("objectOverhang").value;
+                overhang = document.getElementById("objectOverhang").value;
             }
-            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + marginValue + "|" + overhangValue;
+            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + margin + "|" + overhang;
             Renderer.instance.replace(lineSelectorTool.selectedShape);
             
             hasFound = true;
@@ -427,6 +424,7 @@ function importData(json){
     document.getElementById("showStartPoint").checked = json['showStartPoint'] ? true : false;
 
     generatorTool.fromJSON(json['generator']);
+    updateSettings();
 }
 
 function canvasAsImage(){

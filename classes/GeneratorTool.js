@@ -19,12 +19,12 @@ export default class GeneratorTool {
     offsetY = 0;
 
     debugBoundingBox = true;
-    debugRaycast = true;
+    debugRaycast = false;
     debugInset = true;
     debugOutset = true;
-    debugTiles = true;
-    debugParallel = true;
-    debugStartingPoint = true;
+    debugTiles = false;
+    debugParallel = false;
+    debugStartingPoint = false;
 
     #buffer = null;
     #renderer = null;
@@ -183,9 +183,9 @@ export default class GeneratorTool {
             }
 
             var dirN = vn.getCopy().remove(vc).normalized();
-            dirN.multiply(new Vector2(mp, mp));
+            dirN.multiply(new Vector2(mn, mn));
             var dirP = vp.getCopy().remove(vc).normalized();
-            dirP.multiply(new Vector2(mn, mn));
+            dirP.multiply(new Vector2(mp, mp));
             var posN = dirN.getCopy().add(vc);
             var posP = dirP.getCopy().add(vc);
             
@@ -307,9 +307,9 @@ export default class GeneratorTool {
             }
 
             var dirN = vn.getCopy().remove(vc).normalized();
-            dirN.multiply(new Vector2(enableOverhangP ? op : mp, enableOverhangP ? op : mp));
+            dirN.multiply(new Vector2(enableOverhangP ? op : mn, enableOverhangP ? op : mn));
             var dirP = vp.getCopy().remove(vc).normalized();
-            dirP.multiply(new Vector2(enableOverhangN ? on : mn, enableOverhangN ? on : mn));
+            dirP.multiply(new Vector2(enableOverhangN ? on : mp, enableOverhangN ? on : mp));
             var posN = dirN.getCopy().add(vc);
             var posP = dirP.getCopy().add(vc);
             
@@ -490,8 +490,6 @@ export default class GeneratorTool {
         var overhangPoints = overhang.getVertices();
         var boundingBox = inset.getBoundingBox();
         var count = 0;
-        var tiledMode = this.rowOffsetMode;
-        var dummySize = this.dummyTileSize;
 
         this.#tiles = [];
         this.#totalWidth = 0;
@@ -764,6 +762,7 @@ export default class GeneratorTool {
                         const insetPoint = insetPoints[r];
                         if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
                             results.splice(index, 0, insetPoint);
+                            didAdd = true;
                         }
                     }
                     for (let x = 0; x < outsets.length; x++) {
@@ -773,86 +772,42 @@ export default class GeneratorTool {
                             const outsetPoint = outsetPoints[r];
                             if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
                                 results.splice(index, 0, outsetPoint);
+                                didAdd = true;
                             }
                         }
                     }
                     
-                    console.log(count, results.length == resultLength);
-                    if(count == 30){
-                        if(raycastP != null){
-                            self.#buffer.circle(raycastP.x, raycastP.y, 10);
-                        }
-                        
-                        if(raycastN != null){
-                            self.#buffer.circle(raycastN.x, raycastN.y, 10);
+                    if(results.length == resultLength){
+                        // Loop door predicted points
+                        for (let k = 0; k < predictionPoints.length; k++) {
+                            const vp = predictionPoints[k - 1 >= 0 ? k - 1 : predictionPoints.length - 1];
+                            const vc = predictionPoints[k];
+                            const vn = predictionPoints[k + 1 <= predictionPoints.length - 1 ? k + 1 : 0];
+                            
+                            if (!self.IsInside(insetPoints, vc.x, vc.y))
+                            {
+                                self.#buffer.circle(vc.x, vc.y, 5);
+                                var dirP = vp.getCopy().remove(vc).normalized();
+                                var dirN = vn.getCopy().remove(vc).normalized();
+        
+                                var distP = Vector2.distance(vc, vp);
+                                var raycastP = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
+                                var distN = Vector2.distance(vc, vn);
+                                var raycastN = self.#raycast([inset].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
+
+                                if(raycastP != null){
+                                    self.#buffer.circle(raycastP.x, raycastP.y, 10);
+                                    self.checkAndPush(results, raycastP, k, true);
+                                }
+                                if(raycastN != null){
+                                    self.#buffer.circle(raycastN.x, raycastN.y, 10);
+                                    self.checkAndPush(results, raycastN, k + 1, true);
+                                }
+                            }
                         }
                     }
                 }
-      
                 predictionPoints = Vector2.copyAll(results);
-                
-                // //PHASE 01: Move all the points to valid locations
-                // var tmp = Vector2.copyAll(predictionPoints);
-                // for (let i = 0; i < predictionPoints.length; i++) {
-                //     const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
-                //     const vc = predictionPoints[i];
-                //     const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
-
-                //     //If point is invalid
-                //     if (!self.IsInside(insetPoints, vc.x, vc.y) || self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) {
-
-                //         var dirPrev = vc.getCopy().remove(vp).normalized();
-                //         var raycastPrev = self.#raycast([inset].concat(outsets), vc, dirPrev, tileSize.x, false);
-
-                //         var dirNext = vc.getCopy().remove(vn).normalized();
-                //         var raycastNext = self.#raycast([inset].concat(outsets), vc, dirNext, tileSize.x, false);
-
-                //         //Has collision with previous
-                //         if (raycastPrev != null) {
-                //             tmp[i] = raycastPrev;
-                //             isDummy = true;
-                //         }
-                //         //Has no collision
-                //         if (raycastPrev == null && raycastNext == null) {
-                //             isDummy = true;
-                //             self.#buffer.text("X", vc.x, vc.y);
-                //             tmp.splice(i, 1);
-
-                //             for (let r = 0; r < insetPoints.length; r++) {
-                //                 const insetPoint = insetPoints[r];
-                //                 if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y)) {
-                //                     tmp.splice(i, 0, insetPoint);
-                //                 }
-                //             }
-                //         }
-
-                //         if ((raycastNext != null || raycastPrev != null) && !(raycastNext != null && raycastPrev != null)) {
-                //             for (let x = 0; x < outsets.length; x++) {
-                //                 const outsetPoints = outsets[x].getVertices();
-
-                //                 for (let r = 0; r < outsetPoints.length; r++) {
-                //                     const outsetPoint = outsetPoints[r];
-                //                     if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y)) {
-                //                         tmp.splice(i, 0, outsetPoint);
-                //                     }
-                //                 }
-                //             }
-                //         }
-
-                //         //Has collision with next
-                //         if (raycastNext != null) {
-                //             isDummy = true;
-                //             tmp[i] = raycastNext;
-                //         }
-                //     }
-                // }
-                // predictionPoints = Vector2.copyAll(tmp);
-
-                // for (let i = 0; i < predictionPoints.length; i++) {
-                //     const vc = predictionPoints[i];
-                //     if (!hideVisuals) { self.#buffer.fill(0); self.#buffer.circle(vc.x, vc.y, 10); }
-                // }
-
 
                 // create tile
                 var tile = self.#createTile(predictionPoints, isDummy);
@@ -876,9 +831,17 @@ export default class GeneratorTool {
 
         var tmpTiles = [];
         var loop = async (x, y, w, h) => {
-            var predictedPoints = [new Vector2(x, y), new Vector2(x + w, y), new Vector2(x + w, y + h), new Vector2(x, y + h)];
+            var yIndex = Math.round((y - topleft.y) / tileSize.y);
+            var tempX = x + (this.rowOffsetMode && yIndex % 2 == 1 ? tileSize.x / 2 : 0);
+            var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + h), new Vector2(tempX, y + h)];
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
-                await syncedPlaceTile(x, y, predictedPoints).then(tiles => {
+                await syncedPlaceTile(tempX, y, predictedPoints).then(tiles => {
+                    for (let r = 0; r < tiles.length; r++) {
+                        const tile = tiles[r];
+                        if(tile != null){
+                            this.#tiles.push(tile);
+                        }
+                    }
                     tmpTiles[x + "_" + y] = tiles;
                 });
 
@@ -921,7 +884,6 @@ export default class GeneratorTool {
         //center
         await loop(topleft.x + self.offsetX, topleft.y + self.offsetY, tileSize.x, tileSize.y);
         
-        console.log(this.#tiles);
         if(this.debugStartingPoint){
             this.#buffer.fill(255, 0, 0);
             this.#buffer.circle(topleft.x + self.offsetX, topleft.y + self.offsetY, 10);

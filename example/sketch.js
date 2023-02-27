@@ -424,6 +424,7 @@ function importData(json){
     document.getElementById("showStartPoint").checked = json['showStartPoint'] ? true : false;
 
     generatorTool.fromJSON(json['generator']);
+    updateSettings();
 }
 
 function canvasAsImage(){

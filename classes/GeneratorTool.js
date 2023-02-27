@@ -513,12 +513,20 @@ export default class GeneratorTool {
                     self.#buffer.text(count, predictionPoints[0].x + 10 + tileSize.x / 2, predictionPoints[0].y + 10 + tileSize.y / 2);
                 }
 
+                if(count == 30){
+                    for (let i = 0; i < predictionPoints.length; i++) {
+                        const vc = predictionPoints[i];
+                        self.#buffer.circle(vc.x, vc.y, 5);
+                    }
+                }
+
                 for (let i = 0; i < predictionPoints.length; i++) {
                     const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
                     const vc = predictionPoints[i];
                     const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
                     
                     if(!self.IsInsideForbiddenShapes(outsets, vc.x, vc.y) && self.IsInside(insetPoints, vc.x, vc.y)){
+                        if(count == 30){console.log('is inside shape :D');}
                         var dirP = vp.getCopy().remove(vc).normalized();
                         var dirN = vn.getCopy().remove(vc).normalized();
     
@@ -554,7 +562,7 @@ export default class GeneratorTool {
                             isDummy = true;
                             results.push(raycastN);
                             // if(self.IsInside(insetPoints, vn.x, vn.y)) 
-                                collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(insetPoints, vn.x, vn.y) });
+                            collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(insetPoints, vn.x, vn.y) });
                             if (this.debugTiles) {
                                 self.#buffer.stroke(0);
                                 self.#buffer.fill(255, 255, 0);
@@ -566,11 +574,18 @@ export default class GeneratorTool {
                         isDummy = true;
                     }
                 }
+
                 var pointsNeedToBeAdded = [];
                 for (let r = 0; r < insetPoints.length; r++) {
                     const insetPoint = insetPoints[r];
                     if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
                         pointsNeedToBeAdded.push(insetPoint);
+                    }
+                }
+                for (let r = 0; r < overhangPoints.length; r++) {
+                    const overhangPoint = overhangPoints[r];
+                    if(self.IsInside(predictionPoints, overhangPoint.x, overhangPoint.y, false)){
+                        pointsNeedToBeAdded.push(overhangPoint);
                     }
                 }
                 for (let x = 0; x < outsets.length; x++) {
@@ -742,6 +757,8 @@ export default class GeneratorTool {
                 }
                 //add point inside tile
                 else if(collisions.length == 2){
+                    var resultLength = results.length;
+
                     var index = collisions[0]['index'];
                     for (let r = 0; r < insetPoints.length; r++) {
                         const insetPoint = insetPoints[r];
@@ -757,6 +774,17 @@ export default class GeneratorTool {
                             if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
                                 results.splice(index, 0, outsetPoint);
                             }
+                        }
+                    }
+                    
+                    console.log(count, results.length == resultLength);
+                    if(count == 30){
+                        if(raycastP != null){
+                            self.#buffer.circle(raycastP.x, raycastP.y, 10);
+                        }
+                        
+                        if(raycastN != null){
+                            self.#buffer.circle(raycastN.x, raycastN.y, 10);
                         }
                     }
                 }

@@ -328,6 +328,8 @@ function updateMargin() {
             if (!margin) {
                 margin = document.getElementById("objectMargin").value;
             }
+
+            margin = margin < 5 ? 5 : margin;
             
             var overhang = elem.getAttribute("data-overhang");
             if (!overhang) {
@@ -345,6 +347,7 @@ function updateMargin() {
 
     if(!hasFound){
         generatorTool.margin = document.getElementById("objectMargin").value;
+        generatorTool.margin = generatorTool.margin < 5 ? 5 : generatorTool.margin;
         generatorTool.overhang = document.getElementById("objectOverhang").value;
     }
     generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;

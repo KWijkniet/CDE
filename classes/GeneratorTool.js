@@ -19,12 +19,12 @@ export default class GeneratorTool {
     offsetY = 0;
 
     debugBoundingBox = true;
-    debugRaycast = true;
+    debugRaycast = false;
     debugInset = true;
     debugOutset = true;
-    debugTiles = true;
-    debugParallel = true;
-    debugStartingPoint = true;
+    debugTiles = false;
+    debugParallel = false;
+    debugStartingPoint = false;
 
     #buffer = null;
     #renderer = null;
@@ -56,7 +56,6 @@ export default class GeneratorTool {
     }
 
     generate() {
-        console.log('Generating...');
         var insets = [];
         var overhangs = [];
         var outsets = [];
@@ -262,8 +261,8 @@ export default class GeneratorTool {
             op = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[2]);
             on = parseInt(shape.lineMargins[i].split('|')[2]);
 
-            if(op != 0) enableOverhangP = true; 
-            if(on != 0) enableOverhangN = true; 
+            if(op != 0) enableOverhangP = true;
+            if(on != 0) enableOverhangN = true;
 
             if ((vp.x == vc.x && vc.x == vn.x) || (vp.y == vc.y && vc.y == vn.y)) {
                 continue;
@@ -454,8 +453,6 @@ export default class GeneratorTool {
         var overhangPoints = overhang.getVertices();
         var boundingBox = overhang.getBoundingBox();
         var count = 0;
-        var tiledMode = this.rowOffsetMode;
-        var dummySize = this.dummyTileSize;
 
         this.#tiles = [];
         this.#totalWidth = 0;
@@ -725,6 +722,7 @@ export default class GeneratorTool {
                         const insetPoint = overhangPoints[r];
                         if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
                             results.splice(index, 0, insetPoint);
+                            didAdd = true;
                         }
                     }
                     for (let x = 0; x < outsets.length; x++) {
@@ -734,19 +732,20 @@ export default class GeneratorTool {
                             const outsetPoint = outsetPoints[r];
                             if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
                                 results.splice(index, 0, outsetPoint);
+                                didAdd = true;
                             }
                         }
                     }
                     
                     if(results.length == resultLength){
+                        //Loop door predicted points
                         for (let k = 0; k < predictionPoints.length; k++) {
                             const vp = predictionPoints[k - 1 >= 0 ? k - 1 : predictionPoints.length - 1];
                             const vc = predictionPoints[k];
                             const vn = predictionPoints[k + 1 <= predictionPoints.length - 1 ? k + 1 : 0];
-
+                            
                             if (!self.IsInside(overhangPoints, vc.x, vc.y))
                             {
-                                self.#buffer.circle(vc.x, vc.y, 5);
                                 var dirP = vp.getCopy().remove(vc).normalized();
                                 var dirN = vn.getCopy().remove(vc).normalized();
         
@@ -770,21 +769,11 @@ export default class GeneratorTool {
                                     else if(self.IsInsideForbiddenShapes(outsets, raycastN.x, raycastN.y) && self.IsInside(overhangPoints, raycastN.x, raycastN.y))
                                         self.#buffer.circle(raycastN.x, raycastN.y,20);
                                 }
-                                
-                                
                             }
                         }
                     }
                 }
-                
                 predictionPoints = Vector2.copyAll(results);
-                
-                // if(count == 9){
-                //     for (let index = 0; index < predictionPoints.length; index++) {
-                //         const element = predictionPoints[index];
-                //         self.#buffer.text(index,element.x, element.y);
-                //     }
-                // }
                 
                 // create tile
                 var tile;
@@ -816,15 +805,6 @@ export default class GeneratorTool {
             var yIndex = Math.round((y - topleft.y) / tileSize.y);
             var tempX = x + (this.rowOffsetMode && yIndex % 2 == 1 ? tileSize.x / 2 : 0);
             var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + h), new Vector2(tempX, y + h)];
-
-            // Check if the current row is the top row
-            // for (let i = 0; i < predictedPoints.length; i++) {
-            //     const element = predictedPoints[i];
-            //     if(element.y > topleft.y){
-            //         element.y = element.y + 20;
-            //         console.log('penis');
-            //     }
-            // }
 
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
                 await syncedPlaceTile(tempX, y, predictedPoints).then(tiles => {

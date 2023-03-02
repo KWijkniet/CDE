@@ -329,7 +329,9 @@ function updateMargin() {
                 margin = document.getElementById("objectMargin").value;
             }
 
-            margin = margin < 5 ? 5 : margin;
+            if (margin < 5) {
+                margin = 5;
+            }
             
             var overhang = elem.getAttribute("data-overhang");
             if (!overhang) {

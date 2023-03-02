@@ -157,26 +157,9 @@ export default class GeneratorTool {
 
             var mp = 5;
             var mn = 5;
-            // if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "daknok1" && 
-            //     shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "dakrand1" && 
-            //     shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split("|")[0] != "gootdetail3") {
-            //     if (shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1] != null) {
-            //         mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
-            //     }
-            // }
-            // if (shape.lineMargins[i].split("|")[0] != "daknok1" && shape.lineMargins[i].split("|")[0] != "dakrand1" && shape.lineMargins[i].split("|")[0] != "gootdetail3") {
-            //     if (shape.lineMargins[i] != null) {
-            //         mn = parseInt(shape.lineMargins[i].split('|')[1]);
-            //     }
-            // }
-
-            console.log(i, 'mp',shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1], 'mn',shape.lineMargins[i]);
-            
 
             mp = parseInt(shape.lineMargins[i - 1 >= 0 ? i - 1 : points.length - 1].split('|')[1]);
             mn = parseInt(shape.lineMargins[i].split('|')[1]);
-
-            console.log(mp, mn);
 
             if ((vp.x == vc.x && vc.x == vn.x) || (vp.y == vc.y && vc.y == vn.y)) {
                 continue;
@@ -281,9 +264,6 @@ export default class GeneratorTool {
 
             if(op != 0) enableOverhangP = true; 
             if(on != 0) enableOverhangN = true; 
-
-            // console.log(mp, mn); 
-
 
             if ((vp.x == vc.x && vc.x == vn.x) || (vp.y == vc.y && vc.y == vn.y)) {
                 continue;
@@ -468,7 +448,7 @@ export default class GeneratorTool {
 
     async #generateTiles(shape, inset, overhang, outsets) {
         var self = this;
-        var tileSize = new Vector2(820 / 10, 600 / 10);
+        var tileSize = new Vector2(820 / 10, (600 / 10) -20);
         var shapePoints = shape.getVertices();
         var insetPoints = inset.getVertices();
         var overhangPoints = overhang.getVertices();
@@ -485,6 +465,8 @@ export default class GeneratorTool {
         this.#tileWidth = 0;
         this.#tileHeight = 0;
 
+        console.log(tileSize);
+
         var syncedPlaceTile = async (x, y, predictionPoints) => new Promise((resolve) => {
             var delay = 1;
             var isDummy = false;
@@ -500,7 +482,7 @@ export default class GeneratorTool {
                 }
                 for (let l = 0; l < predictionPoints.length; l++) {
                     const vc = predictionPoints[l];
-                    if(self.IsInside(insetPoints, vc.x, vc.y)) {inShapeCount++;}
+                    if(self.IsInside(shapePoints, vc.x, vc.y)) {inShapeCount++;}
                 }
 
                 for (let i = 0; i < predictionPoints.length; i++) {
@@ -510,7 +492,6 @@ export default class GeneratorTool {
                     if(!self.IsInside(insetPoints, vc.x, vc.y)) {isDummy = true;}
                     
                     if(!self.IsInsideForbiddenShapes(outsets, vc.x, vc.y) && self.IsInside(overhangPoints, vc.x, vc.y)){
-                        if(count == 30){console.log('is inside shape :D');}
                         var dirP = vp.getCopy().remove(vc).normalized();
                         var dirN = vn.getCopy().remove(vc).normalized();
     
@@ -586,9 +567,6 @@ export default class GeneratorTool {
                 //split tile
                 if(collisions.length >= 4){
                     if(pointsNeedToBeAdded.length == 1) {
-                        console.log(count);
-                        console.log(collisions.length, collisions);
-                        console.log(results);
                         var index;
                         for (let j = 0; j < collisions.length; j++) {
                             const element = collisions[j];
@@ -760,19 +738,15 @@ export default class GeneratorTool {
                         }
                     }
                     
-                    // console.log(count, results.length == resultLength);
                     if(results.length == resultLength){
-                        // print(count);
-                        // Loop door predicted points
                         for (let k = 0; k < predictionPoints.length; k++) {
                             const vp = predictionPoints[k - 1 >= 0 ? k - 1 : predictionPoints.length - 1];
                             const vc = predictionPoints[k];
                             const vn = predictionPoints[k + 1 <= predictionPoints.length - 1 ? k + 1 : 0];
-                            
 
                             if (!self.IsInside(overhangPoints, vc.x, vc.y))
                             {
-                                // self.#buffer.circle(vc.x, vc.y, 5);
+                                self.#buffer.circle(vc.x, vc.y, 5);
                                 var dirP = vp.getCopy().remove(vc).normalized();
                                 var dirN = vn.getCopy().remove(vc).normalized();
         
@@ -780,38 +754,42 @@ export default class GeneratorTool {
                                 var raycastP = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
                                 var distN = Vector2.distance(vc, vn);
                                 var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
-
-
+                                
+                                
                                 if(raycastP != null){
-                                    // self.#buffer.circle(raycastP.x, raycastP.y, 10);
-                                    self.checkAndPush(results, raycastP, k, true);
+                                    self.#buffer.circle(raycastP.x, raycastP.y,10);
+                                    if(!self.IsInsideForbiddenShapes(outsets, raycastP.x, raycastP.y) && self.IsInside(overhangPoints, raycastP.x, raycastP.y))
+                                        self.checkAndPush(results, raycastP, k, true);
+                                    else if(self.IsInsideForbiddenShapes(outsets, raycastP.x, raycastP.y) && self.IsInside(overhangPoints, raycastP.x, raycastP.y))
+                                        self.#buffer.circle(raycastP.x, raycastP.y,20);
                                 }
                                 if(raycastN != null){
-                                    // self.#buffer.circle(raycastN.x, raycastN.y, 10);
-                                    self.checkAndPush(results, raycastN, k + 1, true);
+                                    self.#buffer.circle(raycastN.x, raycastN.y,10);
+                                    if(!self.IsInsideForbiddenShapes(outsets, raycastN.x, raycastN.y) && self.IsInside(overhangPoints, raycastN.x, raycastN.y))
+                                        self.checkAndPush(results, raycastN, k + 1, true);
+                                    else if(self.IsInsideForbiddenShapes(outsets, raycastN.x, raycastN.y) && self.IsInside(overhangPoints, raycastN.x, raycastN.y))
+                                        self.#buffer.circle(raycastN.x, raycastN.y,20);
                                 }
-
-
+                                
+                                
                             }
                         }
                     }
-                    if(count == 30){
-                        if(raycastP != null){
-                        }
-                        
-                        if(raycastN != null){
-                        }
-                    }
                 }
-      
+                
                 predictionPoints = Vector2.copyAll(results);
+                
+                // if(count == 9){
+                //     for (let index = 0; index < predictionPoints.length; index++) {
+                //         const element = predictionPoints[index];
+                //         self.#buffer.text(index,element.x, element.y);
+                //     }
+                // }
                 
                 // create tile
                 var tile;
                 if(inShapeCount >= 1){
                     tile = self.#createTile(predictionPoints, isDummy);
-                }else {
-                    console.log('Dont generate : ',count);
                 }
                 var extra = null;
 
@@ -838,6 +816,16 @@ export default class GeneratorTool {
             var yIndex = Math.round((y - topleft.y) / tileSize.y);
             var tempX = x + (this.rowOffsetMode && yIndex % 2 == 1 ? tileSize.x / 2 : 0);
             var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + h), new Vector2(tempX, y + h)];
+
+            // Check if the current row is the top row
+            // for (let i = 0; i < predictedPoints.length; i++) {
+            //     const element = predictedPoints[i];
+            //     if(element.y > topleft.y){
+            //         element.y = element.y + 20;
+            //         console.log('penis');
+            //     }
+            // }
+
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
                 await syncedPlaceTile(tempX, y, predictedPoints).then(tiles => {
                     for (let r = 0; r < tiles.length; r++) {
@@ -871,7 +859,6 @@ export default class GeneratorTool {
                 }
             }
         };
-        console.log("Tile Count:", tmpTiles.length);
         
         //Find the top left vertice of the shape
         var topleft = null;
@@ -889,7 +876,6 @@ export default class GeneratorTool {
         //center
         await loop(topleft.x + self.offsetX, topleft.y + self.offsetY, tileSize.x, tileSize.y);
         
-        console.log(this.#tiles);
         if(this.debugStartingPoint){
             this.#buffer.fill(255, 0, 0);
             this.#buffer.circle(topleft.x + self.offsetX, topleft.y + self.offsetY, 10);
@@ -1071,24 +1057,6 @@ export default class GeneratorTool {
         }
 
         return isInside;
-
-        // if (Collision.polygonPoint(vertices, x, y)) {
-        //     return true;
-        // }
-
-        // for (let i = 0; i < vertices.length; i++) {
-        //     const vc = vertices[i];
-        //     const vn = vertices[i + 1 < vertices.length - 1 ? i + 1 : 0];
-
-        //     if (Collision.linePoint(vc.x, vc.y, vn.x, vn.y, x, y)) {
-        //         if (y == 406.91537822811176 && x == 1907.2847231827582) {
-        //             console.log("Inside");
-        //         }
-        //         return true;
-        //     }
-        // }
-
-        // return false;
     }
 
     IsInsideForbiddenShapes(forbiddenShapes, x, y) {

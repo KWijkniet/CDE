@@ -219,7 +219,6 @@ export default class GeneratorTool {
             if (this.debugParallel) {
                 this.#buffer.text(i, vc.x, vc.y + 10);
                 this.#buffer.fill(0, 255, 0);
-                // this.#buffer.circle(pos.x, pos.y, 10);
                 this.#buffer.circle(posP.x, posP.y, 5);
                 this.#buffer.circle(posN.x, posN.y, 5);
                 this.#buffer.fill(255, 0, 0);
@@ -325,7 +324,6 @@ export default class GeneratorTool {
             if (this.debugParallel) {
                 this.#buffer.text(i, vc.x, vc.y + 10);
                 this.#buffer.fill(0, 255, 0);
-                // this.#buffer.circle(pos.x, pos.y, 10);
                 this.#buffer.circle(posP.x, posP.y, 5);
                 this.#buffer.circle(posN.x, posN.y, 5);
                 this.#buffer.fill(255, 0, 0);
@@ -347,7 +345,6 @@ export default class GeneratorTool {
         var outsets = [];
         this.#buffer.beginShape();
         var points = shape.getVertices();
-        var hideVisuals = true;
         this.#buffer.push();
 
         for (let i = 0; i < points.length; i++) {
@@ -399,7 +396,6 @@ export default class GeneratorTool {
             }
 
             // Stap 3
-            // #calculateOutsetPoint(shape, point, startPoint, endPoint, this.debugParallel = true)
             var newPosP = this.#calculateOutsetPoint(shape, posP, perpendicularStartPointP, perpendicularEndPointP, this.debugParallel); 
             var newPosN = this.#calculateOutsetPoint(shape, posN, perpendicularStartPointN, perpendicularEndPointN, this.debugParallel);
 
@@ -431,7 +427,6 @@ export default class GeneratorTool {
             if (this.debugParallel) {
                 this.#buffer.text(i, vc.x, vc.y + 10);
                 this.#buffer.fill(0, 255, 0);
-                // this.#buffer.circle(pos.x, pos.y, 10);
                 this.#buffer.circle(posP.x, posP.y, 10);
                 this.#buffer.circle(posN.x, posN.y, 10);
             }
@@ -505,11 +500,6 @@ export default class GeneratorTool {
                             isDummy = true;
                             results.push(raycastP);
                             collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(overhangPoints, vp.x, vp.y) });
-                            self.#buffer.stroke(0);
-                            if (this.debugTiles) {
-                                self.#buffer.fill(255, 255, 0);
-                                self.#buffer.circle(raycastP.x, raycastP.y, 13);
-                            }
                         }
 
                         results.push(vc);
@@ -517,13 +507,7 @@ export default class GeneratorTool {
                         if (raycastN != null) {
                             isDummy = true;
                             results.push(raycastN);
-                            // if(self.IsInside(insetPoints, vn.x, vn.y)) 
                             collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(overhangPoints, vn.x, vn.y) });
-                            if (this.debugTiles) {
-                                self.#buffer.stroke(0);
-                                self.#buffer.fill(255, 255, 0);
-                                self.#buffer.circle(raycastN.x, raycastN.y, 13);
-                            }
                         }
                     }
                     else{
@@ -719,7 +703,7 @@ export default class GeneratorTool {
                                 if(self.IsInside(overhangPoints, outsetPoint.x, outsetPoint.y))
                                     results.splice(index, 0, outsetPoint);
                                 else{
-                                    self.#buffer.circle(outsetPoint.x, outsetPoint.y, 20);
+                                    // self.#buffer.circle(outsetPoint.x, outsetPoint.y, 20);
                                     for (let t = 0; t < predictionPoints.length; t++) {
                                         const vp = predictionPoints[t - 1 >= 0 ? t - 1 : predictionPoints.length - 1];
                                         const vc = predictionPoints[t];
@@ -768,24 +752,18 @@ export default class GeneratorTool {
                                 var doCollisionCheckP = false;
                                 var doCollisionCheckN = false;
                                 if(raycastP != null){
-                                    // self.#buffer.circle(raycastP.x, raycastP.y,10);
                                     if(!self.IsInsideForbiddenShapes(outsets, raycastP.x, raycastP.y) && self.IsInside(overhangPoints, raycastP.x, raycastP.y)){
-                                        // self.#buffer.circle(raycastP.x, raycastP.y,10);
                                         self.checkAndPush(results, raycastP, k, true);
                                     }
                                     else if(self.IsInsideForbiddenShapes(outsets, raycastP.x, raycastP.y) && self.IsInside(overhangPoints, raycastP.x, raycastP.y)){
-                                        // self.#buffer.circle(raycastP.x, raycastP.y,20);
                                         doCollisionCheckP = true;
                                     }
                                 }
                                 if(raycastN != null){
-                                    // self.#buffer.circle(raycastN.x, raycastN.y,10);
                                     if(!self.IsInsideForbiddenShapes(outsets, raycastN.x, raycastN.y) && self.IsInside(overhangPoints, raycastN.x, raycastN.y)){
-                                        // self.#buffer.circle(raycastN.x, raycastN.y,10);
                                         self.checkAndPush(results, raycastN, k + 1, true);
                                     }
                                     else if(self.IsInsideForbiddenShapes(outsets, raycastN.x, raycastN.y) && self.IsInside(overhangPoints, raycastN.x, raycastN.y)){
-                                        // self.#buffer.circle(raycastN.x, raycastN.y,20);
                                         doCollisionCheckN = true;
                                     }
                                 }
@@ -809,21 +787,6 @@ export default class GeneratorTool {
                     }
                 }
                 predictionPoints = Vector2.copyAll(results);
-                
-                if(count == 54 || count == 51){
-                    for (let index = 0; index < predictionPoints.length; index++) {
-                        const element = predictionPoints[index];
-                        self.#buffer.text(index,element.x, element.y);
-                    }
-                }
-
-                // for (let l = 0; l < predictionPoints.length; l++) {
-                //     const vc = predictionPoints[l];
-                //      if(!self.IsInside(overhangPoints, vc.x, vc.y)){
-                //         // delete vc
-                //         predictionPoints.splice(l , 1);
-                //      }
-                // }
                 
                 // create tile
                 var tile;
@@ -912,15 +875,6 @@ export default class GeneratorTool {
         }
     }
 
-    #convertToGrid(value, gridStart, gridSize, useRound = true) {
-        if (useRound) {
-            return Math.round((value - gridStart) / gridSize) * gridSize + gridStart;
-        }
-        else {
-            return Math.floor((value - gridStart) / gridSize) * gridSize + gridStart;
-        }
-    }
-
     #createTile(vertices, isDummy) {
         return new Tile(vertices, this.#buffer, isDummy);
     }
@@ -994,16 +948,6 @@ export default class GeneratorTool {
                 this.#tileHeight += tile.height;
             }
         }
-
-        // for (let i = 0; i < this.#tiles['Alucobond'].length; i++) {
-        //     const tile = this.#tiles['Alucobond'][i];
-        //     t['Alucobond'].push(tile.toJSON());
-        // }
-
-        // for (let i = 0; i < this.#tiles['X-Roof'].length; i++) {
-        //     const tile = this.#tiles['X-Roof'][i];
-        //     t['X-Roof'].push(tile.toJSON());
-        // }
 
         return { 'tiles': t, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
     }
@@ -1197,16 +1141,12 @@ export default class GeneratorTool {
             var raycastSFalse = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), false);
             var raycastSTrue = this.#raycast([shape], point, new Vector2(-directionStart.x, -directionStart.y), Vector2.distance(point, startPoint), true);
             if (raycastSFalse != null && raycastSTrue != null) {
-                this.#buffer.fill(0, 255, 0);
-                this.#buffer.circle(startPoint.x, startPoint.y, 5);
                 newPos = startPoint;
             }
 
             var raycastEFalse = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), false);
             var raycastETrue = this.#raycast([shape], point, new Vector2(-directionEnd.x, -directionEnd.y), Vector2.distance(point, endPoint), true);
             if (raycastEFalse != null && raycastETrue != null) {
-                this.#buffer.fill(0, 255, 0);
-                this.#buffer.circle(endPoint.x, endPoint.y, 5);
                 newPos = endPoint;
             }
         }

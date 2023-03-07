@@ -442,7 +442,8 @@ export default class GeneratorTool {
 
     async #generateTiles(shape, inset, overhang, outsets) {
         var self = this;
-        var tileSize = new Vector2(820 / 10, (600 / 10) -20);
+        var tileSize = new Vector2(820 / 10, (600 / 10));
+        var overlap = 100;
         var shapePoints = shape.getVertices();
         var insetPoints = inset.getVertices();
         var overhangPoints = overhang.getVertices();
@@ -457,9 +458,9 @@ export default class GeneratorTool {
         this.#tileWidth = 0;
         this.#tileHeight = 0;
 
-        var syncedPlaceTile = async (x, y, predictionPoints) => new Promise((resolve) => {
+        var syncedPlaceTile = async (x, y, predictionPoints, isDummy = false) => new Promise((resolve) => {
             var delay = 1;
-            var isDummy = false;
+            // var isDummy = false;
             count++;
 
             setTimeout(() => {
@@ -769,7 +770,7 @@ export default class GeneratorTool {
                                 }
                                 
 
-                                if(doCollisionCheckP || doCollisionCheckN){
+                                if(raycastP != null && raycastN != null && (doCollisionCheckP || doCollisionCheckN)){
                                     var startPointP = Vector2.add(raycastP, dirN.multiplyScalar(100));
                                     var endPointP = Vector2.add(raycastP, dirN.multiplyScalar(-100));
                                     var startPointN = Vector2.add(raycastN, dirP.multiplyScalar(100));
@@ -818,39 +819,65 @@ export default class GeneratorTool {
             var yIndex = Math.round((y - topleft.y) / tileSize.y);
             var tempX = x + (this.rowOffsetMode && yIndex % 2 == 1 ? tileSize.x / 2 : 0);
             var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + h), new Vector2(tempX, y + h)];
-
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
-                await syncedPlaceTile(tempX, y, predictedPoints).then(tiles => {
+                await syncedPlaceTile(tempX, y, predictedPoints, y < topleft.y + self.offsetY).then(tiles => {
+                    tmpTiles[x + "_" + y] = tiles;
                     for (let r = 0; r < tiles.length; r++) {
                         const tile = tiles[r];
                         if(tile != null){
                             this.#tiles.push(tile);
                         }
                     }
-                    tmpTiles[x + "_" + y] = tiles;
                 });
+            }
+            await self.#sleep(100);
 
-                await self.#sleep(10);
-
-                if(tmpTiles[x + "_" + y][0] != null || tmpTiles[x + "_" + y][1] != null){
-                    //Neighbour left
-                    if(typeof tmpTiles[(x - w) + "_" + y] === "undefined"){
-                        await loop(x - w, y, w, h);
+            // if(tmpTiles[x + "_" + y] && (tmpTiles[x + "_" + y][0] != null || tmpTiles[x + "_" + y][1] != null)){
+                //Neighbour right
+                if(typeof tmpTiles[(x + w) + "_" + y] === "undefined"){
+                    var predictedRight = Vector2.copyAll(predictedPoints);
+                    for (let x = 0; x < predictedRight.length; x++) {
+                        predictedRight[x].x += w;
                     }
-                    //Neighbour right
-                    if(typeof tmpTiles[(x + w) + "_" + y] === "undefined"){
+
+                    if(Collision.polygonPolygon(insetPoints, predictedRight)){
                         await loop(x + w, y, w, h);
                     }
-                    //Neighbour up
-                    if(typeof tmpTiles[x + "_" + (y - h)] === "undefined"){
+                }
+                //Neighbour left
+                if(typeof tmpTiles[(x - w) + "_" + y] === "undefined"){
+                    var predictedLeft = Vector2.copyAll(predictedPoints);
+                    for (let x = 0; x < predictedLeft.length; x++) {
+                        predictedLeft[x].x -= w;
+                    }
+
+                    if(Collision.polygonPolygon(insetPoints, predictedLeft)){
+                        await loop(x - w, y, w, h);
+                    }
+                }
+                //Neighbour up
+                if(typeof tmpTiles[x + "_" + (y - h)] === "undefined"){
+                    var predictedUp = Vector2.copyAll(predictedPoints);
+                    for (let x = 0; x < predictedUp.length; x++) {
+                        predictedUp[x].y -= h;
+                    }
+
+                    if(Collision.polygonPolygon(insetPoints, predictedUp)){
                         await loop(x, y - h, w, h);
                     }
-                    //Neighbour down
-                    if(typeof tmpTiles[x + "_" + (y + h)] === "undefined"){
+                }
+                //Neighbour down
+                if(typeof tmpTiles[x + "_" + (y + h)] === "undefined"){
+                    var predictedDown = Vector2.copyAll(predictedPoints);
+                    for (let x = 0; x < predictedDown.length; x++) {
+                        predictedDown[x].y += h;
+                    }
+
+                    if(Collision.polygonPolygon(insetPoints, predictedDown)){
                         await loop(x, y + h, w, h);
                     }
                 }
-            }
+            // }
         };
         
         //Find the top left vertice of the shape
@@ -866,8 +893,13 @@ export default class GeneratorTool {
             }
         }
 
+        if(this.debugStartingPoint){
+            this.#buffer.fill(255, 0, 0);
+            this.#buffer.circle(topleft.x + self.offsetX, topleft.y + self.offsetY, 10);
+        }
+
         //center
-        await loop(topleft.x + self.offsetX, topleft.y + self.offsetY, tileSize.x, tileSize.y);
+        await loop(topleft.x + self.offsetX, topleft.y + self.offsetY, tileSize.x, tileSize.y - overlap);
         
         if(this.debugStartingPoint){
             this.#buffer.fill(255, 0, 0);

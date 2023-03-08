@@ -449,6 +449,7 @@ export default class GeneratorTool {
         var overhangPoints = overhang.getVertices();
         var boundingBox = overhang.getBoundingBox();
         var count = 0;
+        var hasTilesAbove = false;
 
         this.#tiles = [];
         this.#totalWidth = 0;
@@ -820,16 +821,26 @@ export default class GeneratorTool {
 
         var tmpTiles = [];
         var loop = async (x, y, w, h) => {
-            var yIndex = Math.round((y - topleft.y) / (tileSize.y - overlap));
+            var yIndex = Math.round((y - (topleft.y + self.offsetY)) / (tileSize.y - overlap));
             var tempX = x + (this.rowOffsetMode && Math.abs(yIndex % 2) == 1 ? tileSize.x / 2 : 0);
-            var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + h), new Vector2(tempX, y + h)];
+            var tempY = h;// - overlap;
+            
+            // if(yIndex == 0 && !hasTilesAbove){
+            //     tempY += overlap;
+            // }
+            
+            var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + tempY), new Vector2(tempX, y + tempY)];
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
                 await syncedPlaceTile(tempX, y, predictedPoints, y < topleft.y + self.offsetY).then(tiles => {
                     tmpTiles[x + "_" + y] = tiles;
                     for (let r = 0; r < tiles.length; r++) {
                         const tile = tiles[r];
                         if(tile != null){
+                            if(yIndex != 0 && this.#tiles.length <= 0){
+                                hasTilesAbove = true;
+                            }
                             this.#tiles.push(tile);
+                            self.#buffer.text(yIndex, tile.getVertices()[0].x + 25, tile.getVertices()[0].y - 15);
                         }
                     }
                 });
@@ -859,26 +870,26 @@ export default class GeneratorTool {
                         await loop(x - w, y, w, h);
                     }
                 }
-                //Neighbour up
-                if(typeof tmpTiles[x + "_" + (y - h)] === "undefined"){
-                    var predictedUp = Vector2.copyAll(predictedPoints);
-                    for (let x = 0; x < predictedUp.length; x++) {
-                        predictedUp[x].y -= h;
-                    }
-
-                    if(Collision.polygonPolygon(insetPoints, predictedUp)){
-                        await loop(x, y - h, w, h);
-                    }
-                }
                 //Neighbour down
-                if(typeof tmpTiles[x + "_" + (y + h)] === "undefined"){
+                if(typeof tmpTiles[x + "_" + (y + tempY)] === "undefined"){
                     var predictedDown = Vector2.copyAll(predictedPoints);
                     for (let x = 0; x < predictedDown.length; x++) {
-                        predictedDown[x].y += h;
+                        predictedDown[x].y += tempY;
                     }
 
                     if(Collision.polygonPolygon(insetPoints, predictedDown)){
-                        await loop(x, y + h, w, h);
+                        await loop(x, y + tempY, w, h);
+                    }
+                }
+                //Neighbour up
+                if(typeof tmpTiles[x + "_" + (y - tempY)] === "undefined"){
+                    var predictedUp = Vector2.copyAll(predictedPoints);
+                    for (let x = 0; x < predictedUp.length; x++) {
+                        predictedUp[x].y -= tempY;
+                    }
+
+                    if(Collision.polygonPolygon(insetPoints, predictedUp)){
+                        await loop(x, y - tempY, w, h);
                     }
                 }
             // }
@@ -903,7 +914,7 @@ export default class GeneratorTool {
         }
 
         //center
-        await loop(topleft.x + self.offsetX, topleft.y + self.offsetY, tileSize.x, tileSize.y - overlap);
+        await loop(topleft.x + self.offsetX, topleft.y + self.offsetY, tileSize.x, tileSize.y);
         
         if(this.debugStartingPoint){
             this.#buffer.fill(255, 0, 0);

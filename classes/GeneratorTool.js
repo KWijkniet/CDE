@@ -24,7 +24,7 @@ export default class GeneratorTool {
     debugOutset = true;
     debugTiles = false;
     debugParallel = false;
-    debugStartingPoint = false;
+    debugStartingPoint = true;
 
     #buffer = null;
     #renderer = null;
@@ -498,17 +498,21 @@ export default class GeneratorTool {
                         var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
 
                         if(raycastP != null){
-                            isDummy = true;
-                            results.push(raycastP);
-                            collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(overhangPoints, vp.x, vp.y) });
+                            if(Vector2.distance(raycastP, vp) > 0){
+                                isDummy = true;
+                                results.push(raycastP);
+                                collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(overhangPoints, vp.x, vp.y) });
+                            }
                         }
 
                         results.push(vc);
 
                         if (raycastN != null) {
-                            isDummy = true;
-                            results.push(raycastN);
-                            collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(overhangPoints, vn.x, vn.y) });
+                            if(Vector2.distance(raycastN, vn) > 0){
+                                isDummy = true;
+                                results.push(raycastN);
+                                collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(overhangPoints, vn.x, vn.y) });
+                            }
                         }
                     }
                     else{
@@ -816,8 +820,8 @@ export default class GeneratorTool {
 
         var tmpTiles = [];
         var loop = async (x, y, w, h) => {
-            var yIndex = Math.round((y - topleft.y) / tileSize.y);
-            var tempX = x + (this.rowOffsetMode && yIndex % 2 == 1 ? tileSize.x / 2 : 0);
+            var yIndex = Math.round((y - topleft.y) / (tileSize.y - overlap));
+            var tempX = x + (this.rowOffsetMode && Math.abs(yIndex % 2) == 1 ? tileSize.x / 2 : 0);
             var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + h), new Vector2(tempX, y + h)];
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
                 await syncedPlaceTile(tempX, y, predictedPoints, y < topleft.y + self.offsetY).then(tiles => {

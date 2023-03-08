@@ -9,6 +9,7 @@ export default class Renderer {
     constructor() {
         Renderer.instance = this;
         this.#shapes = [];
+        
         // // R
         // this.add(new Shape([
         //     new Vector2(300, 200),
@@ -191,6 +192,56 @@ export default class Renderer {
         // ], new Color(null, 255, 0, 0, 255));
         // forbidden.isAllowed = false;
         // this.add(forbidden);
+
+        // TEST SHAPES ANGLES
+        // this.add(new Shape([
+        //     new Vector2(800, 500),
+        //     new Vector2(1200, 500),
+        //     new Vector2(1200, 900),
+        //     new Vector2(1000, 900),
+        //     new Vector2(1000, 700),
+        // ], new Color(null, 255, 255, 255, 255)));
+
+        // this.add(new Shape([
+        //     new Vector2(1600, 500),
+        //     new Vector2(1300, 800),
+        //     new Vector2(1900, 800),
+        // ], new Color(null, 255, 255, 255, 255)));
+
+        // this.add(new Shape([
+        //     new Vector2(1300, 900),
+        //     new Vector2(1600, 900),
+        //     new Vector2(1600, 1100),
+        //     new Vector2(1800, 1200),
+        //     new Vector2(1800, 1500),
+        //     new Vector2(1500, 1500),
+        //     new Vector2(1300, 1300),
+        //     new Vector2(1100, 1300),
+        //     new Vector2(1100, 1100),
+        // ], new Color(null, 255, 255, 255, 50)));
+
+        // Inset test
+        // this.add(new Shape([
+        //     new Vector2(900, 500),
+        //     new Vector2(1200, 500),
+        //     new Vector2(1500, 700),
+        //     new Vector2(1500, 1000),
+        //     new Vector2(1100, 1000),
+        //     new Vector2(900, 800),
+        // ], new Color(null, 255, 255, 255, 50)));
+        
+        // Outset test
+        // var forbidden = new Shape([
+        //     new Vector2(900, 500),
+        //     new Vector2(1200, 500),
+        //     new Vector2(1500, 700),
+        //     new Vector2(1500, 1000),
+        //     new Vector2(1100, 1000),
+        //     new Vector2(900, 800),
+        // ], new Color(null, 255, 0, 0, 255));
+        // forbidden.isAllowed = false;
+        // this.add(forbidden);
+
     }
 
     update(){

@@ -27,6 +27,7 @@ onSetupComplete = () => {};
 
 function setup() {
     var canvas = createCanvas(visualViewport.width, visualViewport.height);
+    // document.getElementsByClassName("editor")[0].appendChild(canvas.elt);
 
     HistoryTool.instance();
     Settings.setCanvas(canvas);
@@ -302,26 +303,55 @@ function updateToolMode(mode){
 }
 
 function updateSettings(){
+    generatorTool.offsetX = parseInt(document.getElementById("offsetX").value ? document.getElementById("offsetX").value : "0");
+    generatorTool.offsetY = parseInt(document.getElementById("offsetY").value ? document.getElementById("offsetY").value : "0");
     generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
     Settings.type = document.getElementById("tileType").value;
+
+    //Debugging
+    generatorTool.debugBoundingBox = document.getElementById("showBoundingBox").checked ? true : false;
+    generatorTool.debugRaycast = document.getElementById("showRaycast").checked ? true : false;
+    generatorTool.debugInset = document.getElementById("showInset").checked ? true : false;
+    generatorTool.debugOutset = document.getElementById("showOutset").checked ? true : false;
+    generatorTool.debugTiles = document.getElementById("showTiles").checked ? true : false;
+    generatorTool.debugParallel = document.getElementById("showParallel").checked ? true : false;
+    generatorTool.debugStartingPoint = document.getElementById("showStartPoint").checked ? true : false;
 }
 
 function updateMargin() {
+    var hasFound = false;
     var elems = document.getElementsByName("marginType");
     for (let i = 0; i < elems.length; i++) {
         const elem = elems[i];
         if (elem.checked) {
-            var value = elem.getAttribute("data-margin");
-            if (!value) {
-                value = document.querySelector('[data-target="' + elem.id + '"]').value;
+            var margin = elem.getAttribute("data-margin");
+            if (!margin) {
+                margin = document.getElementById("objectMargin").value;
             }
-            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + value;
+
+            if (margin < 5) {
+                margin = 5;
+            }
+            
+            var overhang = elem.getAttribute("data-overhang");
+            if (!overhang) {
+                overhang = document.getElementById("objectOverhang").value;
+            }
+            lineSelectorTool.selectedShape.lineMargins[lineSelectorTool.selectedPointIndex] = elem.id + "|" + margin + "|" + overhang;
             Renderer.instance.replace(lineSelectorTool.selectedShape);
+            
+            hasFound = true;
+            generatorTool.margin = margin;
+            generatorElem.overhang = overhang;
             break;
         }
     }
 
-    generatorTool.margin = document.getElementById("objectMargin").value;
+    if(!hasFound){
+        generatorTool.margin = document.getElementById("objectMargin").value;
+        generatorTool.margin = generatorTool.margin < 5 ? 5 : generatorTool.margin;
+        generatorTool.overhang = document.getElementById("objectOverhang").value;
+    }
     generatorTool.rowOffsetMode = document.getElementById("useRowOffset").checked;
 }
 
@@ -334,12 +364,11 @@ function loadMargin() {
             elem.checked = true;
 
             if (!elem.getAttribute("data-margin")){
-                document.querySelector('[data-target="' + elem.id + '"]').value = data[1];
+                document.getElementById("objectMargin").value = data[1];
+                document.getElementById("objectOverhang").value = data[2];
             }
-            break;
         }
-
-        if (elem.checked){
+        else if (elem.checked){
             elem.checked = false;
         }
     }
@@ -362,6 +391,16 @@ function exportData() {
     data['tileType'] = document.getElementById("tileType").value;
     data['dakvoetprofielen'] = document.getElementById("dakvoetprofielen").value;
     data['vogelschroten'] = document.getElementById("vogelschroten").value;
+    data['offsetX'] = document.getElementById("offsetX").value;
+    data['offsetY'] = document.getElementById("offsetY").value;
+    
+    data['debugBoundingBox'] = document.getElementById("showBoundingBox").checked ? true : false;
+    data['debugRaycast'] = document.getElementById("showRaycast").checked ? true : false;
+    data['debugInset'] = document.getElementById("showInset").checked ? true : false;
+    data['debugOutset'] = document.getElementById("showOutset").checked ? true : false;
+    data['debugTiles'] = document.getElementById("showTiles").checked ? true : false;
+    data['debugParallel'] = document.getElementById("showParallel").checked ? true : false;
+    data['showStartPoint'] = document.getElementById("showStartPoint").checked ? true : false;
 
     return JSON.stringify(data);
 }
@@ -376,9 +415,21 @@ function importData(json){
     }
     document.getElementById("useRowOffset").checked = json['useRowOffset'];
     document.getElementById("tileType").value = json['tileType'];
-    document.getElementById("dakvoetprofielen").value = json['dakvoetprofielen'];
-    document.getElementById("vogelschroten").value = json['vogelschroten'];
+    document.getElementById("dakvoetprofielen").value = json['dakvoetprofielen'] ? json['dakvoetprofielen'] : 0;
+    document.getElementById("vogelschroten").value = json['vogelschroten'] ? json['vogelschroten'] : 0;
+    document.getElementById("offsetX").value = json['offsetX'];
+    document.getElementById("offsetY").value = json['offsetY'];
+    
+    document.getElementById("showBoundingBox").checked = json['debugBoundingBox'] ? true : false;
+    document.getElementById("showRaycast").checked = json['debugRaycast'] ? true : false;
+    document.getElementById("showInset").checked = json['debugInset'] ? true : false;
+    document.getElementById("showOutset").checked = json['debugOutset'] ? true : false;
+    document.getElementById("showTiles").checked = json['debugTiles'] ? true : false;
+    document.getElementById("showParallel").checked = json['debugParallel'] ? true : false;
+    document.getElementById("showStartPoint").checked = json['showStartPoint'] ? true : false;
+
     generatorTool.fromJSON(json['generator']);
+    updateSettings();
 }
 
 function canvasAsImage(){

@@ -13,6 +13,7 @@ export default class DrawingTool {
 
     #buffer = null;
     #points = [];
+    #isAllowed = true;
     #selectedPointIndex = null;
 
     #dragOldPos = null;
@@ -93,6 +94,13 @@ export default class DrawingTool {
     update() {
         this.#generate();
         image(this.#buffer, 0, 0);
+
+        // var cursor = Cursor.get();
+        // var pos = cursor.local().remove(cursor.offset);
+        // pos.x /= Settings.zoom;
+        // pos.y /= Settings.zoom;
+        // pos = Cursor.toGrid(pos);
+        // if(pos.x < 0 || pos.y < 0 || pos.x > Settings.mapSizeX || pos.y > Settings.mapSizeY) { return; }
     }
 
     enable() {
@@ -155,7 +163,8 @@ export default class DrawingTool {
                 }
                 else if(this.#points.length > 1){
                     hasFound = true;
-                    var shape = new Shape(this.#points, Settings.shapeAllowed);
+                    var shape = new Shape(this.#points, this.#isAllowed ? Settings.shapeAllowed : Settings.shapeForbidden);
+                    shape.isAllowed = this.#isAllowed;
                     var points = Vector2.copyAll(this.#points);
 
                     //create history entree
@@ -215,6 +224,20 @@ export default class DrawingTool {
             if (!hasFound) {
                 if(this.#originalShape == null){
                     if (this.canAdd) {
+                        if(this.#points.length <= 0){
+                            this.#isAllowed = true;
+                        }
+
+                        var shapes = Renderer.instance.getAll();
+                        for (let x = 0; x < shapes.length; x++) {
+                            const shape = shapes[x];
+                            const shapePoints = shape.getVertices();
+                            if(Collision.polygonPoint(shapePoints, pos.x, pos.y)){
+                                this.#isAllowed = false;
+                                break;
+                            }
+                        }
+                        
                         var action = new Action("Added Coordinates",
                             () => { this.#points.splice(this.#points.length - 1, 1); this.#generate(); },
                             () => { this.#points.push(pos); this.#generate(); }

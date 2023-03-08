@@ -82,6 +82,20 @@
                 </button>
             </div>
         </li>
+        <!-- Offset X -->
+        <li class="nav-item pointer">
+            <div class="dropdown">
+                <input class="form-control" style="width: 42px; padding: 0px;" type="number" value="0" id="offsetX" onchange="updateSettings()">
+                <span class="nav-title">Offset X (cm)</span>
+            </div>
+        </li>
+        <!-- Offset Y -->
+        <li class="nav-item pointer">
+            <div class="dropdown">
+                <input class="form-control" style="width: 42px; padding: 0px;" type="number" value="0" id="offsetY" onchange="updateSettings()">
+                <span class="nav-title">Offset Y (cm)</span>
+            </div>
+        </li>
         <!-- SelectTile -->
         <li class="nav-item pointer" id="tileTool">
             <div class="dropdown">
@@ -112,42 +126,82 @@
                 </div>
                 <div class="modal-body">
                     <div class="accordion" id="accordionExample">
+
                         <div class="accordion-item">
-                            <h2 class="accordion-header" id="Daknok">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
-                                    aria-expanded="true" aria-controls="collapseOne">
-                                    Daknok
+                            <h2 class="accordion-header" id="other">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    Other
                                 </button>
                             </h2>
-                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="Daknok"
+                            <div id="collapseFour" class="accordion-collapse collapse show" aria-labelledby="other"
                                 data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
                                     <div class="row">
                                         <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="5" id="daknok1">
-                                            <label class="form-check-label" for="daknok1">
-                                                Alucobond nok
-                                                <img src="./assets/Alucobond_nok.png" alt="Alucobond_nok" style="max-width: 100%;">
-                                            </label>
-                                        </div>
-                                        <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="10" id="daknok2">
-                                            <label class="form-check-label" for="daknok2">
-                                                Nokvorst
-                                                <img src="./assets/nokvorst.png" alt="nokvorst" style="max-width: 100%;">
-                                            </label>
-                                        </div>
-                                        <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="20" checked id="daknok3">
-                                            <label class="form-check-label" for="daknok3">
-                                                Pannen nok
-                                                <img src="./assets/Pannen_nok.png" alt="Pannen_nok" style="max-width: 100%;">
+                                            <input class="form-check-input" type="radio" name="marginType" id="customMargin">
+                                            <label class="form-check-label" for="customMargin">
+                                                Custom:
+                                                <div class="col-md-12">
+                                                    <label class="form-check-label" for="objectMargin">Margin</label>
+                                                    <input class="form-control" data-target="other" style="text-align: left; display: inline-block; width: 75px; margin-top: 0px;" type="number" value="5" id="objectMargin">cm
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <label class="form-check-label" for="objectOverhang">Overhang</label>
+                                                    <input class="form-control" data-target="other" style="text-align: left; display: inline-block; width: 75px; margin-top: 0px;" type="number" value="30" id="objectOverhang">cm
+                                                </div>
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="Daknok">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
+                                    aria-expanded="true" aria-controls="collapseOne">
+                                    Daknok
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="Daknok"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="5" data-overhang="20" id="daknok1">
+                                            <label class="form-check-label" for="daknok1">
+                                                Alucobond nok
+                                                <img src="./assets/Alucobond_nok.png" alt="Alucobond_nok" style="max-width: 100%;">
+                                                Margin: 5cm<br />
+                                                Overhang: 20cm
+                                            </label>
+                                            <!-- Size: -->
+                                            <!-- <input class="form-control" data-target="other" style="height: 20px; text-align: left; display: inline-block; width: 75px; margin-top: 0px;" type="number" value="30" id="daknok1_overlap" > -->
+                                        </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="10" data-overhang="0" id="daknok2">
+                                            <label class="form-check-label" for="daknok2">
+                                                Nokvorst
+                                                <img src="./assets/nokvorst.png" alt="nokvorst" style="max-width: 100%;">
+                                                Margin: 10cm<br />
+                                                Overhang: 0cm
+                                            </label>
+                                        </div>
+                                        <div class="form-check col-md-4">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="20" data-overhang="0" checked id="daknok3">
+                                            <label class="form-check-label" for="daknok3">
+                                                Pannen nok
+                                                <img src="./assets/Pannen_nok.png" alt="Pannen_nok" style="max-width: 100%;">
+                                                Margin: 20cm<br />
+                                                Overhang: 0cm
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="Dakrand">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo"
@@ -160,30 +214,37 @@
                                 <div class="accordion-body">
                                     <div class="row">
                                         <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="5" id="dakrand1">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="5" data-overhang="20" id="dakrand1">
                                             <label class="form-check-label" for="dakrand1">
                                                 Alucobond
                                                 <img src="./assets/Alucobond.png" alt="Alucobond" style="max-width: 100%;">
+                                                Margin: 5cm<br />
+                                                Overhang: 20cm
                                             </label>
                                         </div>
                                         <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="10" id="dakrand2">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="10" data-overhang="0" id="dakrand2">
                                             <label class="form-check-label" for="dakrand2">
                                                 Pannen
                                                 <img src="./assets/Pannen.png" alt="Pannen" style="max-width: 100%;">
+                                                Margin: 10cm<br />
+                                                Overhang: 0cm
                                             </label>
                                         </div>
                                         <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="20" checked id="dakrand3">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="20" data-overhang="0" checked id="dakrand3">
                                             <label class="form-check-label" for="dakrand3">
                                                 Zetwerk
                                                 <img src="./assets/Zetwerk.png" alt="Zetwerk" style="max-width: 100%;">
+                                                Margin: 20cm<br />
+                                                Overhang: 0cm
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="Gootdetail">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -196,52 +257,37 @@
                                 <div class="accordion-body">
                                     <div class="row">
                                         <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="5" id="gootdetail1">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="5" data-overhang="0" id="gootdetail1">
                                             <label class="form-check-label" for="gootdetail1">
                                                 X-Roof
                                                 <img src="./assets/goot_xroof.png" alt="goot_xroof" style="max-width: 100%;">
+                                                Margin: 5cm<br />
+                                                Overhang: 0cm
                                             </label>
                                         </div>
                                         <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="10" id="gootdetail2">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="10" data-overhang="0" id="gootdetail2">
                                             <label class="form-check-label" for="gootdetail2">
                                                 Dakpan
                                                 <img src="./assets/goot_dakpan.png" alt="goot_dakpan" style="max-width: 100%;">
+                                                Margin: 10cm<br />
+                                                Overhang: 0cm
                                             </label>
                                         </div>
                                         <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" data-margin="20" checked id="gootdetail3">
+                                            <input class="form-check-input" type="radio" name="marginType" data-margin="5" data-overhang="20" checked id="gootdetail3">
                                             <label class="form-check-label" for="gootdetail3">
                                                 Paspaneel
                                                 <img src="./assets/goot_paspaneel.png" alt="goot_paspaneel" style="max-width: 100%;">
+                                                Margin: 5cm<br />
+                                                Overhang: 20cm
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="other">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                    Other
-                                </button>
-                            </h2>
-                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="other"
-                                data-bs-parent="#accordionExample">
-                                <div class="accordion-body">
-                                    <div class="row">
-                                        <div class="form-check col-md-4">
-                                            <input class="form-check-input" type="radio" name="marginType" id="other">
-                                            <label class="form-check-label" for="other">
-                                                Custom:
-                                                <input class="form-control" data-target="other" style="text-align: left; display: inline-block; width: 75px; margin-top: 0px;" type="number" value="5" id="objectMargin">
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -266,23 +312,54 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-12 mb-3 form-check">
-                            <label class="form-check-label" style="margin-right: 10px;" for="useRowOffset">Metsel patroon:</label>
-                            <input class="form-check-input" type="checkbox" value="" id="useRowOffset">
+                            <label class="form-check-label" style="margin-left: 10px;" for="useRowOffset">Metsel patroon:</label>
+                            <input class="form-check-input" style="margin-left: -12px;" type="checkbox" value="" id="useRowOffset">
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-check-label" style="margin-right: 10px;" for="tileType">Xroof Type:</label>
+                            <label class="form-check-label" for="tileType">Xroof Type:</label>
                             <select class="form-select col-md-6" aria-label="Tile Type" value="Zwart" id="tileType">
                                 <option value="Zwart">Zwart</option>
                                 <option value="Terracotta">Terracotta</option>
                             </select>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label for="dakvoetprofielen" class="form-label">Dakvoet Profielen</label>
-                            <input type="number" class="form-control" id="dakvoetprofielen">
+                            <label for="dakvoetprofielen" class="form-label">Dakvoet Profielen:</label>
+                            <input class="form-control" style="text-align: left; display: inline-block; width: 75px; margin-top: 0px;" type="number" id="dakvoetprofielen" value="0">(ST)
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label for="vogelschroten" class="form-label">Vogelschroten</label>
-                            <input type="number" class="form-control" id="vogelschroten">
+                            <label for="vogelschroten" class="form-label">Vogelschroten:</label>
+                            <input class="form-control" style="text-align: left; display: inline-block; width: 75px; margin-top: 0px;" type="number" id="vogelschroten" value="0">(ST)
+                        </div>
+                    </div>
+                    Visuals:
+                    <div class="row">
+                        <div class="col-md-12 mb-3 form-check">
+                            <label class="form-check-label" style="margin-left: 10px;" for="showStartPoint">Show Starting Point</label>
+                            <input class="form-check-input" style="margin-left: -12px;" type="checkbox" id="showStartPoint" checked>
+                        </div>
+                        <div class="col-md-12 mb-3 form-check">
+                            <label class="form-check-label" style="margin-left: 10px;" for="showBoundingBox">Show BoundingBox</label>
+                            <input class="form-check-input" style="margin-left: -12px;" type="checkbox" id="showBoundingBox">
+                        </div>
+                        <div class="col-md-12 mb-3 form-check">
+                            <label class="form-check-label" style="margin-left: 10px;" for="showRaycast">Show Raycast</label>
+                            <input class="form-check-input" style="margin-left: -12px;" type="checkbox" id="showRaycast">
+                        </div>
+                        <div class="col-md-12 mb-3 form-check">
+                            <label class="form-check-label" style="margin-left: 10px;" for="showInset">Show Inset</label>
+                            <input class="form-check-input" style="margin-left: -12px;" type="checkbox" id="showInset" checked>
+                        </div>
+                        <div class="col-md-12 mb-3 form-check">
+                            <label class="form-check-label" style="margin-left: 10px;" for="showOutset">Show Outset</label>
+                            <input class="form-check-input" style="margin-left: -12px;" type="checkbox" id="showOutset" checked>
+                        </div>
+                        <div class="col-md-12 mb-3 form-check">
+                            <label class="form-check-label" style="margin-left: 10px;" for="showTiles">Show Tiles</label>
+                            <input class="form-check-input" style="margin-left: -12px;" type="checkbox" id="showTiles">
+                        </div>
+                        <div class="col-md-12 mb-3 form-check">
+                            <label class="form-check-label" style="margin-left: 10px;" for="showParallel">Show Parallel Lines</label>
+                            <input class="form-check-input" style="margin-left: -12px;" type="checkbox" id="showParallel">
                         </div>
                     </div>
                 </div>
@@ -298,7 +375,11 @@
     
     <script>
         onSetupComplete = () => {
-            importData({"shapes":[{"id":"4fc3-dfe0-972-c393","color":{"r":255,"g":255,"b":255,"a":128},"showData":true,"isAllowed":true,"isGenerated":false,"vertices":[{"x":1100,"y":200},{"x":1100,"y":700},{"x":1600,"y":700},{"x":1600,"y":200}],"lineMargins":["daknok1|5","daknok1|5","daknok1|5","daknok1|5"],"pos":{"x":1075,"y":175}}],"generator":{"tiles":{"Alucobond":[],"X-Roof":[],"Ventilatiekap":[]},"width":0,"height":0,"tile_width":0,"tile_height":0,"dummy_width":0,"dummy_height":0},"useRowOffset":false,"tileType":"Zwart","dakvoetprofielen":"","vogelschroten":""});
+            // importData({"shapes":[{"id":"0833-cbf0-aa8-045c","color":{"r":255,"g":255,"b":255,"a":128},"showData":true,"isAllowed":true,"isGenerated":false,"vertices":[{"x":1200,"y":500},{"x":1100,"y":800},{"x":1700,"y":800},{"x":1600,"y":500}],"lineMargins":["customMargin|5|30","daknok1|5|20","customMargin|5|40","gootdetail3|5|20"],"pos":{"x":1075,"y":475}}],"generator":{"tiles":{"Alucobond":[],"X-Roof":[],"Ventilatiekap":[]},"width":0,"height":0,"tile_width":0,"tile_height":0,"dummy_width":0,"dummy_height":0},"useRowOffset":false,"tileType":"Zwart","dakvoetprofielen":"0","vogelschroten":"0","offsetX":"20","offsetY":"20","debugBoundingBox":false,"debugRaycast":false,"debugInset":false,"debugOutset":false,"debugTiles":false,"debugParallel":false,"showStartPoint":true});
+
+            importData({"shapes":[{"id":"0833-cbf0-aa8-045c","color":{"r":255,"g":255,"b":255,"a":128},"showData":true,"isAllowed":true,"isGenerated":false,"vertices":[{"x":1200,"y":500},{"x":1100,"y":800},{"x":1700,"y":800},{"x":1700,"y":500}],"lineMargins":["customMargin|5|30","daknok2|10|0","daknok2|10|0","customMargin|5|80"],"pos":{"x":1075,"y":475}},{"id":"6cc0-e726-98e-9a95","color":{"r":255,"g":0,"b":0,"a":128},"showData":true,"isAllowed":false,"isGenerated":false,"vertices":[{"x":1300,"y":750},{"x":1300,"y":860},{"x":1480,"y":860},{"x":1480,"y":750}],"lineMargins":["customMargin|5|0","customMargin|5|0","customMargin|5|0","customMargin|5|0"],"pos":{"x":1275,"y":725}},{"id":"e761-c71f-89b-e01f","color":{"r":255,"g":0,"b":0,"a":128},"showData":true,"isAllowed":false,"isGenerated":false,"vertices":[{"x":1710,"y":590},{"x":1590,"y":590},{"x":1590,"y":690},{"x":1710,"y":690}],"lineMargins":["customMargin|5|0","customMargin|5|0","customMargin|5|0","customMargin|5|0"],"pos":{"x":1565,"y":565}}],"generator":{"tiles":{"Alucobond":[{"vertices":[{"x":1160.0438900649829,"y":525},{"x":1223.60379610028,"y":525},{"x":1223.60379610028,"y":565},{"x":1146.7105567316496,"y":565}],"width":76.89323936863047,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1173.3772233983161,"y":485},{"x":1223.60379610028,"y":485},{"x":1223.60379610028,"y":525},{"x":1160.0438900649829,"y":525}],"width":63.55990603529722,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1223.60379610028,"y":485},{"x":1305.60379610028,"y":485},{"x":1305.60379610028,"y":525},{"x":1223.60379610028,"y":525}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1305.60379610028,"y":485},{"x":1387.60379610028,"y":485},{"x":1387.60379610028,"y":525},{"x":1305.60379610028,"y":525}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1387.60379610028,"y":485},{"x":1469.60379610028,"y":485},{"x":1469.60379610028,"y":525},{"x":1387.60379610028,"y":525}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1469.60379610028,"y":485},{"x":1551.60379610028,"y":485},{"x":1551.60379610028,"y":525},{"x":1469.60379610028,"y":525}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1551.60379610028,"y":485},{"x":1633.60379610028,"y":485},{"x":1633.60379610028,"y":525},{"x":1551.60379610028,"y":525}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1633.60379610028,"y":485},{"x":1690,"y":485},{"x":1690,"y":525},{"x":1633.60379610028,"y":525}],"width":56.39620389971992,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1633.60379610028,"y":525},{"x":1690,"y":525},{"x":1690,"y":565},{"x":1633.60379610028,"y":565}],"width":56.39620389971992,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1141.60379610028,"y":580.3202818941085},{"x":1146.7105567316496,"y":565},{"x":1223.60379610028,"y":565},{"x":1223.60379610028,"y":605},{"x":1141.60379610028,"y":605},{"x":1141.60379610028,"y":580.3202818941083}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1141.60379610028,"y":605},{"x":1223.60379610028,"y":605},{"x":1223.60379610028,"y":645},{"x":1141.60379610028,"y":645}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1551.60379610028,"y":605},{"x":1585,"y":605},{"x":1585,"y":645},{"x":1551.60379610028,"y":645}],"width":33.39620389971992,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1551.60379610028,"y":565},{"x":1633.60379610028,"y":565},{"x":1633.60379610028,"y":585},{"x":1585,"y":585},{"x":1585,"y":605},{"x":1551.60379610028,"y":605}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1715,"y":585},{"x":1633.60379610028,"y":585},{"x":1633.60379610028,"y":565},{"x":1690,"y":565}],"width":81.39620389971992,"height":20,"isDummy":true,"isVent":false},{"vertices":[{"x":1551.60379610028,"y":645},{"x":1585,"y":645},{"x":1585,"y":685},{"x":1551.60379610028,"y":685}],"width":33.39620389971992,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1141.60379610028,"y":645},{"x":1223.60379610028,"y":645},{"x":1223.60379610028,"y":685},{"x":1141.60379610028,"y":685}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1141.60379610028,"y":685},{"x":1223.60379610028,"y":685},{"x":1223.60379610028,"y":725},{"x":1141.60379610028,"y":725}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1106.7105567316496,"y":685},{"x":1141.60379610028,"y":685},{"x":1141.60379610028,"y":725},{"x":1093.3772233983163,"y":725}],"width":48.22657270196373,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1093.3772233983163,"y":725},{"x":1141.60379610028,"y":725},{"x":1141.60379610028,"y":765},{"x":1080.0438900649829,"y":765}],"width":61.55990603529722,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1223.60379610028,"y":725},{"x":1305.60379610028,"y":725},{"x":1305.60379610028,"y":745},{"x":1295,"y":745},{"x":1295,"y":765},{"x":1223.60379610028,"y":765}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1305.60379610028,"y":745},{"x":1305.60379610028,"y":725},{"x":1387.60379610028,"y":725},{"x":1387.60379610028,"y":745}],"width":82,"height":20,"isDummy":true,"isVent":false},{"vertices":[{"x":1387.60379610028,"y":745},{"x":1387.60379610028,"y":725},{"x":1469.60379610028,"y":725},{"x":1469.60379610028,"y":745}],"width":82,"height":20,"isDummy":true,"isVent":false},{"vertices":[{"x":1485,"y":745},{"x":1469.60379610028,"y":745},{"x":1469.60379610028,"y":725},{"x":1551.60379610028,"y":725},{"x":1551.60379610028,"y":765},{"x":1485,"y":765}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1633.60379610028,"y":725},{"x":1690,"y":725},{"x":1690,"y":765},{"x":1633.60379610028,"y":765}],"width":56.39620389971992,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1715,"y":695},{"x":1690,"y":725},{"x":1633.60379610028,"y":725},{"x":1633.60379610028,"y":695}],"width":81.39620389971992,"height":30,"isDummy":true,"isVent":false},{"vertices":[{"x":1551.60379610028,"y":685},{"x":1585,"y":685},{"x":1585,"y":695},{"x":1633.60379610028,"y":695},{"x":1633.60379610028,"y":725},{"x":1551.60379610028,"y":725}],"width":82,"height":40,"isDummy":true,"isVent":false},{"vertices":[{"x":1690,"y":790},{"x":1633.60379610028,"y":790},{"x":1633.60379610028,"y":765},{"x":1690,"y":765}],"width":56.39620389971992,"height":25,"isDummy":true,"isVent":false},{"vertices":[{"x":1551.60379610028,"y":790},{"x":1551.60379610028,"y":765},{"x":1633.60379610028,"y":765},{"x":1633.60379610028,"y":790}],"width":82,"height":25,"isDummy":true,"isVent":false},{"vertices":[{"x":1485,"y":765},{"x":1551.60379610028,"y":765},{"x":1551.60379610028,"y":790},{"x":1485,"y":790}],"width":66.60379610028008,"height":25,"isDummy":true,"isVent":false},{"vertices":[{"x":1223.60379610028,"y":790},{"x":1223.60379610028,"y":765},{"x":1295,"y":765},{"x":1295,"y":789.9999999999999}],"width":71.39620389971992,"height":25,"isDummy":true,"isVent":false},{"vertices":[{"x":1141.60379610028,"y":790},{"x":1141.60379610028,"y":765},{"x":1223.60379610028,"y":765},{"x":1223.60379610028,"y":790}],"width":82,"height":25,"isDummy":true,"isVent":false},{"vertices":[{"x":1071.7105567316496,"y":790},{"x":1080.0438900649829,"y":765},{"x":1141.60379610028,"y":765},{"x":1141.60379610028,"y":790}],"width":69.89323936863047,"height":25,"isDummy":true,"isVent":false}],"X-Roof":[{"vertices":[{"x":1223.60379610028,"y":525},{"x":1305.60379610028,"y":525},{"x":1305.60379610028,"y":565},{"x":1223.60379610028,"y":565}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1551.60379610028,"y":525},{"x":1633.60379610028,"y":525},{"x":1633.60379610028,"y":565},{"x":1551.60379610028,"y":565}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1469.60379610028,"y":525},{"x":1551.60379610028,"y":525},{"x":1551.60379610028,"y":565},{"x":1469.60379610028,"y":565}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1387.60379610028,"y":525},{"x":1469.60379610028,"y":525},{"x":1469.60379610028,"y":565},{"x":1387.60379610028,"y":565}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1305.60379610028,"y":525},{"x":1387.60379610028,"y":525},{"x":1387.60379610028,"y":565},{"x":1305.60379610028,"y":565}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1305.60379610028,"y":565},{"x":1387.60379610028,"y":565},{"x":1387.60379610028,"y":605},{"x":1305.60379610028,"y":605}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1223.60379610028,"y":565},{"x":1305.60379610028,"y":565},{"x":1305.60379610028,"y":605},{"x":1223.60379610028,"y":605}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1223.60379610028,"y":605},{"x":1305.60379610028,"y":605},{"x":1305.60379610028,"y":645},{"x":1223.60379610028,"y":645}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1305.60379610028,"y":605},{"x":1387.60379610028,"y":605},{"x":1387.60379610028,"y":645},{"x":1305.60379610028,"y":645}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1387.60379610028,"y":605},{"x":1469.60379610028,"y":605},{"x":1469.60379610028,"y":645},{"x":1387.60379610028,"y":645}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1469.60379610028,"y":605},{"x":1551.60379610028,"y":605},{"x":1551.60379610028,"y":645},{"x":1469.60379610028,"y":645}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1469.60379610028,"y":565},{"x":1551.60379610028,"y":565},{"x":1551.60379610028,"y":605},{"x":1469.60379610028,"y":605}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1387.60379610028,"y":565},{"x":1469.60379610028,"y":565},{"x":1469.60379610028,"y":605},{"x":1387.60379610028,"y":605}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1469.60379610028,"y":645},{"x":1551.60379610028,"y":645},{"x":1551.60379610028,"y":685},{"x":1469.60379610028,"y":685}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1387.60379610028,"y":645},{"x":1469.60379610028,"y":645},{"x":1469.60379610028,"y":685},{"x":1387.60379610028,"y":685}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1305.60379610028,"y":645},{"x":1387.60379610028,"y":645},{"x":1387.60379610028,"y":685},{"x":1305.60379610028,"y":685}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1223.60379610028,"y":645},{"x":1305.60379610028,"y":645},{"x":1305.60379610028,"y":685},{"x":1223.60379610028,"y":685}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1141.60379610028,"y":725},{"x":1223.60379610028,"y":725},{"x":1223.60379610028,"y":765},{"x":1141.60379610028,"y":765}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1551.60379610028,"y":725},{"x":1633.60379610028,"y":725},{"x":1633.60379610028,"y":765},{"x":1551.60379610028,"y":765}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1469.60379610028,"y":685},{"x":1551.60379610028,"y":685},{"x":1551.60379610028,"y":725},{"x":1469.60379610028,"y":725}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1387.60379610028,"y":685},{"x":1469.60379610028,"y":685},{"x":1469.60379610028,"y":725},{"x":1387.60379610028,"y":725}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1305.60379610028,"y":685},{"x":1387.60379610028,"y":685},{"x":1387.60379610028,"y":725},{"x":1305.60379610028,"y":725}],"width":82,"height":40,"isDummy":false,"isVent":false},{"vertices":[{"x":1223.60379610028,"y":685},{"x":1305.60379610028,"y":685},{"x":1305.60379610028,"y":725},{"x":1223.60379610028,"y":725}],"width":82,"height":40,"isDummy":false,"isVent":false}],"Ventilatiekap":[]},"width":4193.302494707577,"height":2040,"tile_width":1886,"tile_height":920,"dummy_width":2307.3024947075787,"dummy_height":1120},"useRowOffset":false,"tileType":"Zwart","dakvoetprofielen":"0","vogelschroten":"0","offsetX":"20","offsetY":"20","debugBoundingBox":false,"debugRaycast":false,"debugInset":true,"debugOutset":true,"debugTiles":true,"debugParallel":false,"showStartPoint":true});
+            
+            // toggleGeneratorTool();
         }
     </script>
 

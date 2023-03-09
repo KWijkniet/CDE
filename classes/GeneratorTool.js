@@ -818,18 +818,23 @@ export default class GeneratorTool {
                 resolve([tile, extra]);
             }, delay);
         });
+        
+        // Calculate if tile is above
+        if(self.offsetY <= 20){
+            hasTilesAbove = false;
+        } else {
+            hasTilesAbove = true;
+        }
 
         var tmpTiles = [];
         var loop = async (x, y, w, h) => {
             var yIndex = Math.round((y - (topleft.y + self.offsetY)) / (tileSize.y - overlap));
             var xIndex = Math.round((x - (topleft.x + self.offsetX)) / tileSize.x);
-            
             var tempX = x + (this.rowOffsetMode && Math.abs(yIndex % 2) == 1 ? tileSize.x / 2 : 0);
             var tempY = h - overlap;
             if(yIndex == 0 && !hasTilesAbove){
                 tempY += overlap;
             }
-
             var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + tempY), new Vector2(tempX, y + tempY)];
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
                 await syncedPlaceTile(tempX, y, predictedPoints, y < topleft.y + self.offsetY || x < topleft.x + self.offsetX).then(tiles => {
@@ -846,7 +851,7 @@ export default class GeneratorTool {
                     }
                 });
             }
-            await self.#sleep(100);
+            await self.#sleep(10);
 
             // if(tmpTiles[x + "_" + y] && (tmpTiles[x + "_" + y][0] != null || tmpTiles[x + "_" + y][1] != null)){
                 //Neighbour right

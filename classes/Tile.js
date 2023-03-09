@@ -6,14 +6,14 @@ export default class Tile {
     height = 0;
     pos = null;
     isDummy = false;
-    isVent = false;
+    isVent = 'normal';
     
     #buffer = null;
     #vertices = [];
     #color = null;
     #isValid = false;
 
-    constructor(vertices = [], buffer = null, isDummy = false, isVent = false) {
+    constructor(vertices = [], buffer = null, isDummy = false, isVent = 'normal') {
         this.#buffer = buffer;
         this.#vertices = vertices;
         this.width = 0;
@@ -74,12 +74,15 @@ export default class Tile {
         this.#buffer.vertex(this.#vertices[0].x, this.#vertices[0].y);
 
         this.#buffer.push();
-        var rgba = this.#color.rgba();
+        if (this.isVent == 'dummy') {
+            var color = Settings.type == "Zwart" ? Settings.dummyZwartBackground : Settings.dummyTerracottaBackground;
+            var rgba = color.rgba();
+        }else var rgba = this.#color.rgba();
         this.#buffer.fill(rgba.r, rgba.g, rgba.b, rgba.a);
         this.#buffer.endShape();
         this.#buffer.pop();
 
-        if (this.isVent) {
+        if (this.isVent == 'vent') {
             const xArr = this.#vertices.map(a => a.x);
             const yArr = this.#vertices.map(a => a.y);
             var pos = new Vector2(Math.min(...xArr) + (this.height / 2) - 10, Math.min(...yArr) + (this.height / 2) + 8);
@@ -90,6 +93,8 @@ export default class Tile {
             this.#buffer.text("Vent", pos.x, pos.y);
             this.#buffer.pop();
         }
+
+        
     }
 
     getBoundingBox() {
@@ -114,8 +119,12 @@ export default class Tile {
         // if(w == 82 && h == 60){
             
         // }
+        if(this.isVent == 'normal') this.isVent = 'vent';
+        else if(this.isVent == 'vent') this.isVent = 'dummy';
+        else if(this.isVent == 'dummy') this.isVent = 'normal';
 
-        this.isVent = !this.isVent;
+        console.log('isVent',this.isVent);
+        // this.isVent = !this.isVent;
     }
 
     clone() {

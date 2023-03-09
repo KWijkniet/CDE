@@ -18,13 +18,13 @@ export default class GeneratorTool {
     offsetX = 0;
     offsetY = 0;
 
+    debugStartingPoint = true;
     debugBoundingBox = true;
-    debugRaycast = false;
     debugInset = true;
     debugOutset = true;
+    debugRaycast = false;
     debugTiles = false;
     debugParallel = false;
-    debugStartingPoint = true;
 
     #buffer = null;
     #renderer = null;
@@ -443,12 +443,13 @@ export default class GeneratorTool {
     async #generateTiles(shape, inset, overhang, outsets) {
         var self = this;
         var tileSize = new Vector2(820 / 10, (600 / 10));
-        var overlap = 100;
+        var overlap = 100 / 10;
         var shapePoints = shape.getVertices();
         var insetPoints = inset.getVertices();
         var overhangPoints = overhang.getVertices();
         var boundingBox = overhang.getBoundingBox();
         var count = 0;
+        var hasTilesAbove = false;
 
         this.#tiles = [];
         this.#totalWidth = 0;
@@ -820,16 +821,27 @@ export default class GeneratorTool {
 
         var tmpTiles = [];
         var loop = async (x, y, w, h) => {
-            var yIndex = Math.round((y - topleft.y) / (tileSize.y - overlap));
+            var yIndex = Math.round((y - (topleft.y + self.offsetY)) / (tileSize.y - overlap));
+            var xIndex = Math.round((x - (topleft.x + self.offsetX)) / tileSize.x);
+            
             var tempX = x + (this.rowOffsetMode && Math.abs(yIndex % 2) == 1 ? tileSize.x / 2 : 0);
-            var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + h), new Vector2(tempX, y + h)];
+            var tempY = h - overlap;
+            if(yIndex == 0 && !hasTilesAbove){
+                tempY += overlap;
+            }
+
+            var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + tempY), new Vector2(tempX, y + tempY)];
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
-                await syncedPlaceTile(tempX, y, predictedPoints, y < topleft.y + self.offsetY).then(tiles => {
-                    tmpTiles[x + "_" + y] = tiles;
+                await syncedPlaceTile(tempX, y, predictedPoints, y < topleft.y + self.offsetY || x < topleft.x + self.offsetX).then(tiles => {
+                    tmpTiles[xIndex + ", " + yIndex] = tiles;
                     for (let r = 0; r < tiles.length; r++) {
                         const tile = tiles[r];
                         if(tile != null){
+                            if(yIndex != 0 && this.#tiles.length <= 0){
+                                hasTilesAbove = true;
+                            }
                             this.#tiles.push(tile);
+                            // self.#buffer.text(tempY, tile.getVertices()[0].x + 5, tile.getVertices()[0].y + 25);
                         }
                     }
                 });
@@ -838,7 +850,7 @@ export default class GeneratorTool {
 
             // if(tmpTiles[x + "_" + y] && (tmpTiles[x + "_" + y][0] != null || tmpTiles[x + "_" + y][1] != null)){
                 //Neighbour right
-                if(typeof tmpTiles[(x + w) + "_" + y] === "undefined"){
+                if(typeof tmpTiles[(xIndex + 1) + ", " + yIndex] === "undefined"){
                     var predictedRight = Vector2.copyAll(predictedPoints);
                     for (let x = 0; x < predictedRight.length; x++) {
                         predictedRight[x].x += w;
@@ -849,7 +861,7 @@ export default class GeneratorTool {
                     }
                 }
                 //Neighbour left
-                if(typeof tmpTiles[(x - w) + "_" + y] === "undefined"){
+                if(typeof tmpTiles[(xIndex - 1) + ", " + yIndex] === "undefined"){
                     var predictedLeft = Vector2.copyAll(predictedPoints);
                     for (let x = 0; x < predictedLeft.length; x++) {
                         predictedLeft[x].x -= w;
@@ -860,25 +872,25 @@ export default class GeneratorTool {
                     }
                 }
                 //Neighbour up
-                if(typeof tmpTiles[x + "_" + (y - h)] === "undefined"){
+                if(typeof tmpTiles[xIndex + ", " + (yIndex - 1)] === "undefined"){
                     var predictedUp = Vector2.copyAll(predictedPoints);
                     for (let x = 0; x < predictedUp.length; x++) {
-                        predictedUp[x].y -= h;
+                        predictedUp[x].y -= tempY;
                     }
 
                     if(Collision.polygonPolygon(insetPoints, predictedUp)){
-                        await loop(x, y - h, w, h);
+                        await loop(x, y - tempY, w, h);
                     }
                 }
                 //Neighbour down
-                if(typeof tmpTiles[x + "_" + (y + h)] === "undefined"){
+                if(typeof tmpTiles[xIndex + ", " + (yIndex + 1)] === "undefined"){
                     var predictedDown = Vector2.copyAll(predictedPoints);
                     for (let x = 0; x < predictedDown.length; x++) {
-                        predictedDown[x].y += h;
+                        predictedDown[x].y += tempY;
                     }
 
                     if(Collision.polygonPolygon(insetPoints, predictedDown)){
-                        await loop(x, y + h, w, h);
+                        await loop(x, y + tempY, w, h);
                     }
                 }
             // }
@@ -903,7 +915,7 @@ export default class GeneratorTool {
         }
 
         //center
-        await loop(topleft.x + self.offsetX, topleft.y + self.offsetY, tileSize.x, tileSize.y - overlap);
+        await loop(topleft.x + self.offsetX, topleft.y + self.offsetY - tileSize.y + overlap, tileSize.x, tileSize.y);
         
         if(this.debugStartingPoint){
             this.#buffer.fill(255, 0, 0);

@@ -19,9 +19,9 @@ export default class GeneratorTool {
     offsetY = 0;
 
     debugStartingPoint = true;
-    debugBoundingBox = true;
     debugInset = true;
     debugOutset = true;
+    debugBoundingBox = false;
     debugRaycast = false;
     debugTiles = false;
     debugParallel = false;
@@ -911,6 +911,7 @@ export default class GeneratorTool {
 
         var tmpTiles = [];
         var loop = async (x, y, w, h) => {
+            self.#buffer.stroke(0);
             var yIndex = Math.round((y - (topleft.y + self.offsetY)) / (tileSize.y - overlap));
             var xIndex = Math.round((x - (topleft.x + self.offsetX)) / tileSize.x);
             var tempX = x + (this.rowOffsetMode && Math.abs(yIndex % 2) == 1 ? tileSize.x / 2 : 0);
@@ -1030,6 +1031,7 @@ export default class GeneratorTool {
         var keys = [];
         var end = from.getCopy().remove(new Vector2(dir.x, dir.y).multiply(new Vector2(dist, dist)));
         if(this.debugRaycast){
+            this.#buffer.fill(0);
             this.#buffer.line(from.x, from.y, end.x, end.y);
         }
 
@@ -1144,6 +1146,9 @@ export default class GeneratorTool {
 
         if (json.tile_width) { this.#tileWidth = json.tile_width; }
         if (json.tile_height) { this.#tileHeight = json.tile_height; }
+
+        if (json.offsetX) { this.offsetX = json.offsetX; }
+        if (json.offsetY) { this.offsetY = json.offsetY; }
     }
 
     IsInside(vertices, x, y, includeLines = true) {

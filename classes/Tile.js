@@ -123,7 +123,7 @@ export default class Tile {
         else if(this.isVent == 'vent') this.isVent = 'dummy';
         else if(this.isVent == 'dummy') this.isVent = 'normal';
 
-        console.log('isVent',this.isVent);
+        // console.log('isVent',this.isVent);
         // this.isVent = !this.isVent;
     }
 

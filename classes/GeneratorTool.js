@@ -1061,6 +1061,9 @@ export default class GeneratorTool {
 
         if (json.tile_width) { this.#tileWidth = json.tile_width; }
         if (json.tile_height) { this.#tileHeight = json.tile_height; }
+
+        if (json.offsetX) { this.offsetX = json.offsetX; }
+        if (json.offsetY) { this.offsetY = json.offsetY; }
     }
 
     IsInside(vertices, x, y, includeLines = true) {

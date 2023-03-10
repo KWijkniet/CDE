@@ -481,7 +481,7 @@ export default class GeneratorTool {
                     const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
                     
                     if(!self.IsInside(insetPoints, vc.x, vc.y)) {isDummy = true; outsideShapeCount++;} else inShapeCount++;
-                    if(!self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) inForbiddenCount++;
+                    if(self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) {inForbiddenCount++; isDummy = true;}
                     
                     if(!self.IsInsideForbiddenShapes(outsets, vc.x, vc.y) && self.IsInside(overhangPoints, vc.x, vc.y)){
                         var dirP = vp.getCopy().remove(vc).normalized();
@@ -502,8 +502,8 @@ export default class GeneratorTool {
                         var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
 
                         if(raycastP != null){
-                            if(Vector2.distance(raycastP, vp) > 0 || (!self.IsInsideForbiddenShapes(outsets, vp.x, vp.y, false) && Vector2.distance(raycastP, vp) <= 0)){
-                                isDummy = true;
+                            if(Vector2.distance(raycastP, vp) > 0 || (!self.IsInsideForbiddenShapes(outsets, vp.x, vp.y, false) && Vector2.distance(raycastP, vp) <= 0)) {
+                                // isDummy = true;
                                 results.push(raycastP);
                                 collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(overhangPoints, vp.x, vp.y) });
                             }
@@ -512,8 +512,8 @@ export default class GeneratorTool {
                         results.push(vc);
 
                         if (raycastN != null) {
-                            if(Vector2.distance(raycastN, vn) > 0 ||  (!self.IsInsideForbiddenShapes(outsets, vn.x, vn.y, false) && Vector2.distance(raycastN, vn) <= 0)){
-                                isDummy = true;
+                            if(Vector2.distance(raycastN, vn) > 0 ||  (!self.IsInsideForbiddenShapes(outsets, vn.x, vn.y, false) && Vector2.distance(raycastN, vn) <= 0)) {
+                                // isDummy = true;
                                 results.push(raycastN);
                                 collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(overhangPoints, vn.x, vn.y) });
                             }
@@ -919,12 +919,10 @@ export default class GeneratorTool {
             if(yIndex == 0 && !hasTilesAbove){
                 tempY += overlap;
             }
-
             var predictedPoints = [new Vector2(tempX, y), new Vector2(tempX + w, y), new Vector2(tempX + w, y + tempY), new Vector2(tempX, y + tempY)];
-
             if(Collision.polygonPolygon(insetPoints, predictedPoints)){
                 await syncedPlaceTile(tempX, y, predictedPoints, y < topleft.y + self.offsetY || x < topleft.x + self.offsetX).then(tiles => {
-                    tmpTiles[x + "_" + y] = tiles;
+                    tmpTiles[xIndex + ", " + yIndex] = tiles;
                     for (let r = 0; r < tiles.length; r++) {
                         const tile = tiles[r];
                         if(tile != null){

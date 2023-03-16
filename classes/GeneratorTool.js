@@ -136,6 +136,14 @@ export default class GeneratorTool {
             }
         }
 
+        this.#tiles = [];
+        this.#totalWidth = 0;
+        this.#totalHeight = 0;
+        this.#dummyWidth = 0;
+        this.#dummyHeight = 0;
+        this.#tileWidth = 0;
+        this.#tileHeight = 0;
+
         for (let i = 0; i < insets.length; i++) {
             const inset = insets[i];
             this.#generateTiles(shapes[i], inset, overhangs[i], outsets);
@@ -450,14 +458,7 @@ export default class GeneratorTool {
         var boundingBox = overhang.getBoundingBox();
         var count = 0;
         var hasTilesAbove = false;
-
-        this.#tiles = [];
-        this.#totalWidth = 0;
-        this.#totalHeight = 0;
-        this.#dummyWidth = 0;
-        this.#dummyHeight = 0;
-        this.#tileWidth = 0;
-        this.#tileHeight = 0;
+        var tmpResults = [];
 
         var syncedPlaceTile = async (x, y, predictionPoints, isDummy = false) => new Promise((resolve) => {
             var delay = 1;
@@ -524,7 +525,6 @@ export default class GeneratorTool {
                         isDummy = true;
                     }
                 }
-                
 
                 var pointsNeedToBeAdded = [];
                 for (let r = 0; r < overhangPoints.length; r++) {
@@ -1084,10 +1084,10 @@ export default class GeneratorTool {
                     for (let r = 0; r < tiles.length; r++) {
                         const tile = tiles[r];
                         if(tile != null){
-                            if(yIndex != 0 && this.#tiles.length <= 0){
+                            if(yIndex != 0 && tmpResults.length <= 0){
                                 hasTilesAbove = true;
                             }
-                            this.#tiles.push(tile);
+                            tmpResults.push(tile);
                             // self.#buffer.text(tempY, tile.getVertices()[0].x + 5, tile.getVertices()[0].y + 25);
                         }
                     }
@@ -1124,7 +1124,7 @@ export default class GeneratorTool {
                     for (let x = 0; x < predictedUp.length; x++) {
                         predictedUp[x].y -= tempY;
                     }
-
+                    
                     if(Collision.polygonPolygon(insetPoints, predictedUp)){
                         await loop(x, y - tempY, w, h);
                     }
@@ -1168,6 +1168,8 @@ export default class GeneratorTool {
             this.#buffer.fill(255, 0, 0);
             this.#buffer.circle(topleft.x + self.offsetX, topleft.y + self.offsetY, 10);
         }
+
+        this.#tiles = this.#tiles.concat(tmpResults);
     }
 
     #createTile(vertices, isDummy) {

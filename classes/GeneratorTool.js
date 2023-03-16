@@ -479,9 +479,10 @@ export default class GeneratorTool {
                     const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
                     const vc = predictionPoints[i];
                     const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
-                    
-                    if(!self.IsInside(insetPoints, vc.x, vc.y)) {isDummy = true; outsideShapeCount++;} else inShapeCount++;
-                    if(self.IsInsideForbiddenShapes(outsets, vc.x, vc.y)) {inForbiddenCount++; isDummy = true;}
+
+                    if(!self.IsInside(insetPoints, vc.x, vc.y)) {isDummy = true; }
+                    if(!self.IsInside(overhangPoints, vc.x, vc.y)) {isDummy = true; outsideShapeCount++;} else inShapeCount++;
+                    if(self.IsInsideForbiddenShapes(outsets, vc.x, vc.y )) {inForbiddenCount++;}
                     
                     if(!self.IsInsideForbiddenShapes(outsets, vc.x, vc.y) && self.IsInside(overhangPoints, vc.x, vc.y)){
                         var dirP = vp.getCopy().remove(vc).normalized();
@@ -503,7 +504,7 @@ export default class GeneratorTool {
 
                         if(raycastP != null){
                             if(Vector2.distance(raycastP, vp) > 0 || (!self.IsInsideForbiddenShapes(outsets, vp.x, vp.y, false) && Vector2.distance(raycastP, vp) <= 0)) {
-                                // isDummy = true;
+                                isDummy = true;
                                 results.push(raycastP);
                                 collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(overhangPoints, vp.x, vp.y) });
                             }
@@ -513,7 +514,7 @@ export default class GeneratorTool {
 
                         if (raycastN != null) {
                             if(Vector2.distance(raycastN, vn) > 0 ||  (!self.IsInsideForbiddenShapes(outsets, vn.x, vn.y, false) && Vector2.distance(raycastN, vn) <= 0)) {
-                                // isDummy = true;
+                                isDummy = true;
                                 results.push(raycastN);
                                 collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(overhangPoints, vn.x, vn.y) });
                             }
@@ -523,6 +524,7 @@ export default class GeneratorTool {
                         isDummy = true;
                     }
                 }
+                
 
                 var pointsNeedToBeAdded = [];
                 for (let r = 0; r < overhangPoints.length; r++) {
@@ -537,21 +539,231 @@ export default class GeneratorTool {
                         pointsNeedToBeAdded.push(overhangPoint);
                     }
                 }
+
+                var multipleOutsetsUsed = false;
+                var _outsets = [];
                 for (let x = 0; x < outsets.length; x++) {
                     const outsetPoints = outsets[x].getVertices();
 
                     for (let r = 0; r < outsetPoints.length; r++) {
                         const outsetPoint = outsetPoints[r];
-                        if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
+                        if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, true)) {
                             pointsNeedToBeAdded.push(outsetPoint);
-                            
+                            _outsets.push(x);
                         }
                     }
+                }
+                if(_outsets.length > 1) multipleOutsetsUsed = true;
+
+                var pointsAddedThroughException = false;
+                if(inForbiddenCount == 2 && outsideShapeCount == 2){
+                    console.log(count,'inForbiddenCount == 2 && outsideShapeCount == 2', inForbiddenCount == 2 , outsideShapeCount == 2);
+                    for (let i = 0; i < predictionPoints.length; i++) {
+                        const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
+                        const vc = predictionPoints[i];
+                        const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
+
+                        var dirP = vp.getCopy().remove(vc).normalized();
+                        var dirN = vn.getCopy().remove(vc).normalized();
+
+                        var distP = Vector2.distance(vc, vp);
+                        var raycastP = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
+                        var distN = Vector2.distance(vc, vn);
+                        var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
+
+                        if(raycastP != null){
+                            if(Vector2.distance(raycastP, vp) > 0){ 
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastP.x, raycastP.y)){
+                                    var response = self.checkAndPush(results, raycastP, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+
+                        if(self.IsInside(overhangPoints, vc.x, vc.y) && !self.IsInsideForbiddenShapes(outsets, vc.x, vc.y, false) && pointsNeedToBeAdded.length == 0){
+                            var response = self.checkAndPush(results, vc, 0, false);
+                            if (response != 'found') pointsAddedThroughException = true;
+                        }
+
+                        if (raycastN != null) {
+                            if(Vector2.distance(raycastN, vn) > 0){
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastN.x, raycastN.y)){
+                                    var response = self.checkAndPush(results, raycastN, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+                    }
+                } else if(inForbiddenCount == 1 && outsideShapeCount == 1){
+                    console.log(count,'inForbiddenCount == 1 && outsideShapeCount == 1');
+                    for (let i = 0; i < predictionPoints.length; i++) {
+                        const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
+                        const vc = predictionPoints[i];
+                        const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
+
+                        var dirP = vp.getCopy().remove(vc).normalized();
+                        var dirN = vn.getCopy().remove(vc).normalized();
+
+                        var distP = Vector2.distance(vc, vp);
+                        var raycastP = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
+                        var distN = Vector2.distance(vc, vn);
+                        var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
+
+                        if(raycastP != null){
+                            if(Vector2.distance(raycastP, vp) > 0){ 
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastP.x, raycastP.y)){
+                                    var response = self.checkAndPush(results, raycastP, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+
+                        if(self.IsInside(overhangPoints, vc.x, vc.y) && !self.IsInsideForbiddenShapes(outsets, vc.x, vc.y, false)){
+                            var response = self.checkAndPush(results, vc, 0, false);
+                            if (response != 'found') pointsAddedThroughException = true;
+                        }
+
+                        if (raycastN != null) {
+                            if(Vector2.distance(raycastN, vn) > 0){
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastN.x, raycastN.y)){
+                                    var response = self.checkAndPush(results, raycastN, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+                    }
+                } else if(inForbiddenCount >= 1 && outsideShapeCount >= 2){
+                    console.log(count,'inForbiddenCount >= 1 && outsideShapeCount >= 2');
+                    for (let i = 0; i < predictionPoints.length; i++) {
+                        const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
+                        const vc = predictionPoints[i];
+                        const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
+
+                        var dirP = vp.getCopy().remove(vc).normalized();
+                        var dirN = vn.getCopy().remove(vc).normalized();
+
+                        var distP = Vector2.distance(vc, vp);
+                        var raycastP = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
+                        var distN = Vector2.distance(vc, vn);
+                        var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
+
+                        if(raycastP != null){
+                            if(Vector2.distance(raycastP, vp) > 0){ 
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastP.x, raycastP.y)){
+                                    var response = self.checkAndPush(results, raycastP, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+
+                        if(self.IsInside(overhangPoints, vc.x, vc.y) && !self.IsInsideForbiddenShapes(outsets, vc.x, vc.y, false)){
+                            var response = self.checkAndPush(results, vc, 0, false);
+                            if (response != 'found') pointsAddedThroughException = true;
+                        }
+
+                        if (raycastN != null) {
+                            if(Vector2.distance(raycastN, vn) > 0){
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastN.x, raycastN.y)){
+                                    var response = self.checkAndPush(results, raycastN, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+                    }
+                } else if(inForbiddenCount >= 2 && outsideShapeCount >= 1){
+                    console.log(count,'inForbiddenCount >= 2 && outsideShapeCount >= 1');
+                    for (let i = 0; i < predictionPoints.length; i++) {
+                        const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
+                        const vc = predictionPoints[i];
+                        const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
+
+                        var dirP = vp.getCopy().remove(vc).normalized();
+                        var dirN = vn.getCopy().remove(vc).normalized();
+
+                        var distP = Vector2.distance(vc, vp);
+                        var raycastP = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
+                        var distN = Vector2.distance(vc, vn);
+                        var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
+
+                        if(raycastP != null){
+                            if(Vector2.distance(raycastP, vp) > 0){ 
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastP.x, raycastP.y)){
+                                    var response = self.checkAndPush(results, raycastP, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+
+                        // if(self.IsInside(overhangPoints, vc.x, vc.y) && !self.IsInsideForbiddenShapes(outsets, vc.x, vc.y, false)){
+                        //     var response = self.checkAndPush(results, vc, 0, false);
+                        //     if (response != 'found') pointsAddedThroughException = true;
+                        // }
+
+                        if (raycastN != null) {
+                            if(Vector2.distance(raycastN, vn) > 0){
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastN.x, raycastN.y)){
+                                    var response = self.checkAndPush(results, raycastN, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+                    }
+                } else if(inForbiddenCount == 1 && outsideShapeCount == 0){
+                    console.log(count,'inForbiddenCount >= 1 && outsideShapeCount == 0');
+                    for (let i = 0; i < predictionPoints.length; i++) {
+                        const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
+                        const vc = predictionPoints[i];
+                        const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
+
+                        var dirP = vp.getCopy().remove(vc).normalized();
+                        var dirN = vn.getCopy().remove(vc).normalized();
+
+                        var distP = Vector2.distance(vc, vp);
+                        var raycastP = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
+                        var distN = Vector2.distance(vc, vn);
+                        var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
+
+                        if(raycastP != null){
+                            if(Vector2.distance(raycastP, vp) > 0){ 
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastP.x, raycastP.y)){
+                                    var response = self.checkAndPush(results, raycastP, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+
+                        // if(self.IsInside(overhangPoints, vc.x, vc.y) && !self.IsInsideForbiddenShapes(outsets, vc.x, vc.y, false)){
+                        //     var response = self.checkAndPush(results, vc, 0, false);
+                        //     if (response != 'found') pointsAddedThroughException = true;
+                        // }
+
+                        if (raycastN != null) {
+                            if(Vector2.distance(raycastN, vn) > 0){
+                                isDummy = true;
+                                if(self.IsInside(overhangPoints, raycastN.x, raycastN.y)){
+                                    var response = self.checkAndPush(results, raycastN, 0, false);
+                                    if (response != 'found') pointsAddedThroughException = true;
+                                }
+                            }
+                        }
+                    }
+                } 
+                if(pointsAddedThroughException){
+                    this.#reorderClockwise(results);
                 }
 
                 var extraTile = null;
                 //split tile
-                if(collisions.length >= 4){
+                if(collisions.length >= 4){                
                     if(pointsNeedToBeAdded.length == 1) {
                         var index;
                         for (let j = 0; j < collisions.length; j++) {
@@ -564,6 +776,7 @@ export default class GeneratorTool {
                             if (self.IsInside(predictionPoints, insetPoint.x, insetPoint.y, false)) {
                                 if (self.IsInside(results, insetPoint.x, insetPoint.y, false)) {
                                     results.splice(index, 0, insetPoint);
+                                    isDummy = true;
                                 } else {
                                     const vp = results[index - 1];
                                     const vc = insetPoint;
@@ -577,6 +790,7 @@ export default class GeneratorTool {
                                     var toNext = self.#raycast([shape], vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), false);
                                     results.splice(index, 0, toPrev);
                                     results.splice(index+1, 0, toNext);
+                                    isDummy = true;
                                 }
                             }
                         }
@@ -587,6 +801,7 @@ export default class GeneratorTool {
                                 if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
                                     if (self.IsInside(results, outsetPoint.x, outsetPoint.y, false)) {
                                         results.splice(index, 0, outsetPoint);
+                                        isDummy = true;
                                     } else {
                                         const vp = results[index - 1];
                                         const vc = outsetPoint;
@@ -600,6 +815,7 @@ export default class GeneratorTool {
                                         var toNext = self.#raycast([shape], vc, new Vector2(-dirN.x, -dirN.y), Vector2.distance(vn, vc), false);
                                         results.splice(index, 0, toPrev);
                                         results.splice(index+1, 0, toNext);
+                                        isDummy = true;
                                     }
                                 }
                             }
@@ -678,13 +894,17 @@ export default class GeneratorTool {
                         }
 
                         results = newResults;
-                        var tile01 = results.slice(collisions[0]['index'], collisions[2]['index']);
-                        var tile02 = results.slice(collisions[2]['index'], results.length).concat(results.slice(0, collisions[0]['index']));
-    
-                        extraTile = Vector2.copyAll(tile01);
-                        results = Vector2.copyAll(tile02);
+                        if(!multipleOutsetsUsed){
+                            isDummy = true;
+                            var tile01 = results.slice(collisions[0]['index'], collisions[2]['index']);
+                            var tile02 = results.slice(collisions[2]['index'], results.length).concat(results.slice(0, collisions[0]['index']));
+        
+                            extraTile = Vector2.copyAll(tile01);
+                            results = Vector2.copyAll(tile02);
+                        }
                     }  
                     else {
+                        isDummy = true;
                         var tile01 = results.slice(collisions[0]['index'], collisions[2]['index']);
                         var tile02 = results.slice(collisions[2]['index'], results.length).concat(results.slice(0, collisions[0]['index']));
                         extraTile = Vector2.copyAll(tile01);
@@ -692,7 +912,8 @@ export default class GeneratorTool {
                     }
                 }
                 //add point inside tile
-                else if(collisions.length == 2){
+                else if(collisions.length >= 2){
+                    
                     var resultLength = results.length;
 
                     var index = collisions[0]['index'];
@@ -710,7 +931,27 @@ export default class GeneratorTool {
                             const outsetPoint = outsetPoints[r];
                             if (self.IsInside(predictionPoints, outsetPoint.x, outsetPoint.y, false)) {
                                 if(self.IsInside(overhangPoints, outsetPoint.x, outsetPoint.y)){
-                                    results.splice(index, 0, outsetPoint);
+                                    if(pointsAddedThroughException){
+                                        // Check which 2 points falls into the forbidden
+                                        var index = null;
+                                        for (let a = 0; a < results.length; a++) {
+                                            const vc = results[a];
+                                            const vn = results[a + 1 <= results.length - 1 ? a + 1 : 0];
+                                            
+                                            if(self.IsInsideForbiddenShapes(outsets, vc.x, vc.y) && self.IsInsideForbiddenShapes(outsets, vn.x, vn.y)) {
+                                                if(index == null) {
+                                                    index = a;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if(index != null) {
+                                            results.splice(index + 1, 0, outsetPoint);
+                                        }
+                                    } else {
+                                        results.splice(index, 0, outsetPoint);
+                                    }
                                 }
                                 else{
                                     for (let t = 0; t < predictionPoints.length; t++) {
@@ -796,91 +1037,8 @@ export default class GeneratorTool {
                     }
                 }
 
-                var pointsAddedThroughException = false;
-                if(inForbiddenCount == 2 && outsideShapeCount == 2){
-                    for (let i = 0; i < predictionPoints.length; i++) {
-                        const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
-                        const vc = predictionPoints[i];
-                        const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
-
-                        var dirP = vp.getCopy().remove(vc).normalized();
-                        var dirN = vn.getCopy().remove(vc).normalized();
-
-                        var distP = Vector2.distance(vc, vp);
-                        var raycastP = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
-                        var distN = Vector2.distance(vc, vn);
-                        var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
-
-                        if(raycastP != null){
-                            if(Vector2.distance(raycastP, vp) > 0){
-                                isDummy = true;
-                                if(self.IsInside(insetPoints, raycastP.x, raycastP.y)){
-                                    var response = self.checkAndPush(results, raycastP, 0, true);
-                                    if (response != 'found') pointsAddedThroughException = true;
-                                }
-                                // collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(overhangPoints, vp.x, vp.y) });
-                            }
-                        }
-
-                        if (raycastN != null) {
-                            if(Vector2.distance(raycastN, vn) > 0){
-                                isDummy = true;
-                                if(self.IsInside(insetPoints, raycastN.x, raycastN.y)){
-                                    var response = self.checkAndPush(results, raycastN, 0, true);
-                                    if (response != 'found') pointsAddedThroughException = true;
-                                }
-                                // collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(overhangPoints, vn.x, vn.y) });
-                            }
-                        }
-                    }
-                } else if(inForbiddenCount >= 1 && outsideShapeCount >= 2){
-                    for (let i = 0; i < predictionPoints.length; i++) {
-                        const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
-                        const vc = predictionPoints[i];
-                        const vn = predictionPoints[i + 1 <= predictionPoints.length - 1 ? i + 1 : 0];
-
-                        var dirP = vp.getCopy().remove(vc).normalized();
-                        var dirN = vn.getCopy().remove(vc).normalized();
-
-                        var distP = Vector2.distance(vc, vp);
-                        var raycastP = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirP.x, -dirP.y), distP, true);
-                        var distN = Vector2.distance(vc, vn);
-                        var raycastN = self.#raycast([overhang].concat(outsets), vc, new Vector2(-dirN.x, -dirN.y), distN, true);
-
-                        if(raycastP != null){
-                            if(Vector2.distance(raycastP, vp) > 0){
-                                isDummy = true;
-                                if(self.IsInside(insetPoints, raycastP.x, raycastP.y)){
-                                    var response = self.checkAndPush(results, raycastP, 0, true);
-                                    if (response != 'found') pointsAddedThroughException = true;
-                                }
-                                // collisions.push({'index': results.length - 1, 'isWall': !self.IsInsideForbiddenShapes(outsets, vp.x, vp.y) && !self.IsInside(overhangPoints, vp.x, vp.y) });
-                            }
-                        }
-
-                        if (raycastN != null) {
-                            if(Vector2.distance(raycastN, vn) > 0){
-                                isDummy = true;
-                                if(self.IsInside(insetPoints, raycastN.x, raycastN.y)){
-                                    var response = self.checkAndPush(results, raycastN, 0, true);
-                                    if (response != 'found') pointsAddedThroughException = true;
-                                }
-                                // collisions.push({'index': results.length, 'isWall': !self.IsInsideForbiddenShapes(outsets, vn.x, vn.y) && !self.IsInside(overhangPoints, vn.x, vn.y) });
-                            }
-                        }
-                    }
-                } 
-
-                if(pointsAddedThroughException){
-                    print(count);
-                    this.#reorderClockwise(results);
-                    for (let index = 0; index < results.length; index++) {
-                        const element = results[index];
-                        self.#buffer.text(index, element.x, element.y);
-                    }
-                }
-
-                // console.log(count, 'In Shape : ', inShapeCount, "In Forbidden : ", inForbiddenCount, 'Outside Shape', outsideShapeCount);
+                // if(count == 2|| count == 3||count == 4||count == 15||count == 17||count == 21||count == 22||count == 28||count == 35||count == 47||count == 48||count == 49||count == 50)
+                //     console.log(count, 'inShapeCount', inShapeCount, 'outsideShapeCount', outsideShapeCount, 'inForbiddenCount', inForbiddenCount, results);
 
                 predictionPoints = Vector2.copyAll(results);
                 
@@ -1363,58 +1521,14 @@ export default class GeneratorTool {
         center.x /= points.length;
         center.y /= points.length;
 
-        this.#buffer.circle(center.x,center.y,5);
-
         // Step 2: Sort the array based on angle
         points.sort((a, b) => {
             const angleA = Math.atan2(a.y - center.y, a.x - center.x);
             const angleB = Math.atan2(b.y - center.y, b.x - center.x);
-             // calculate distance from center point
-            const distanceA = a.distance(center);
-            const distanceB = b.distance(center);
-
             // use angle as primary sort key
             let result = angleA - angleB;
-
-            // // if angle is close to 3 o'clock, prioritize the closer point
-            // if (Math.abs(result) < 0.5 && Math.abs(Math.abs(angleA) - Math.PI / 2) < 0.5) {
-            //     console.log('right');
-            //     result = distanceA - distanceB;
-            // }
-            // // if angle is close to 9 o'clock, prioritize the furthest point
-            // else if (Math.abs(result) < 0.5 && Math.abs(Math.abs(angleA) - Math.PI) < 0.5) {
-            //     console.log('left');
-            //     result = distanceB - distanceA;
-            // }
-
-            // if angles are close, prioritize the further point
-            if (Math.abs(result) < 0.2) {
-                // if angles and distances are similar, sort based on direction
-                if (angleA >= -Math.PI / 4 && angleA < Math.PI / 4) {
-                    // right
-                    console.log('right');
-                    this.#buffer.text("A",a.x,a.y);
-                    this.#buffer.text("B",b.x,b.y);
-                    result = distanceA - distanceB;
-                } else if (angleA >= Math.PI / 4 && angleA < 3 * Math.PI / 4) {
-                    // top
-                    console.log('top');
-                } else if (angleA < -Math.PI / 4 && angleA >= -3 * Math.PI / 4) {
-                    // bottom
-                    console.log('bottom');
-                } else {
-                    // left
-                    console.log('left');
-                    this.#buffer.text("A",a.x,a.y);
-                    this.#buffer.text("B",b.x,b.y);
-                    result = distanceB - distanceA;
-                }
-            }
-
             return result;
         });
-
-        
     }
 
     getTiles() {
